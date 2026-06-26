@@ -2,6 +2,8 @@
 
 Use `figma-console-mcp` through the user's local Figma bridge plugin. Never claim a Figma file, frame, or component was created unless the MCP tool call succeeds.
 
+Never call Figma while the prototype reference gate is pending.
+
 ## Preflight
 
 Before any Figma generation:
@@ -21,6 +23,12 @@ If the tool is unavailable, stop and tell the user:
 ```
 
 Then output the `PrototypeSpec` and do not simulate tool results.
+
+If the prototype reference gate is pending, stop before preparing the `PrototypeSpec` and ask:
+
+```text
+未找到当前需求可复用的已有原型或参考图。请提供截图/参考图，或明确回复“无参考图，继续生成”。
+```
 
 ## Call Contract
 

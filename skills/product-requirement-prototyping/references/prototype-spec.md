@@ -2,6 +2,8 @@
 
 Create a `PrototypeSpec` before every Figma call. Use it as the contract between product reasoning and `figma-console-mcp`.
 
+Do not create a `PrototypeSpec` while `prototypeReferenceGate.userDecision` is `pending`. The reference gate must resolve first.
+
 ## Required Shape
 
 ```json
@@ -80,6 +82,7 @@ Create a `PrototypeSpec` before every Figma call. Use it as the contract between
 - Accept screenshots when the project has no existing Figma prototype or the user wants an external reference.
 - Before producing a prototype spec, first check for existing project prototypes or saved visual references. If none exist, ask the user whether to provide screenshots/reference images or continue without visual references.
 - Do not proceed while `prototypeReferenceGate.userDecision` is `pending`.
+- When the decision is pending, write only the reference decision file and ask the user for screenshots/reference images or confirmation to continue without them.
 - Ask what aspects to reuse if unclear: layout, flow pattern, table density, form structure, navigation, visual style, or microcopy tone.
 - Do not copy third-party branding, logos, proprietary content, or user data from screenshots unless the user owns the material and explicitly asks for it.
 - Record screenshot paths or URLs in `visualReferences`.

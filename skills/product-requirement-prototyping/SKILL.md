@@ -9,6 +9,8 @@ description: Turn raw product requirements into clarified business rules, conver
 
 Operate as a gated product requirement workflow. Do not skip gates, do not fabricate Figma results, and do not move to the next major stage until the product manager explicitly confirms the current stage.
 
+Hard stop means stop the task immediately after asking the required question. Do not continue by making assumptions, do not generate the next artifact, and do not call Figma.
+
 Default outputs are Chinese Markdown. Use Mermaid for flowcharts. Use BDD scenarios in Chinese unless the user asks otherwise.
 
 Persist every stage artifact to disk. Read `references/output-artifacts.md` at the start of every task, create or reuse the project output directory it defines, and include saved file paths in each user-facing stage summary.
@@ -16,6 +18,8 @@ Persist every stage artifact to disk. Read `references/output-artifacts.md` at t
 When no existing project prototype is available, accept user-provided screenshots as visual references for prototype generation. Treat screenshots as references for layout, information density, component patterns, and visual tone; do not let screenshots override confirmed business rules or workflow gates.
 
 Before any low-fidelity or high-fidelity prototype generation, run a prototype reference gate. Check whether an existing project prototype or user-provided visual reference is available. If neither is available, explicitly ask the user to provide screenshots/reference images or confirm that the prototype should be generated without visual references.
+
+Reference gate is a hard stop. If the gate decision is missing or pending, output only the reference check result, the saved `02-reference-decision.md` path, and the question asking for screenshots/reference images or confirmation to continue without references.
 
 ## Workflow
 
@@ -37,6 +41,7 @@ Before any low-fidelity or high-fidelity prototype generation, run a prototype r
    - Run the prototype reference gate: check for existing Figma pages/prototypes or saved visual references for this requirement.
    - If no reference exists, ask the user to provide screenshots/reference images or explicitly confirm "no visual reference, continue".
    - Save the reference decision before producing the `PrototypeSpec`.
+   - Hard stop if the reference decision is `pending`. Do not produce `03-low-fidelity-prototype-spec.json`.
    - Produce a structured `PrototypeSpec` for low fidelity.
    - If the user supplied screenshots, include them as visual references in the `PrototypeSpec`.
    - Save the low-fidelity `PrototypeSpec` before any Figma call.
@@ -62,6 +67,7 @@ Before any low-fidelity or high-fidelity prototype generation, run a prototype r
    - Run the prototype reference gate again: prefer the approved low-fidelity prototype as the primary reference, then check for additional screenshots or visual references.
    - If no approved low-fidelity prototype or visual reference is available, ask the user to provide screenshots/reference images or explicitly confirm "no visual reference, continue".
    - Save the reference decision before producing the `PrototypeSpec`.
+   - Hard stop if the reference decision is `pending`. Do not produce `08-high-fidelity-prototype-spec.json`.
    - Produce a high-fidelity `PrototypeSpec`.
    - If the user supplied screenshots, include them as visual references in the `PrototypeSpec` and explain which visual aspects are being reused.
    - Save the high-fidelity `PrototypeSpec` before any Figma call.
@@ -80,6 +86,25 @@ Require explicit user confirmation at these points:
 - After PRD/BDD review, before high-fidelity Figma generation.
 
 If the user asks to continue without confirmation, summarize the risk and request the missing confirmation. If the user explicitly overrides the gate, record that override in the output.
+
+## Hard Stops
+
+Stop immediately and do not generate downstream artifacts when:
+
+- Clarification answers are missing.
+- Business convergence has not been confirmed.
+- Prototype reference gate decision is `pending`.
+- Low-fidelity prototype review has not been confirmed.
+- PRD/BDD review has not been approved for high fidelity.
+- `figma-console-mcp` is unavailable during a Figma stage.
+
+For a pending prototype reference gate, ask exactly one decision question:
+
+```text
+No reusable prototype or visual reference was found for this requirement. Please provide screenshots/reference images, or explicitly confirm: no visual reference, continue.
+```
+
+Then stop.
 
 ## Reference Loading
 
