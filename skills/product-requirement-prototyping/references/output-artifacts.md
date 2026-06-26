@@ -29,6 +29,7 @@ Create files as stages become available:
 00-raw-requirement.md
 01-clarification-questions.md
 02-business-model.md
+02-reference-decision.md
 03-low-fidelity-prototype-spec.json
 04-low-fidelity-review.md
 05-prd.md
@@ -43,6 +44,14 @@ index.md
 Do not create placeholder files for future stages. Create or update each file only when that stage is reached.
 
 If the user supplies screenshots or image references, store copies in `references/` when the files are locally accessible, or record their URLs/identifiers in `index.md` when they are not.
+
+Before any prototype generation, create or update `02-reference-decision.md` with:
+
+- Whether existing Figma pages/prototypes were checked.
+- Whether a relevant existing prototype was found.
+- Whether screenshots/reference images were requested.
+- The user's decision: use existing prototype, provided reference, or continue without reference.
+- Paths, URLs, or identifiers of accepted visual references.
 
 ## Index File
 

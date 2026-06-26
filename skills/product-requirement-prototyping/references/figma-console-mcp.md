@@ -8,9 +8,11 @@ Before any Figma generation:
 
 1. Check available tools for a Figma or `figma-console-mcp` MCP server.
 2. Confirm the local Figma bridge plugin is connected when the tool requires an active Figma session.
-3. Prepare a complete `PrototypeSpec`.
-4. State whether the call is for low fidelity or high fidelity.
-5. Decide page behavior: create a new page by default; update an existing page only when the user explicitly asks to modify one.
+3. Check whether the current Figma file/project contains an existing prototype page relevant to this requirement.
+4. If no existing prototype or saved visual reference is found, ask the user to provide screenshots/reference images or confirm continuing without visual references.
+5. Prepare a complete `PrototypeSpec`.
+6. State whether the call is for low fidelity or high fidelity.
+7. Decide page behavior: create a new page by default; update an existing page only when the user explicitly asks to modify one.
 
 If the tool is unavailable, stop and tell the user:
 
@@ -29,6 +31,7 @@ Send enough structured information for the bridge plugin to create or update fra
 - Page name and target page id when applicable.
 - Prototype mode: low fidelity or high fidelity.
 - Product surface inference.
+- Prototype reference gate decision: existing prototype found, screenshots provided, or user confirmed no visual reference.
 - Screenshot or image references, when supplied by the user, including which aspects to borrow.
 - Page/frame list.
 - Flow order and navigation links.
@@ -43,6 +46,9 @@ When no existing project prototype is available, user-provided screenshots may b
 
 Rules:
 
+- Always check for existing relevant Figma pages/prototypes before asking for screenshots.
+- If no existing prototype is found, explicitly ask the user to provide screenshots/reference images or confirm continuing without visual references.
+- Do not call Figma while the visual reference decision is still pending.
 - Pass screenshot paths, URLs, or uploaded image identifiers through the `visualReferences` field in `PrototypeSpec`.
 - State which aspects are being reused: layout, navigation, density, component style, spacing, or interaction affordance.
 - Do not copy logos, private data, or third-party brand-specific visuals unless the user confirms they own or may reuse them.

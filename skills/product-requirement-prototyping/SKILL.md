@@ -15,6 +15,8 @@ Persist every stage artifact to disk. Read `references/output-artifacts.md` at t
 
 When no existing project prototype is available, accept user-provided screenshots as visual references for prototype generation. Treat screenshots as references for layout, information density, component patterns, and visual tone; do not let screenshots override confirmed business rules or workflow gates.
 
+Before any low-fidelity or high-fidelity prototype generation, run a prototype reference gate. Check whether an existing project prototype or user-provided visual reference is available. If neither is available, explicitly ask the user to provide screenshots/reference images or confirm that the prototype should be generated without visual references.
+
 ## Workflow
 
 1. **Raw requirement intake**
@@ -32,6 +34,9 @@ When no existing project prototype is available, accept user-provided screenshot
 
 3. **Low-fidelity prototype**
    - Read `references/prototype-spec.md`.
+   - Run the prototype reference gate: check for existing Figma pages/prototypes or saved visual references for this requirement.
+   - If no reference exists, ask the user to provide screenshots/reference images or explicitly confirm "no visual reference, continue".
+   - Save the reference decision before producing the `PrototypeSpec`.
    - Produce a structured `PrototypeSpec` for low fidelity.
    - If the user supplied screenshots, include them as visual references in the `PrototypeSpec`.
    - Save the low-fidelity `PrototypeSpec` before any Figma call.
@@ -54,6 +59,9 @@ When no existing project prototype is available, accept user-provided screenshot
 
 6. **High-fidelity prototype**
    - Base high fidelity only on the reviewed PRD/BDD and low-fidelity feedback.
+   - Run the prototype reference gate again: prefer the approved low-fidelity prototype as the primary reference, then check for additional screenshots or visual references.
+   - If no approved low-fidelity prototype or visual reference is available, ask the user to provide screenshots/reference images or explicitly confirm "no visual reference, continue".
+   - Save the reference decision before producing the `PrototypeSpec`.
    - Produce a high-fidelity `PrototypeSpec`.
    - If the user supplied screenshots, include them as visual references in the `PrototypeSpec` and explain which visual aspects are being reused.
    - Save the high-fidelity `PrototypeSpec` before any Figma call.
@@ -67,6 +75,7 @@ Require explicit user confirmation at these points:
 
 - After clarification answers are gathered, before business convergence is treated as final.
 - After business objects, statuses, and main flows are summarized, before low-fidelity Figma generation.
+- Before prototype generation when no existing prototype or visual reference is available.
 - After low-fidelity prototype reverse check, before PRD/flowchart/BDD generation.
 - After PRD/BDD review, before high-fidelity Figma generation.
 

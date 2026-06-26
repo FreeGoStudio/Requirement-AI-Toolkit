@@ -17,6 +17,13 @@ Create a `PrototypeSpec` before every Figma call. Use it as the contract between
   "objective": "",
   "audience": "",
   "sourceArtifacts": [],
+  "prototypeReferenceGate": {
+    "existingPrototypeChecked": false,
+    "existingPrototypeFound": false,
+    "visualReferenceRequested": false,
+    "userDecision": "provided-reference | use-existing-prototype | continue-without-reference | pending",
+    "notes": ""
+  },
   "visualReferences": [],
   "businessObjects": [],
   "states": [],
@@ -37,6 +44,7 @@ Create a `PrototypeSpec` before every Figma call. Use it as the contract between
 - `figmaPageStrategy`: Use `create-new-page` by default. Use `update-existing-page` only when the user explicitly asks to modify an existing page or provides a target page.
 - `productSurface`: Infer from the requirement and state the inference.
 - `sourceArtifacts`: List the confirmed requirement summary, PRD, BDD, prototype review notes, or user-provided files used.
+- `prototypeReferenceGate`: Record whether existing project prototypes were checked, whether one was found, whether visual references were requested, and the user's decision.
 - `visualReferences`: List screenshots or image references supplied by the user. Include file path or URL, source, what to borrow, what not to borrow, and confidence.
 - `businessObjects`: Include object name, purpose, key attributes only when needed for screen clarity, and relevant statuses.
 - `states`: Include state name, owner, entry condition, exit condition, and visible UI effect.
@@ -70,6 +78,8 @@ Create a `PrototypeSpec` before every Figma call. Use it as the contract between
 ## Screenshot Reference Rules
 
 - Accept screenshots when the project has no existing Figma prototype or the user wants an external reference.
+- Before producing a prototype spec, first check for existing project prototypes or saved visual references. If none exist, ask the user whether to provide screenshots/reference images or continue without visual references.
+- Do not proceed while `prototypeReferenceGate.userDecision` is `pending`.
 - Ask what aspects to reuse if unclear: layout, flow pattern, table density, form structure, navigation, visual style, or microcopy tone.
 - Do not copy third-party branding, logos, proprietary content, or user data from screenshots unless the user owns the material and explicitly asks for it.
 - Record screenshot paths or URLs in `visualReferences`.
