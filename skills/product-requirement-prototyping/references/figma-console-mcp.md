@@ -2,7 +2,7 @@
 
 Use `figma-console-mcp` through the user's local Figma bridge plugin. Never claim a Figma file, frame, or component was created unless the MCP tool call succeeds.
 
-Never call Figma while the prototype reference gate is pending.
+Never call Figma while the prototype reference gate or high-fidelity visual reference gate is pending.
 
 ## Preflight
 
@@ -30,6 +30,12 @@ If the prototype reference gate is pending, stop before preparing the `Prototype
 未找到当前需求可复用的已有原型或参考图。请提供截图/参考图，或明确回复“无参考图，继续生成”。
 ```
 
+If the high-fidelity visual reference gate is pending, stop before preparing the high-fidelity `PrototypeSpec` and ask:
+
+```text
+低保真只能作为流程和结构参考，不能单独支撑高保真视觉生成。请提供参考图、设计系统、已有高保真页面，或明确回复“无视觉参考，继续生成并接受风险”。
+```
+
 ## Call Contract
 
 Send enough structured information for the bridge plugin to create or update frames:
@@ -40,6 +46,7 @@ Send enough structured information for the bridge plugin to create or update fra
 - Prototype mode: low fidelity or high fidelity.
 - Product surface inference.
 - Prototype reference gate decision: existing prototype found, screenshots provided, or user confirmed no visual reference.
+- For high fidelity, visual reference gate decision: visual source used or user accepted no-visual-reference risk.
 - Screenshot or image references, when supplied by the user, including which aspects to borrow.
 - Page/frame list.
 - Flow order and navigation links.
@@ -61,7 +68,7 @@ Rules:
 - State which aspects are being reused: layout, navigation, density, component style, spacing, or interaction affordance.
 - Do not copy logos, private data, or third-party brand-specific visuals unless the user confirms they own or may reuse them.
 - For low fidelity, translate screenshot references into neutral wireframe structure.
-- For high fidelity, use screenshot references as directional design guidance, not as a pixel-for-pixel clone unless the user explicitly asks and has rights.
+- For high fidelity, do not rely only on low fidelity. Use screenshots, design systems, existing high-fidelity pages, or brand UI guidelines as visual guidance. If absent, require explicit risk acceptance before calling Figma.
 
 ## Page Creation Policy
 

@@ -26,6 +26,15 @@ Do not create a `PrototypeSpec` while `prototypeReferenceGate.userDecision` is `
     "userDecision": "provided-reference | use-existing-prototype | continue-without-reference | pending",
     "notes": ""
   },
+  "highFidelityVisualReferenceGate": {
+    "required": false,
+    "lowFidelityUsedOnlyForFlow": true,
+    "visualSourceFound": false,
+    "visualSourceTypes": [],
+    "userDecision": "provided-visual-reference | use-design-system | use-existing-high-fidelity | continue-without-visual-reference | pending | not-applicable",
+    "riskAccepted": false,
+    "notes": ""
+  },
   "visualReferences": [],
   "businessObjects": [],
   "states": [],
@@ -47,6 +56,7 @@ Do not create a `PrototypeSpec` while `prototypeReferenceGate.userDecision` is `
 - `productSurface`: Infer from the requirement and state the inference.
 - `sourceArtifacts`: List the confirmed requirement summary, PRD, BDD, prototype review notes, or user-provided files used.
 - `prototypeReferenceGate`: Record whether existing project prototypes were checked, whether one was found, whether visual references were requested, and the user's decision.
+- `highFidelityVisualReferenceGate`: Required when `mode` is `high-fidelity`. Record that low fidelity is only a flow/structure reference, then require a visual source or explicit risk acceptance.
 - `visualReferences`: List screenshots or image references supplied by the user. Include file path or URL, source, what to borrow, what not to borrow, and confidence.
 - `businessObjects`: Include object name, purpose, key attributes only when needed for screen clarity, and relevant statuses.
 - `states`: Include state name, owner, entry condition, exit condition, and visible UI effect.
@@ -72,6 +82,9 @@ Do not create a `PrototypeSpec` while `prototypeReferenceGate.userDecision` is `
 
 - Base the spec on reviewed PRD/BDD and low-fidelity feedback.
 - Create a new Figma page by default for the high-fidelity prototype, separate from the low-fidelity page.
+- Do not treat low fidelity as a sufficient visual reference. Low fidelity may guide flow, grouping, and page structure only.
+- Require at least one high-fidelity visual source before generation: screenshot/reference image, existing high-fidelity Figma page, design system/component library, or brand UI guideline.
+- If no visual source is available, hard stop and ask the user to provide one or explicitly accept the risk of continuing without visual reference.
 - If screenshots are supplied, use them to guide visual hierarchy, spacing rhythm, component style, and interaction affordances while preserving the approved requirement.
 - Include visual hierarchy, spacing intent, component states, microcopy, validation messages, and realistic sample data.
 - Preserve the approved workflow and business rules.
@@ -87,3 +100,13 @@ Do not create a `PrototypeSpec` while `prototypeReferenceGate.userDecision` is `
 - Do not copy third-party branding, logos, proprietary content, or user data from screenshots unless the user owns the material and explicitly asks for it.
 - Record screenshot paths or URLs in `visualReferences`.
 - If the screenshot conflicts with confirmed business rules, follow the confirmed rules and note the conflict in `annotations`.
+
+## High-Fidelity Visual Reference Gate
+
+Before high-fidelity generation:
+
+1. Treat the approved low-fidelity prototype as a flow/structure reference only.
+2. Check for visual sources: screenshots/reference images, existing high-fidelity Figma pages, design system/component library, or brand UI guidelines.
+3. If no visual source exists, ask the user to provide one or explicitly confirm continuing without a visual reference.
+4. Do not create the high-fidelity `PrototypeSpec` while `highFidelityVisualReferenceGate.userDecision` is `pending`.
+5. If the user accepts the risk, set `riskAccepted` to `true` and explain that visual quality may be less reliable.

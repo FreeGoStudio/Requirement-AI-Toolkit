@@ -21,6 +21,8 @@ Before any low-fidelity or high-fidelity prototype generation, run a prototype r
 
 Reference gate is a hard stop. If the gate decision is missing or pending, output only the reference check result, the saved `02-reference-decision.md` path, and the question asking for screenshots/reference images or confirmation to continue without references.
 
+High fidelity requires a visual reference gate. Approved low-fidelity prototypes are only flow and structure references; they are not sufficient visual references for high fidelity. Before high-fidelity generation, require at least one visual source: screenshot/reference image, existing high-fidelity Figma page, design system/component library, brand UI guideline, or explicit user confirmation to continue without visual reference despite quality risk.
+
 ## Workflow
 
 1. **Raw requirement intake**
@@ -64,8 +66,9 @@ Reference gate is a hard stop. If the gate decision is missing or pending, outpu
 
 6. **High-fidelity prototype**
    - Base high fidelity only on the reviewed PRD/BDD and low-fidelity feedback.
-   - Run the prototype reference gate again: prefer the approved low-fidelity prototype as the primary reference, then check for additional screenshots or visual references.
-   - If no approved low-fidelity prototype or visual reference is available, ask the user to provide screenshots/reference images or explicitly confirm "no visual reference, continue".
+   - Run the prototype reference gate again: use the approved low-fidelity prototype only as a flow/structure reference.
+   - Run the visual reference gate: check for screenshots/reference images, existing high-fidelity Figma pages, design system/component library, or brand UI guidelines.
+   - If no visual source is available, ask the user to provide one or explicitly confirm "no visual reference, continue with high-fidelity risk".
    - Save the reference decision before producing the `PrototypeSpec`.
    - Hard stop if the reference decision is `pending`. Do not produce `08-high-fidelity-prototype-spec.json`.
    - Produce a high-fidelity `PrototypeSpec`.
@@ -94,6 +97,7 @@ Stop immediately and do not generate downstream artifacts when:
 - Clarification answers are missing.
 - Business convergence has not been confirmed.
 - Prototype reference gate decision is `pending`.
+- High-fidelity visual reference gate decision is `pending`.
 - Low-fidelity prototype review has not been confirmed.
 - PRD/BDD review has not been approved for high fidelity.
 - `figma-console-mcp` is unavailable during a Figma stage.
@@ -102,6 +106,14 @@ For a pending prototype reference gate, ask exactly one decision question:
 
 ```text
 No reusable prototype or visual reference was found for this requirement. Please provide screenshots/reference images, or explicitly confirm: no visual reference, continue.
+```
+
+Then stop.
+
+For a pending high-fidelity visual reference gate, ask exactly one decision question:
+
+```text
+Low-fidelity can only guide flow and structure. Please provide a visual reference, design system, existing high-fidelity page, or explicitly confirm: no visual reference, continue with high-fidelity risk.
 ```
 
 Then stop.

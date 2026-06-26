@@ -50,8 +50,9 @@ Before any prototype generation, create or update `02-reference-decision.md` wit
 - Whether existing Figma pages/prototypes were checked.
 - Whether a relevant existing prototype was found.
 - Whether screenshots/reference images were requested.
-- The user's decision: use existing prototype, provided reference, or continue without reference.
+- The user's decision: use existing prototype, provided reference, continue without reference, use visual source for high fidelity, or continue high fidelity without visual reference with risk accepted.
 - Paths, URLs, or identifiers of accepted visual references.
+- For high fidelity, whether low fidelity is used only as flow/structure reference and what visual source will guide the UI.
 
 ## Index File
 
