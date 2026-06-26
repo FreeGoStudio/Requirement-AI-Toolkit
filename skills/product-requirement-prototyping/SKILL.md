@@ -1,6 +1,6 @@
 ---
 name: product-requirement-prototyping
-description: Turn raw product requirements into clarified business rules, converged business objects, state models, workflow checks, Chinese PRDs, Mermaid flowcharts, BDD acceptance scenarios, and Figma low/high fidelity prototypes. Use when Codex needs to support product managers creating requirements, generating clarification questions, calling figma-console-mcp through a Figma bridge plugin, reverse-checking prototypes, or producing review-ready product artifacts.
+description: "Turn raw product requirements into clarified business rules, converged business objects, state models, workflow checks, Chinese PRDs, Mermaid flowcharts, BDD acceptance scenarios, and Figma low/high fidelity prototypes. Use when Codex needs to support product managers creating requirements, generating clarification questions, calling figma-console-mcp through a Figma bridge plugin, reverse-checking prototypes, or producing review-ready product artifacts. 中文触发: 产品需求工具, 使用产品需求工具, 产品需求原型工具, 使用产品需求原型工具, 产品需求原型助手, 产品需求创建, 需求澄清, 低保真原型, 高保真原型, PRD, 流程图, BDD, Figma 原型."
 ---
 
 # Product Requirement Prototyping

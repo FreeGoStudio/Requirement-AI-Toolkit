@@ -1,5 +1,5 @@
 ﻿interface:
-  display_name: "产品需求原型助手"
+  display_name: "产品需求工具"
   short_description: "从原始需求到PRD、BDD与Figma原型评审流程"
   default_prompt: "Use $product-requirement-prototyping to turn this raw product idea into clarified requirements, PRD, BDD, and Figma prototypes."
 dependencies:
