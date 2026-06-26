@@ -1,0 +1,11 @@
+interface:
+  display_name: "产品需求工具"
+  short_description: "短调用入口：PRD、BDD、流程图与Figma原型"
+  default_prompt: "Use $prd to turn this raw product idea into clarified requirements, PRD, BDD, and Figma prototypes."
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "figma-console-mcp"
+      description: "Calls the local Figma bridge plugin through the full product requirement prototyping skill."
+policy:
+  allow_implicit_invocation: true
