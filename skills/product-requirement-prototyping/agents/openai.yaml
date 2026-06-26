@@ -1,0 +1,11 @@
+﻿interface:
+  display_name: "产品需求原型助手"
+  short_description: "从原始需求到PRD、BDD与Figma原型评审流程"
+  default_prompt: "Use $product-requirement-prototyping to turn this raw product idea into clarified requirements, PRD, BDD, and Figma prototypes."
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "figma-console-mcp"
+      description: "Calls the local Figma bridge plugin to create or update low-fidelity and high-fidelity prototypes."
+policy:
+  allow_implicit_invocation: true
