@@ -13,6 +13,8 @@ Default outputs are Chinese Markdown. Use Mermaid for flowcharts. Use BDD scenar
 
 Persist every stage artifact to disk. Read `references/output-artifacts.md` at the start of every task, create or reuse the project output directory it defines, and include saved file paths in each user-facing stage summary.
 
+When no existing project prototype is available, accept user-provided screenshots as visual references for prototype generation. Treat screenshots as references for layout, information density, component patterns, and visual tone; do not let screenshots override confirmed business rules or workflow gates.
+
 ## Workflow
 
 1. **Raw requirement intake**
@@ -31,8 +33,10 @@ Persist every stage artifact to disk. Read `references/output-artifacts.md` at t
 3. **Low-fidelity prototype**
    - Read `references/prototype-spec.md`.
    - Produce a structured `PrototypeSpec` for low fidelity.
+   - If the user supplied screenshots, include them as visual references in the `PrototypeSpec`.
    - Save the low-fidelity `PrototypeSpec` before any Figma call.
    - Read `references/figma-console-mcp.md`.
+   - Unless the user explicitly asks to modify an existing Figma page, require a new Figma page for this requirement's low-fidelity prototype.
    - Check whether `figma-console-mcp` tools are available. If unavailable, stop and ask the user to connect the Figma bridge plugin.
    - If available, call the tool to create/update the low-fidelity Figma prototype.
 
@@ -51,7 +55,9 @@ Persist every stage artifact to disk. Read `references/output-artifacts.md` at t
 6. **High-fidelity prototype**
    - Base high fidelity only on the reviewed PRD/BDD and low-fidelity feedback.
    - Produce a high-fidelity `PrototypeSpec`.
+   - If the user supplied screenshots, include them as visual references in the `PrototypeSpec` and explain which visual aspects are being reused.
    - Save the high-fidelity `PrototypeSpec` before any Figma call.
+   - Unless the user explicitly asks to modify an existing Figma page, require a new Figma page for this requirement's high-fidelity prototype.
    - Check `figma-console-mcp` again before calling Figma.
    - Create/update the high-fidelity Figma prototype only after explicit approval.
 

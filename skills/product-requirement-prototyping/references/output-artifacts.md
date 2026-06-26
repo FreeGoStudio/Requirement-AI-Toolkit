@@ -36,10 +36,13 @@ Create files as stages become available:
 07-bdd.feature
 08-high-fidelity-prototype-spec.json
 09-high-fidelity-review.md
+references/
 index.md
 ```
 
 Do not create placeholder files for future stages. Create or update each file only when that stage is reached.
+
+If the user supplies screenshots or image references, store copies in `references/` when the files are locally accessible, or record their URLs/identifiers in `index.md` when they are not.
 
 ## Index File
 

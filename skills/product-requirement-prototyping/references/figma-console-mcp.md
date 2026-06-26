@@ -10,6 +10,7 @@ Before any Figma generation:
 2. Confirm the local Figma bridge plugin is connected when the tool requires an active Figma session.
 3. Prepare a complete `PrototypeSpec`.
 4. State whether the call is for low fidelity or high fidelity.
+5. Decide page behavior: create a new page by default; update an existing page only when the user explicitly asks to modify one.
 
 If the tool is unavailable, stop and tell the user:
 
@@ -24,14 +25,48 @@ Then output the `PrototypeSpec` and do not simulate tool results.
 Send enough structured information for the bridge plugin to create or update frames:
 
 - Target file or current Figma document, if supplied by the user.
+- Page strategy: `create-new-page` by default, or `update-existing-page` only with an explicit user modification request.
+- Page name and target page id when applicable.
 - Prototype mode: low fidelity or high fidelity.
 - Product surface inference.
+- Screenshot or image references, when supplied by the user, including which aspects to borrow.
 - Page/frame list.
 - Flow order and navigation links.
 - Component inventory.
 - Interaction annotations.
 - Business object/status annotations.
 - Review notes or open questions.
+
+## Visual Reference Policy
+
+When no existing project prototype is available, user-provided screenshots may be used as visual references.
+
+Rules:
+
+- Pass screenshot paths, URLs, or uploaded image identifiers through the `visualReferences` field in `PrototypeSpec`.
+- State which aspects are being reused: layout, navigation, density, component style, spacing, or interaction affordance.
+- Do not copy logos, private data, or third-party brand-specific visuals unless the user confirms they own or may reuse them.
+- For low fidelity, translate screenshot references into neutral wireframe structure.
+- For high fidelity, use screenshot references as directional design guidance, not as a pixel-for-pixel clone unless the user explicitly asks and has rights.
+
+## Page Creation Policy
+
+Default behavior is to create a new Figma page for every prototype generation stage.
+
+Use these names unless the user provides a naming convention:
+
+```text
+<需求名称> / Low Fidelity / <yyyyMMdd-HHmm>
+<需求名称> / High Fidelity / <yyyyMMdd-HHmm>
+```
+
+Rules:
+
+- Low fidelity and high fidelity must be on separate Figma pages.
+- Do not place a new requirement's prototype on the currently open page by default.
+- Do not overwrite or append to a previous prototype page unless the user clearly says this is a modification.
+- If the user asks to modify an existing prototype, require or infer the target Figma page, record `figmaPageStrategy.action` as `update-existing-page`, and include the target page id/name in the `PrototypeSpec`.
+- If the MCP tool returns only frames and no page id, record the page name requested in the stage summary and `index.md`.
 
 ## Expected Result Handling
 
