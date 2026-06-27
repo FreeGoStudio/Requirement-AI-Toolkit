@@ -1,8 +1,8 @@
-# BDD Template
+# BDD 模板
 
-Write BDD in Chinese. Prefer feature-level grouping and scenarios that map directly to confirmed business rules and flows.
+使用中文编写 BDD。优先按功能分组，场景应直接对应已确认的业务规则和流程。
 
-## Format
+## 格式
 
 ```gherkin
 功能: <功能名称>
@@ -26,20 +26,20 @@ Write BDD in Chinese. Prefer feature-level grouping and scenarios that map direc
     并且 <状态保持或变化>
 ```
 
-## Scenario Coverage
+## 场景覆盖
 
-Include scenarios for:
+需要包含以下场景：
 
-- Main happy path.
-- Each confirmed status transition.
-- Important permission differences between roles.
-- Required fields or blocking validations.
-- Empty, error, timeout, duplicate, expired, or rejected states when relevant.
-- Recovery actions after failure.
+- 主成功路径。
+- 每个已确认的状态流转。
+- 重要角色之间的权限差异。
+- 必填字段或阻塞式校验。
+- 相关的空状态、错误、超时、重复、过期或拒绝状态。
+- 失败后的恢复动作。
 
-## Writing Rules
+## 写作规则
 
-- Use observable behavior, not implementation details.
-- Do not introduce fields, APIs, or roles that are absent from the PRD unless clearly marked as assumptions.
-- Keep one scenario focused on one business rule or flow branch.
-- Use stable terms from the confirmed business object model.
+- 使用可观察行为，不写实现细节。
+- 不要引入 PRD 中不存在的字段、API 或角色，除非明确标记为假设。
+- 每个场景只聚焦一个业务规则或流程分支。
+- 使用已确认业务对象模型中的稳定术语。

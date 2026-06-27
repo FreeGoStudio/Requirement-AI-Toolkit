@@ -1,6 +1,6 @@
-# PRD Template
+# PRD 模板
 
-Use this template for review-ready Chinese PRDs. Keep the document concise, concrete, and traceable to the confirmed business model.
+使用此模板生成可评审的中文 PRD。文档应简洁、具体，并可追溯到已确认的业务模型。
 
 ## 1. 背景与目标
 
@@ -62,7 +62,7 @@ Use this template for review-ready Chinese PRDs. Keep the document concise, conc
 
 ## 12. 流程图
 
-Use Mermaid.
+使用 Mermaid。
 
 ```mermaid
 flowchart TD

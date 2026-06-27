@@ -1,135 +1,137 @@
 ---
 name: product-requirement-prototyping
-description: "Turn raw product requirements into clarified business rules, converged business objects, state models, workflow checks, Chinese PRDs, Mermaid flowcharts, BDD acceptance scenarios, and Figma low/high fidelity prototypes. Use when Codex needs to support product managers creating requirements, generating clarification questions, calling figma-console-mcp through a Figma bridge plugin, reverse-checking prototypes, or producing review-ready product artifacts. 中文触发: 产品需求工具, 使用产品需求工具, 产品需求原型工具, 使用产品需求原型工具, 产品需求原型助手, 产品需求创建, 需求澄清, 低保真原型, 高保真原型, PRD, 流程图, BDD, Figma 原型."
+description: "将原始产品需求转化为澄清问题、业务规则、业务对象、状态模型、工作流检查、中文 PRD、Mermaid 流程图、中文 BDD 验收场景，以及 Figma 低/高保真原型。用于支持产品经理完成需求澄清、PRD/BDD/流程图生成、通过 figma-console-mcp 调用 Figma 桥接插件、原型反查与评审产物输出。中文触发: 产品需求工具, 使用产品需求工具, 产品需求原型工具, 使用产品需求原型工具, 产品需求原型助手, 产品需求创建, 需求澄清, 低保真原型, 高保真原型, PRD, 流程图, BDD, Figma 原型."
 ---
 
-# Product Requirement Prototyping
+# 产品需求原型工具
 
-## Core Rule
+## 核心规则
 
-Operate as a gated product requirement workflow. Do not skip gates, do not fabricate Figma results, and do not move to the next major stage until the product manager explicitly confirms the current stage.
+以带 gate 的产品需求工作流运行。不得跳过 gate，不得虚构 Figma 结果，在产品经理明确确认当前阶段前，不得进入下一个主要阶段。
 
-Hard stop means stop the task immediately after asking the required question. Do not continue by making assumptions, do not generate the next artifact, and do not call Figma.
+Hard stop 表示提出必要问题后立即停止任务。不得继续做假设，不得生成下一阶段产物，也不得调用 Figma。
 
-Default outputs are Chinese Markdown. Use Mermaid for flowcharts. Use BDD scenarios in Chinese unless the user asks otherwise.
+所有面向用户的自然语言回复必须使用中文。只有代码标识、文件名、JSON 字段名、工具名、Mermaid/Gherkin 语法关键字等技术字面量可以保留英文。
 
-Persist every stage artifact to disk. Read `references/output-artifacts.md` at the start of every task, create or reuse the project output directory it defines, and include saved file paths in each user-facing stage summary.
+默认产物为中文 Markdown。流程图使用 Mermaid。BDD 场景默认使用中文，除非用户明确要求其他语言。
 
-When no existing project prototype is available, accept user-provided screenshots as visual references for prototype generation. Treat screenshots as references for layout, information density, component patterns, and visual tone; do not let screenshots override confirmed business rules or workflow gates.
+每个阶段产物都必须持久化到磁盘。每次任务开始时读取 `references/output-artifacts.md`，创建或复用其中定义的项目输出目录，并在每次面向用户的阶段总结中包含已保存文件路径。
 
-Before any low-fidelity or high-fidelity prototype generation, run a prototype reference gate. Check whether an existing project prototype or user-provided visual reference is available. If neither is available, explicitly ask the user to provide screenshots/reference images or confirm that the prototype should be generated without visual references.
+当没有可用的项目既有原型时，可接受用户提供的截图作为原型生成的视觉参考。截图仅作为布局、信息密度、组件模式和视觉语气参考，不得覆盖已确认的业务规则或工作流 gate。
 
-Reference gate is a hard stop. If the gate decision is missing or pending, output only the reference check result, the saved `02-reference-decision.md` path, and the question asking for screenshots/reference images or confirmation to continue without references.
+在生成任何低保真或高保真原型前，必须执行原型参考 gate：检查是否存在项目既有原型或用户提供的视觉参考。如果两者都不存在，必须明确询问用户提供截图/参考图，或确认无参考图也继续生成。
 
-High fidelity requires a visual reference gate. Approved low-fidelity prototypes are only flow and structure references; they are not sufficient visual references for high fidelity. Before high-fidelity generation, require at least one visual source: screenshot/reference image, existing high-fidelity Figma page, design system/component library, brand UI guideline, or explicit user confirmation to continue without visual reference despite quality risk.
+参考 gate 是 hard stop。如果 gate 决策缺失或处于 `pending`，只输出参考检查结果、已保存的 `02-reference-decision.md` 路径，以及要求用户提供截图/参考图或确认无参考继续的中文问题。
 
-## Workflow
+高保真必须执行视觉参考 gate。已确认的低保真原型只能作为流程和结构参考，不足以作为高保真视觉参考。高保真生成前必须至少具备一个视觉来源：截图/参考图、既有高保真 Figma 页面、设计系统/组件库、品牌 UI 指南，或用户明确确认接受质量风险并在无视觉参考下继续。
 
-1. **Raw requirement intake**
-   - Read `references/output-artifacts.md` and create the requirement output directory.
-   - Restate the user goal, audience, actors, suspected product surface, and unresolved assumptions.
-   - Generate clarification questions focused on business rules, roles, business objects, states, workflow boundaries, exceptions, permissions, data sources, and success criteria.
-   - Save the intake summary and clarification questions before stopping.
-   - Stop and wait for answers before producing a prototype or PRD.
+## 工作流
 
-2. **Business convergence**
-   - Convert answers into business objects, object relationships, statuses, state transitions, main flows, exception flows, and open risks.
-   - Save the converged model before asking for confirmation.
-   - Ask for explicit confirmation of the converged model.
-   - Do not call Figma before this confirmation.
+1. **原始需求接收**
+   - 读取 `references/output-artifacts.md` 并创建需求输出目录。
+   - 复述用户目标、受众、参与角色、推断的产品端形态，以及尚未解决的假设。
+   - 生成聚焦于业务规则、角色、业务对象、状态、流程边界、异常、权限、数据来源和成功标准的澄清问题。
+   - 停止前保存接收摘要和澄清问题。
+   - 停止并等待用户回答，不得提前生成原型或 PRD。
 
-3. **Low-fidelity prototype**
-   - Read `references/prototype-spec.md`.
-   - Run the prototype reference gate: check for existing Figma pages/prototypes or saved visual references for this requirement.
-   - If no reference exists, ask the user to provide screenshots/reference images or explicitly confirm "no visual reference, continue".
-   - Save the reference decision before producing the `PrototypeSpec`.
-   - Hard stop if the reference decision is `pending`. Do not produce `03-low-fidelity-prototype-spec.json`.
-   - Produce a structured `PrototypeSpec` for low fidelity.
-   - If the user supplied screenshots, include them as visual references in the `PrototypeSpec`.
-   - Save the low-fidelity `PrototypeSpec` before any Figma call.
-   - Read `references/figma-console-mcp.md`.
-   - Unless the user explicitly asks to modify an existing Figma page, require a new Figma page for this requirement's low-fidelity prototype.
-   - Check whether `figma-console-mcp` tools are available. If unavailable, stop and ask the user to connect the Figma bridge plugin.
-   - If available, call the tool to create/update the low-fidelity Figma prototype.
+2. **业务收敛**
+   - 将回答转化为业务对象、对象关系、状态、状态流转、主流程、异常流程和开放风险。
+   - 请求确认前保存收敛后的业务模型。
+   - 要求用户明确确认业务模型。
+   - 在获得确认前不得调用 Figma。
 
-4. **Prototype reverse check**
-   - Inspect the low-fidelity prototype output or returned frame/component summary.
-   - Identify missing steps, unclear interactions, state conflicts, rule gaps, empty/error states, and role-permission mismatches.
-   - Save the reverse-check report.
-   - Ask for confirmation or corrections before generating final requirement artifacts.
+3. **低保真原型**
+   - 读取 `references/prototype-spec.md`。
+   - 执行原型参考 gate：检查当前需求是否有既有 Figma 页面/原型或已保存的视觉参考。
+   - 如果不存在参考，要求用户提供截图/参考图，或明确回复“无参考图，继续生成”。
+   - 生成 `PrototypeSpec` 前保存参考决策。
+   - 如果参考决策为 `pending`，必须 hard stop，不得生成 `03-low-fidelity-prototype-spec.json`。
+   - 生成结构化的低保真 `PrototypeSpec`。
+   - 如果用户提供了截图，将其作为视觉参考写入 `PrototypeSpec`。
+   - 在任何 Figma 调用前保存低保真 `PrototypeSpec`。
+   - 读取 `references/figma-console-mcp.md`。
+   - 除非用户明确要求修改既有 Figma 页面，否则必须为当前需求的低保真原型创建新的 Figma 页面。
+   - 检查 `figma-console-mcp` 工具是否可用。若不可用，停止并要求用户连接 Figma 桥接插件。
+   - 若可用，调用工具创建或更新低保真 Figma 原型。
 
-5. **Requirement artifacts**
-   - Read `references/prd-template.md` and `references/bdd-template.md`.
-   - Generate a review-ready Chinese PRD, Mermaid flowchart, and Chinese BDD scenarios.
-   - Save the PRD, Mermaid flowchart, and BDD files separately.
-   - Ask for review approval before high-fidelity work.
+4. **原型反查**
+   - 检查低保真原型输出，或工具返回的 frame/component 摘要。
+   - 识别缺失步骤、交互不清、状态冲突、规则缺口、空/错状态，以及角色权限不匹配。
+   - 保存反查报告。
+   - 在生成最终需求产物前，要求用户确认或给出修正。
 
-6. **High-fidelity prototype**
-   - Base high fidelity only on the reviewed PRD/BDD and low-fidelity feedback.
-   - Run the prototype reference gate again: use the approved low-fidelity prototype only as a flow/structure reference.
-   - Run the visual reference gate: check for screenshots/reference images, existing high-fidelity Figma pages, design system/component library, or brand UI guidelines.
-   - If no visual source is available, ask the user to provide one or explicitly confirm "no visual reference, continue with high-fidelity risk".
-   - Save the reference decision before producing the `PrototypeSpec`.
-   - Hard stop if the reference decision is `pending`. Do not produce `08-high-fidelity-prototype-spec.json`.
-   - Produce a high-fidelity `PrototypeSpec`.
-   - If the user supplied screenshots, include them as visual references in the `PrototypeSpec` and explain which visual aspects are being reused.
-   - Save the high-fidelity `PrototypeSpec` before any Figma call.
-   - Unless the user explicitly asks to modify an existing Figma page, require a new Figma page for this requirement's high-fidelity prototype.
-   - Check `figma-console-mcp` again before calling Figma.
-   - Create/update the high-fidelity Figma prototype only after explicit approval.
+5. **需求产物**
+   - 读取 `references/prd-template.md` 和 `references/bdd-template.md`。
+   - 生成可评审的中文 PRD、Mermaid 流程图和中文 BDD 场景。
+   - 分别保存 PRD、Mermaid 流程图和 BDD 文件。
+   - 在高保真工作前要求用户评审并批准。
+
+6. **高保真原型**
+   - 高保真只能基于已评审的 PRD/BDD 和低保真反馈。
+   - 再次执行原型参考 gate：已批准的低保真原型只能作为流程/结构参考。
+   - 执行视觉参考 gate：检查截图/参考图、既有高保真 Figma 页面、设计系统/组件库或品牌 UI 指南。
+   - 如果没有可用视觉来源，要求用户提供一个视觉来源，或明确回复“无视觉参考，继续生成并接受风险”。
+   - 生成 `PrototypeSpec` 前保存参考决策。
+   - 如果参考决策为 `pending`，必须 hard stop，不得生成 `08-high-fidelity-prototype-spec.json`。
+   - 生成高保真 `PrototypeSpec`。
+   - 如果用户提供了截图，将其作为视觉参考写入 `PrototypeSpec`，并说明会复用哪些视觉方面。
+   - 在任何 Figma 调用前保存高保真 `PrototypeSpec`。
+   - 除非用户明确要求修改既有 Figma 页面，否则必须为当前需求的高保真原型创建新的 Figma 页面。
+   - 调用 Figma 前再次检查 `figma-console-mcp`。
+   - 只有在获得明确批准后，才创建或更新高保真 Figma 原型。
 
 ## Gates
 
-Require explicit user confirmation at these points:
+以下节点必须获得用户明确确认：
 
-- After clarification answers are gathered, before business convergence is treated as final.
-- After business objects, statuses, and main flows are summarized, before low-fidelity Figma generation.
-- Before prototype generation when no existing prototype or visual reference is available.
-- After low-fidelity prototype reverse check, before PRD/flowchart/BDD generation.
-- After PRD/BDD review, before high-fidelity Figma generation.
+- 收集澄清问题答案后，在将业务收敛视为最终版本前。
+- 汇总业务对象、状态和主流程后，在生成低保真 Figma 原型前。
+- 没有既有原型或视觉参考时，在生成原型前。
+- 低保真原型反查后，在生成 PRD/流程图/BDD 前。
+- PRD/BDD 评审后，在生成高保真 Figma 原型前。
 
-If the user asks to continue without confirmation, summarize the risk and request the missing confirmation. If the user explicitly overrides the gate, record that override in the output.
+如果用户要求在缺少确认时继续，必须用中文总结风险并请求缺失的确认。如果用户明确覆盖 gate，必须在输出中记录该覆盖决定。
 
 ## Hard Stops
 
-Stop immediately and do not generate downstream artifacts when:
+出现以下情况时必须立即停止，且不得生成下游产物：
 
-- Clarification answers are missing.
-- Business convergence has not been confirmed.
-- Prototype reference gate decision is `pending`.
-- High-fidelity visual reference gate decision is `pending`.
-- Low-fidelity prototype review has not been confirmed.
-- PRD/BDD review has not been approved for high fidelity.
-- `figma-console-mcp` is unavailable during a Figma stage.
+- 澄清问题尚未回答。
+- 业务收敛尚未确认。
+- 原型参考 gate 决策为 `pending`。
+- 高保真视觉参考 gate 决策为 `pending`。
+- 低保真原型评审尚未确认。
+- PRD/BDD 评审尚未批准进入高保真。
+- Figma 阶段中 `figma-console-mcp` 不可用。
 
-For a pending prototype reference gate, ask exactly one decision question:
-
-```text
-No reusable prototype or visual reference was found for this requirement. Please provide screenshots/reference images, or explicitly confirm: no visual reference, continue.
-```
-
-Then stop.
-
-For a pending high-fidelity visual reference gate, ask exactly one decision question:
+当原型参考 gate 处于 `pending` 时，只能询问以下一个中文决策问题：
 
 ```text
-Low-fidelity can only guide flow and structure. Please provide a visual reference, design system, existing high-fidelity page, or explicitly confirm: no visual reference, continue with high-fidelity risk.
+未找到当前需求可复用的已有原型或视觉参考。请提供截图/参考图，或明确回复“无参考图，继续生成”。
 ```
 
-Then stop.
+然后停止。
 
-## Reference Loading
+当高保真视觉参考 gate 处于 `pending` 时，只能询问以下一个中文决策问题：
 
-- Read `references/output-artifacts.md` before producing any stage artifact.
-- Read `references/prototype-spec.md` before any Figma prototype stage.
-- Read `references/figma-console-mcp.md` before checking or calling Figma tools.
-- Read `references/prd-template.md` before drafting a PRD.
-- Read `references/bdd-template.md` before drafting BDD scenarios.
+```text
+低保真只能作为流程和结构参考，不能单独支撑高保真视觉生成。请提供参考图、设计系统、已有高保真页面，或明确回复“无视觉参考，继续生成并接受风险”。
+```
 
-## Output Standards
+然后停止。
 
-- Keep product artifacts concrete enough for review, but avoid inventing backend APIs, analytics, release plans, or database fields unless the user asks for implementation depth.
-- Infer B-side, C-side, mobile, desktop, or mixed product surface from the requirement. State the inference and ask if it materially affects the prototype.
-- Preserve open questions as an explicit section instead of silently resolving risky assumptions.
-- When Figma tools are unavailable, provide the exact `PrototypeSpec` that would have been sent and stop there.
-- Every response that completes a stage must list the files written or updated.
+## 参考文件加载
+
+- 生成任何阶段产物前，读取 `references/output-artifacts.md`。
+- 进入任何 Figma 原型阶段前，读取 `references/prototype-spec.md`。
+- 检查或调用 Figma 工具前，读取 `references/figma-console-mcp.md`。
+- 起草 PRD 前，读取 `references/prd-template.md`。
+- 起草 BDD 场景前，读取 `references/bdd-template.md`。
+
+## 输出标准
+
+- 产品产物要具体到足以评审，但除非用户要求实现深度，否则不要虚构后端 API、埋点、发布计划或数据库字段。
+- 从需求推断 B 端、C 端、移动端、桌面端或混合产品端形态。说明推断结果，并在该推断会显著影响原型时向用户确认。
+- 将开放问题保留为明确章节，不得静默解决高风险假设。
+- 当 Figma 工具不可用时，提供原本会发送的精确 `PrototypeSpec`，然后停止。
+- 每个完成阶段的回复都必须列出本阶段写入或更新的文件。
