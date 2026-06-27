@@ -39,7 +39,7 @@ if (Test-Path -LiteralPath (Join-Path $repoDir ".git") -PathType Container) {
   git clone --depth 1 --branch $Branch $RepoUrl $repoDir
 }
 
-$installer = Join-Path $repoDir "scripts\install-product-requirement-prototyping.ps1"
+$installer = Join-Path $repoDir "scripts\install-skill.ps1"
 if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) {
   throw "Installer not found after clone: $installer"
 }
@@ -47,6 +47,7 @@ if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) {
 $args = @(
   "-ExecutionPolicy", "Bypass",
   "-File", $installer,
+  "-SkillName", "prd",
   "-CodexHome", $CodexHome
 )
 
