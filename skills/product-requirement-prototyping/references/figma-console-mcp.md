@@ -8,18 +8,60 @@ Never call Figma while the prototype reference gate or high-fidelity visual refe
 
 Before any Figma generation:
 
-1. Check available tools for a Figma or `figma-console-mcp` MCP server.
-2. Confirm the local Figma bridge plugin is connected when the tool requires an active Figma session.
+1. Run the Figma Tool Discovery Preflight below.
+2. Confirm the local Figma bridge plugin is connected with the read-only smoke test.
 3. Check whether the current Figma file/project contains an existing prototype page relevant to this requirement.
 4. If no existing prototype or saved visual reference is found, ask the user to provide screenshots/reference images or confirm continuing without visual references.
 5. Prepare a complete `PrototypeSpec`.
 6. State whether the call is for low fidelity or high fidelity.
 7. Decide page behavior: create a new page by default; update an existing page only when the user explicitly asks to modify one.
 
-If the tool is unavailable, stop and tell the user:
+## Tool Discovery Preflight
+
+Figma tools may be lazy-loaded. Do not treat a missing first search result as proof that Figma is disconnected.
+
+Required capability:
+
+- Execute capability: `figma_execute`.
+- Screenshot capability: either `figma_capture_screenshot` or `figma_take_screenshot`.
+
+Discovery steps:
+
+1. Use `tool_search` with exact queries for `figma_execute`, `figma_capture_screenshot`, `figma_take_screenshot`, and `figma-console-mcp`.
+2. If any required capability is not found, run a second broader search with `figma`, `screenshot`, and `execute`.
+3. Accept either screenshot alias. `figma_capture_screenshot` and `figma_take_screenshot` both satisfy the screenshot capability.
+4. Only after both exact and broad searches fail to expose `figma_execute` should the stage be considered tool-unavailable.
+5. If `figma_execute` is available but no screenshot tool is available, continue only when the current stage can create a draft without visual verification. State clearly that screenshot verification is unavailable. If the stage requires visual validation, hard stop before calling Figma.
+
+If the execute tool is unavailable after both discovery passes, stop and tell the user:
 
 ```text
-未检测到 figma-console-mcp 或 Figma 桥接插件连接。请先启动 Figma 本地客户端、打开桥接插件，并在 Codex 中连接 figma-console-mcp。下面是本次准备发送的 PrototypeSpec。
+未检测到 Figma 执行工具。可能是 Codex 工具发现/懒加载尚未完成，而不是 Figma Desktop 断开。请重新搜索或等待工具面板加载 figma_execute，并确认 figma-console-mcp 已连接。下面是本次准备发送的 PrototypeSpec。
+```
+
+Then output the `PrototypeSpec` and do not simulate tool results.
+
+## Bridge Smoke Test
+
+After `figma_execute` is found and before any prototype generation, run a read-only smoke test that reads the active Figma document context, such as current file name, current page name, and page count.
+
+Rules:
+
+- A successful smoke test means the bridge is connected. An `Untitled` file name is valid and must not be reported as disconnected.
+- The smoke test must not create, edit, delete, rename, or move any Figma nodes or pages.
+- If the smoke test fails, report the failure as a bridge/session problem, not as a missing tool.
+
+Use these categories when explaining a smoke test failure:
+
+- Figma Desktop is not open or has no active document.
+- The local bridge plugin is not running or not connected to Codex.
+- The session lacks permission or the active document cannot be accessed.
+- The execute tool exists but returned an unexpected runtime error.
+
+If the bridge smoke test fails, stop and tell the user:
+
+```text
+Figma 执行工具已经可见，但桥接 smoke test 失败。请启动 Figma Desktop、打开本地桥接插件、保持目标文件处于激活状态，并确认 Codex 与 figma-console-mcp 的会话仍连接。下面是本次准备发送的 PrototypeSpec。
 ```
 
 Then output the `PrototypeSpec` and do not simulate tool results.

@@ -85,9 +85,9 @@ index.md
 
 ## Figma 失败处理
 
-如果 `figma-console-mcp` 不可用，仍然保存：
+如果 Figma Tool Discovery Preflight 或 bridge smoke test 失败，仍然保存：
 
 - 对应的 `PrototypeSpec` JSON 文件。
-- 在 `index.md` 中写入简短说明，将 Figma 标记为 `unavailable`。
+- 在 `index.md` 中写入简短说明，将 Figma 标记为 `unavailable`，并记录失败类型：工具未暴露、bridge/session 执行失败，或缺少截图校验能力。
 
-然后停止，并用中文要求用户连接 Figma 桥接插件。
+然后停止，并用中文给出对应处理建议；不要把工具懒加载失败误报为 Figma Desktop 断开。
