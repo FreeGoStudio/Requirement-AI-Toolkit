@@ -31,7 +31,7 @@ Discovery steps:
 2. If any required capability is not found, run a second broader search with `figma`, `screenshot`, and `execute`.
 3. Accept either screenshot alias. `figma_capture_screenshot` and `figma_take_screenshot` both satisfy the screenshot capability.
 4. Only after both exact and broad searches fail to expose `figma_execute` should the stage be considered tool-unavailable.
-5. If `figma_execute` is available but no screenshot tool is available, continue only when the current stage can create a draft without visual verification. State clearly that screenshot verification is unavailable. If the stage requires visual validation, hard stop before calling Figma.
+5. Low-fidelity and high-fidelity completion both require a screenshot tool. If `figma_execute` is available but no screenshot tool is available, hard stop; do not mark an unverified draft complete.
 
 If the execute tool is unavailable after both discovery passes, stop and tell the user:
 
@@ -88,6 +88,7 @@ Send enough structured information for the bridge plugin to create or update fra
 - Prototype mode: low fidelity or high fidelity.
 - Product surface inference.
 - Prototype reference gate decision: existing prototype found, screenshots provided, or user confirmed no visual reference.
+- Knowledge-base manifest, actually inspected screenshots, `InterfaceBaseline`, and reference traceability for low fidelity.
 - For high fidelity, visual reference gate decision: visual source used or user accepted no-visual-reference risk.
 - Screenshot or image references, when supplied by the user, including which aspects to borrow.
 - Page/frame list.
@@ -110,6 +111,7 @@ Rules:
 - State which aspects are being reused: layout, navigation, density, component style, spacing, or interaction affordance.
 - Do not copy logos, private data, or third-party brand-specific visuals unless the user confirms they own or may reuse them.
 - For low fidelity, translate screenshot references into neutral wireframe structure.
+- After low-fidelity generation, capture the full frame and pass the structure consistency gate defined in `screenshot-knowledge-workflow.md` before requesting user review.
 - For high fidelity, do not rely only on low fidelity. Use screenshots, design systems, existing high-fidelity pages, or brand UI guidelines as visual guidance. If absent, require explicit risk acceptance before calling Figma.
 
 ## Page Creation Policy

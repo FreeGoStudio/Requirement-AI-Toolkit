@@ -67,24 +67,29 @@ Hard stop 表示提出必要问题后立即停止任务。不得继续做假设�
 
 3. **低保真原型**
    - 读取 `references/prototype-spec.md`。
+   - 读取 `references/screenshot-knowledge-workflow.md` 和 `references/knowledge-bases.json`。
    - 执行原型参考 gate：检查当前需求是否有既有 Figma 页面/原型或已保存的视觉参考。
    - 如果不存在参考，要求用户提供截图/参考图，或明确回复“无参考图，继续生成”。
    - 生成 `PrototypeSpec` 前保存参考决策。
-   - 如果参考决策为 `pending`，必须 hard stop，不得生成 `03-low-fidelity-prototype-spec.json`。
-   - 生成结构化的低保真 `PrototypeSpec`。
-   - 如果用户提供了截图，将其作为视觉参考写入 `PrototypeSpec`。
+   - 如果参考决策为 `pending`，必须 hard stop，不得生成 `03-interface-baseline.json` 或 `04-low-fidelity-prototype-spec.json`。
+   - 识别产品并调用 `scripts/Resolve-KnowledgeBase.ps1` 解析知识库；传入 Codex workspace 根目录，用户指定路径优先，其次为环境变量、workspace 下的 `Knowledge`、兼容回退路径。
+   - 将解析器的 `root`、manifest、截图目录、`resolvedBy` 和 `status` 保存到参考决策与 `InterfaceBaseline`；解析结果为 `blocked` 时 hard stop。
+   - 加载 manifest，选择一张基准页面和最多三张相关截图，并实际打开检查。不得只根据文件名或 manifest 描述推断界面。
+   - 保存 `03-interface-baseline.json`；未加载 manifest、截图未实际读取或 `InterfaceBaseline` 未生成时 hard stop。
+   - 基于 `InterfaceBaseline` 生成结构化的低保真 `PrototypeSpec`，保存为 `04-low-fidelity-prototype-spec.json`。
+   - 为每个关键低模区域写入需求或截图来源追踪；关键区域无来源时 hard stop。
    - 在任何 Figma 调用前保存低保真 `PrototypeSpec`。
    - 读取 `references/figma-console-mcp.md`。
    - 除非用户明确要求修改既有 Figma 页面，否则必须为当前需求的低保真原型创建新的 Figma 页面。
    - 执行 Figma Tool Discovery Preflight，包括精确搜索、宽泛搜索、截图工具别名匹配和只读 bridge smoke test。
    - 只有 preflight 明确失败后才停止，并按失败类型说明是工具未暴露还是 bridge/session 执行失败。
-   - 如果 `figma_execute` 可用但截图工具不可用，低保真草稿可以继续创建，但必须说明无法做截图校验；若当前任务要求视觉验证，则 hard stop。
+   - 正式低保真必须具备截图工具；缺少截图能力时 hard stop，不得把未验证草稿标记为低保真完成。
    - preflight 通过后，调用工具创建或更新低保真 Figma 原型。
 
 4. **原型反查**
-   - 检查低保真原型输出，或工具返回的 frame/component 摘要。
+   - 捕获低保真完整 frame 截图，按照 `InterfaceBaseline` 检查画布、全局壳层、导航、内容/操作区、弹窗关系、信息密度、来源追踪和所有 `mustPreserve`。
+   - 保存 `05-low-fidelity-structure-review.md`。任一关键结构失败时先修正并重新截图检查，不得进入用户确认或下游阶段。
    - 识别缺失步骤、交互不清、状态冲突、规则缺口、空/错状态，以及角色权限不匹配。
-   - 保存反查报告。
    - 在生成最终需求产物前，要求用户确认或给出修正。
 
 5. **需求产物**
@@ -99,7 +104,7 @@ Hard stop 表示提出必要问题后立即停止任务。不得继续做假设�
    - 执行视觉参考 gate：检查截图/参考图、既有高保真 Figma 页面、设计系统/组件库或品牌 UI 指南。
    - 如果没有可用视觉来源，要求用户提供一个视觉来源，或明确回复“无视觉参考，继续生成并接受风险”。
    - 生成 `PrototypeSpec` 前保存参考决策。
-   - 如果参考决策为 `pending`，必须 hard stop，不得生成 `08-high-fidelity-prototype-spec.json`。
+   - 如果参考决策为 `pending`，必须 hard stop，不得生成 `09-high-fidelity-prototype-spec.json`。
    - 生成高保真 `PrototypeSpec`。
    - 如果用户提供了截图，将其作为视觉参考写入 `PrototypeSpec`，并说明会复用哪些视觉方面。
    - 在任何 Figma 调用前保存高保真 `PrototypeSpec`。
@@ -116,6 +121,8 @@ Hard stop 表示提出必要问题后立即停止任务。不得继续做假设�
 - `references/bdd-template.md`
 - `references/prototype-spec.md`
 - `references/output-artifacts.md`
+- `references/screenshot-knowledge-workflow.md`
+- `references/knowledge-bases.json`
 
 如果涉及 Figma 原型生成，还需要读取：
 
@@ -125,6 +132,7 @@ Hard stop 表示提出必要问题后立即停止任务。不得继续做假设�
 
 - 生成任何阶段产物前，读取 `references/output-artifacts.md`。
 - 进入任何 Figma 原型阶段前，读取 `references/prototype-spec.md`。
+- 进入低保真阶段前，读取 `references/screenshot-knowledge-workflow.md` 和 `references/knowledge-bases.json`。
 - 检查或调用 Figma 工具前，读取 `references/figma-console-mcp.md`。
 - 起草 PRD 前，读取 `references/prd-template.md`。
 - 起草 BDD 场景前，读取 `references/bdd-template.md`。
@@ -154,6 +162,10 @@ Hard stop 表示提出必要问题后立即停止任务。不得继续做假设�
 - Figma Tool Discovery Preflight 经过精确搜索和宽泛搜索后仍缺少 `figma_execute`。
 - Figma bridge smoke test 失败。
 - 当前 Figma 阶段要求视觉验证但缺少 `figma_capture_screenshot` 或 `figma_take_screenshot`。
+- 已识别产品的知识库或 manifest 无法加载且用户未提供替代参考。
+- 候选截图未被实际打开检查，或 `InterfaceBaseline` 未生成。
+- 低模关键区域缺少需求或截图来源追踪。
+- 低模结构一致性检查存在未修复的关键失败项。
 
 当原型参考 gate 处于 `pending` 时，只能询问以下一个中文决策问题：
 

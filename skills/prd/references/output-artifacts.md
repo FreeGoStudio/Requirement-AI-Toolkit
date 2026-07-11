@@ -30,13 +30,14 @@ outputs/product-requirements/<yyyyMMdd-HHmm>-<short-requirement-slug>/
 01-clarification-questions.md
 02-business-model.md
 02-reference-decision.md
-03-low-fidelity-prototype-spec.json
-04-low-fidelity-review.md
-05-prd.md
-06-flowchart.mmd
-07-bdd.feature
-08-high-fidelity-prototype-spec.json
-09-high-fidelity-review.md
+03-interface-baseline.json
+04-low-fidelity-prototype-spec.json
+05-low-fidelity-structure-review.md
+06-prd.md
+07-flowchart.mmd
+08-bdd.feature
+09-high-fidelity-prototype-spec.json
+10-high-fidelity-review.md
 references/
 index.md
 ```
@@ -44,6 +45,8 @@ index.md
 不得为未来阶段创建占位文件。只有到达对应阶段时，才创建或更新对应文件。
 
 如果用户提供截图或图片参考，且文件可在本地访问，将副本保存到 `references/`；如果不可本地访问，在 `index.md` 中记录其 URL 或标识符。
+
+知识库截图不复制到需求输出目录；在 `03-interface-baseline.json` 中记录其绝对路径、`screenId`、选择理由和实际检查状态。用户本次提供的截图仍按上条规则保存。
 
 在任何原型生成前，创建或更新 `02-reference-decision.md`，内容包括：
 
@@ -53,6 +56,8 @@ index.md
 - 用户决策：使用既有原型、已提供参考、无参考继续、为高保真使用视觉来源，或接受风险并在无视觉参考下继续高保真。
 - 已接受视觉参考的路径、URL 或标识符。
 - 对于高保真，说明低保真是否仅作为流程/结构参考，以及将由什么视觉来源指导 UI。
+
+低保真生成前必须保存 `03-interface-baseline.json`。低保真生成并截图检查后保存 `05-low-fidelity-structure-review.md`，包含所有结构检查项、证据、失败修正和最终 gate 状态。
 
 ## 索引文件
 

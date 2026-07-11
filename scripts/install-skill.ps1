@@ -58,6 +58,9 @@ if (Test-Path -LiteralPath (Join-Path $source "agents") -PathType Container) {
 if (Test-Path -LiteralPath (Join-Path $source "references") -PathType Container) {
   Assert-DirectoryExists (Join-Path $target "references")
 }
+if (Test-Path -LiteralPath (Join-Path $source "scripts") -PathType Container) {
+  Assert-DirectoryExists (Join-Path $target "scripts")
+}
 
 Write-Host ""
 Write-Host "Installed Codex skill: $SkillName"

@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "environmentRootVariable": "REQUIREMENT_AI_KB_ROOT",
+  "workspaceRelativeRoot": "Knowledge",
+  "fallbackRoot": "D:\\workspace\\JQB\\Requirement-AI-Toolkit-Knowledge",
+  "products": [
+    {
+      "productId": "POS",
+      "aliases": ["POS", "收银", "收银机", "管理中心", "会员中心"],
+      "screenshotDirectory": "screenshot/POS",
+      "manifest": "manifests/POS/screens.json"
+    }
+  ]
+}
