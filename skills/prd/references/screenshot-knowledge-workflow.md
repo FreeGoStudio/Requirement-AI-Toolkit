@@ -4,13 +4,12 @@
 
 ## 1. 定位知识库
 
-1. 优先使用用户本次明确指定的知识库或截图。
-2. 读取 `knowledge-bases.json`，根据需求词和产品别名识别产品。
-3. 调用 `scripts/Resolve-KnowledgeBase.ps1`，传入产品 ID 和 Codex 当前 workspace 根目录。不要把需求输出目录或任意嵌套 shell 当前目录当作 workspace 根目录。
-4. 解析器依次检查：用户指定根目录、配置指定的环境变量、`<workspace-root>/<workspaceRelativeRoot>`、`fallbackRoot`。只有 manifest 文件和截图目录同时存在才算有效。
-5. Codex 未提供 workspace 根目录时，解析器从当前目录逐级向上查找最近的 `Knowledge`，边界为当前磁盘根目录。
-6. 将解析器输出的 `root`、`manifestPath`、`screenshotPath`、`resolvedBy` 和 `status` 写入 gate 与 `InterfaceBaseline`。`resolvedBy` 只能是 `user | environment | workspace | fallback | none`。
-7. `status=blocked` 时记录所有候选的失败原因并进入参考 gate；不得静默按无参考生成。
+1. 读取 `knowledge-bases.json`，根据需求词和产品别名识别产品。
+2. 调用 `scripts/Resolve-KnowledgeBase.ps1`，传入产品 ID 和 Codex 当前 workspace 根目录。
+3. 只读取 `<workspace-root>/Knowledge`。不要把需求输出目录、skill 安装目录或任意嵌套 shell 当前目录当作 workspace 根目录；不得读取用户指定知识库根目录、环境变量或 fallback 目录。
+4. 只有 `<workspace-root>/Knowledge` 下的 manifest 文件和截图目录同时存在才算有效。
+5. 将解析器输出的 `root`、`manifestPath`、`screenshotPath`、`resolvedBy` 和 `status` 写入 gate 与 `InterfaceBaseline`。`resolvedBy` 只能是 `workspace | none`。
+6. `status=blocked` 时记录 workspace 知识库的失败原因并进入参考 gate；不得静默按无参考生成，也不得切换到其他目录。
 
 用户提供的截图覆盖默认检索结果，但仍可使用知识库基准页面补足全局壳层。
 
@@ -46,7 +45,7 @@
 {
   "productId": "",
   "screenFamily": "",
-  "knowledgeBase": {"root": "", "manifest": "", "resolvedBy": "user | environment | workspace | fallback"},
+  "knowledgeBase": {"root": "", "manifest": "", "resolvedBy": "workspace | none"},
   "selectedReferences": [
     {"screenId": "", "path": "", "role": "base | related", "reason": "", "actuallyInspected": true}
   ],

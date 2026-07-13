@@ -1,8 +1,6 @@
 {
   "version": 1,
-  "environmentRootVariable": "REQUIREMENT_AI_KB_ROOT",
   "workspaceRelativeRoot": "Knowledge",
-  "fallbackRoot": "D:\\workspace\\JQB\\Requirement-AI-Toolkit-Knowledge",
   "products": [
     {
       "productId": "POS",

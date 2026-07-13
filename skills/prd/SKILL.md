@@ -72,7 +72,7 @@ Hard stop 表示提出必要问题后立即停止任务。不得继续做假设�
    - 如果不存在参考，要求用户提供截图/参考图，或明确回复“无参考图，继续生成”。
    - 生成 `PrototypeSpec` 前保存参考决策。
    - 如果参考决策为 `pending`，必须 hard stop，不得生成 `03-interface-baseline.json` 或 `04-low-fidelity-prototype-spec.json`。
-   - 识别产品并调用 `scripts/Resolve-KnowledgeBase.ps1` 解析知识库；传入 Codex workspace 根目录，用户指定路径优先，其次为环境变量、workspace 下的 `Knowledge`、兼容回退路径。
+   - 识别产品并调用 `scripts/Resolve-KnowledgeBase.ps1` 解析知识库；必须传入 Codex workspace 根目录，并且只读取 `<workspace-root>/Knowledge`。不得把需求输出目录、skill 安装目录或嵌套 shell 当前目录当作 workspace 根目录，也不得从用户路径、环境变量或 fallback 目录读取。
    - 将解析器的 `root`、manifest、截图目录、`resolvedBy` 和 `status` 保存到参考决策与 `InterfaceBaseline`；解析结果为 `blocked` 时 hard stop。
    - 加载 manifest，选择一张基准页面和最多三张相关截图，并实际打开检查。不得只根据文件名或 manifest 描述推断界面。
    - 保存 `03-interface-baseline.json`；未加载 manifest、截图未实际读取或 `InterfaceBaseline` 未生成时 hard stop。
@@ -133,6 +133,7 @@ Hard stop 表示提出必要问题后立即停止任务。不得继续做假设�
 - 生成任何阶段产物前，读取 `references/output-artifacts.md`。
 - 进入任何 Figma 原型阶段前，读取 `references/prototype-spec.md`。
 - 进入低保真阶段前，读取 `references/screenshot-knowledge-workflow.md` 和 `references/knowledge-bases.json`。
+- 解析项目知识库时，只读取 `<workspace-root>/Knowledge`；知识库缺失或结构不完整时进入 hard stop，不得回退到其他目录。
 - 检查或调用 Figma 工具前，读取 `references/figma-console-mcp.md`。
 - 起草 PRD 前，读取 `references/prd-template.md`。
 - 起草 BDD 场景前，读取 `references/bdd-template.md`。

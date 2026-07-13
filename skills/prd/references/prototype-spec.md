@@ -23,7 +23,7 @@ Do not create a `PrototypeSpec` while `prototypeReferenceGate.userDecision` is `
     "productId": "",
     "root": "",
     "manifest": "",
-    "resolvedBy": "user | environment | workspace | fallback | not-applicable",
+    "resolvedBy": "workspace | none | not-applicable",
     "searchTerms": [],
     "candidateScreens": [],
     "selectedScreens": [],
@@ -76,7 +76,7 @@ Do not create a `PrototypeSpec` while `prototypeReferenceGate.userDecision` is `
 - `figmaPageStrategy`: Use `create-new-page` by default. Use `update-existing-page` only when the user explicitly asks to modify an existing page or provides a target page.
 - `productSurface`: Infer from the requirement and state the inference.
 - `sourceArtifacts`: List the confirmed requirement summary, PRD, BDD, prototype review notes, or user-provided files used.
-- `projectKnowledgeBase`: Record the resolved product knowledge base, manifest, search terms, candidates and selected screenshots. Resolve it with `Resolve-KnowledgeBase.ps1`; explicit user input wins, followed by the environment variable, workspace `Knowledge`, then fallback root.
+- `projectKnowledgeBase`: Record the resolved product knowledge base, manifest, search terms, candidates and selected screenshots. Resolve it with `Resolve-KnowledgeBase.ps1` and read only `<workspace-root>/Knowledge`; never use a user-specified root, environment variable, skill installation directory, nested shell directory, or fallback root.
 - `interfaceBaseline`: Reference `03-interface-baseline.json` and copy its operative structural constraints. Do not populate it unless selected screenshots were actually inspected.
 - `prototypeReferenceGate`: Record whether existing project prototypes were checked, whether one was found, whether visual references were requested, and the user's decision.
 - `highFidelityVisualReferenceGate`: Required when `mode` is `high-fidelity`. Record that low fidelity is only a flow/structure reference, then require a visual source or explicit risk acceptance.

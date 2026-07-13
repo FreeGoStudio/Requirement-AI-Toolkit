@@ -19,6 +19,52 @@ skills/prd
 
 安装后可以在 Codex 中使用 `$prd` 或“产品需求工具”触发中文 PRD、BDD、流程图和 Figma 原型工作流。
 
+## 知识库目录
+
+PRD skill 只从 Codex 当前 workspace 根目录下的 `Knowledge` 读取项目知识库：
+
+```text
+<workspace-root>\Knowledge\
+├─ manifests\
+│  └─ POS\
+│     └─ screens.json
+└─ screenshot\
+   └─ POS\
+      └─ *.png
+```
+
+`manifests\POS\screens.json` 和 `screenshot\POS` 必须同时存在。任一项缺失时，知识库解析状态为 `blocked`；skill 不会读取用户指定目录、环境变量、安装目录或 fallback 目录。
+
+在业务 workspace 根目录中解析知识库：
+
+```powershell
+.\skills\prd\scripts\Resolve-KnowledgeBase.ps1 `
+  -ProductId POS `
+  -WorkspaceRoot "<workspace-root>"
+```
+
+维护截图后，同步 manifest 中的自动元数据：
+
+```powershell
+.\skills\prd\scripts\Sync-ScreenshotManifest.ps1 `
+  -KnowledgeRoot "<workspace-root>\Knowledge" `
+  -ManifestPath "manifests\POS\screens.json"
+```
+
+校验 manifest、截图文件和图片尺寸：
+
+```powershell
+.\skills\prd\scripts\Test-ScreenshotManifest.ps1 `
+  -KnowledgeRoot "<workspace-root>\Knowledge" `
+  -ManifestPath "manifests\POS\screens.json"
+```
+
+修改仓库中的 skill 后，需要重新运行安装脚本，并新开一个 Codex 任务使新规则生效：
+
+```powershell
+.\scripts\install-skill.ps1 -SkillName prd
+```
+
 ## 推荐安装方式
 
 在 PowerShell 中执行：
