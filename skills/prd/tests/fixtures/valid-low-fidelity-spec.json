@@ -1,0 +1,21 @@
+{
+  "mode": "low-fidelity",
+  "flowIdentity": {
+    "flowId": "application-upgrade",
+    "flowName": "应用升级",
+    "objective": "完成应用升级并确认结果",
+    "fidelity": "low",
+    "changeType": "fix"
+  },
+  "figmaPageStrategy": {
+    "action": "update-existing-page",
+    "pageName": "10 LF · 应用升级",
+    "targetPageId": "page-lf-upgrade",
+    "pairedPageId": "page-hf-upgrade",
+    "reason": "修复既有流程"
+  },
+  "designFile": {"fileId": "file-001", "fileName": "Trading Middleware", "manifestPath": "03-figma-design-manifest.json"},
+  "designSystemDependency": {"status": "not-applicable", "tokenCollectionIds": [], "componentIds": [], "patternIds": [], "viewTemplateIds": []},
+  "assetResolution": [],
+  "conformanceRequirements": {"rawStyleCount": 0, "unexplainedDetachedInstanceCount": 0, "unregisteredLocalComponentCount": 0}
+}

@@ -1,0 +1,32 @@
+{
+  "mode": "high-fidelity",
+  "flowIdentity": {
+    "flowId": "application-upgrade",
+    "flowName": "应用升级",
+    "objective": "完成应用升级并确认结果",
+    "fidelity": "high",
+    "changeType": "iteration"
+  },
+  "figmaPageStrategy": {
+    "action": "update-existing-page",
+    "pageName": "20 HF · 应用升级",
+    "targetPageId": "page-hf-upgrade",
+    "pairedPageId": "page-lf-upgrade",
+    "reason": "迭代既有高模"
+  },
+  "designFile": {"fileId": "file-001", "fileName": "Trading Middleware", "manifestPath": "03-figma-design-manifest.json"},
+  "designSystemDependency": {
+    "status": "approved",
+    "tokenCollectionIds": ["tokens-core"],
+    "componentIds": ["component-button"],
+    "patternIds": ["pattern-form"],
+    "viewTemplateIds": ["view-upgrade"]
+  },
+  "assetResolution": [
+    {"assetId": "tokens-core", "assetType": "token-collection", "targetPageId": "page-foundations", "status": "approved", "instanceIds": [], "createdBeforeFlowInstance": true},
+    {"assetId": "component-button", "assetType": "component", "targetPageId": "page-components", "status": "approved", "instanceIds": ["instance-button"], "createdBeforeFlowInstance": true},
+    {"assetId": "pattern-form", "assetType": "pattern", "targetPageId": "page-patterns", "status": "approved", "instanceIds": ["instance-form"], "createdBeforeFlowInstance": true},
+    {"assetId": "view-upgrade", "assetType": "view-template", "targetPageId": "page-views", "status": "approved", "instanceIds": ["instance-view"], "createdBeforeFlowInstance": true}
+  ],
+  "conformanceRequirements": {"rawStyleCount": 0, "unexplainedDetachedInstanceCount": 0, "unregisteredLocalComponentCount": 0}
+}

@@ -27,10 +27,10 @@ PRD skill 按以下六个阶段运行。各阶段产物会写入同一个需求�
 | --- | --- | --- | --- |
 | 1. 原始需求接收 | 复述目标、受众、角色和产品端形态，识别未解决假设并提出业务规则、状态、权限、异常和成功标准等澄清问题。 | `00-raw-requirement.md`、`01-clarification-questions.md` | 用户回答必要的澄清问题。 |
 | 2. 业务收敛 | 将用户回答整理为业务对象、对象关系、状态流转、主流程、异常流程和开放风险。 | `02-business-model.md` | 用户明确确认业务模型。 |
-| 3. 低保真原型 | 执行原型参考 gate，读取 workspace 的 `Knowledge`、manifest 和实际截图，形成界面基线与来源追踪，再生成低保真规格并调用 Figma。 | `02-reference-decision.md`、`03-interface-baseline.json`、`04-low-fidelity-prototype-spec.json` | 参考决策已完成、知识库与截图检查通过、Figma preflight 成功并生成可验证的低保真原型。 |
+| 3. 低保真原型 | 执行参考 gate，建立 Design File 治理清单，读取 workspace 截图形成界面基线，再按 `flowId + fidelity` 创建或更新唯一低模 Page。 | `02-reference-decision.md`、`03-figma-design-manifest.json`、`03-interface-baseline.json`、`04-low-fidelity-prototype-spec.json` | 四个基础 Page 已登记、参考检查通过、流程 Page 无重复且低模生成可验证。 |
 | 4. 原型反查 | 截取完整低保真 frame，与界面基线对照检查壳层、导航、内容区、弹窗关系、信息密度和 `mustPreserve`，发现问题后先修正再复查。 | `05-low-fidelity-structure-review.md` | 关键结构检查全部通过，并由用户确认低保真原型或给出修正意见。 |
 | 5. 需求产物 | 基于已确认的业务模型和低保真反馈，生成可评审的中文 PRD、Mermaid 流程图和中文 BDD 验收场景。 | `06-prd.md`、`07-flowchart.mmd`、`08-bdd.feature` | 用户完成 PRD/BDD 评审，并明确批准进入高保真阶段。 |
-| 6. 高保真原型 | 再次执行参考 gate；使用参考图、既有高保真页面、设计系统或品牌规范生成高保真规格与 Figma 原型，并完成视觉检查。 | 更新后的 `02-reference-decision.md`、`09-high-fidelity-prototype-spec.json`、`10-high-fidelity-review.md` | 具备有效视觉来源，或用户明确接受无视觉参考风险；高保真生成和检查完成。 |
+| 6. 视觉方向、Design System 与高保真 | 使用 Approved Design System；无视觉参考时先生成三套视觉方向，选定后固化并确认 Design System，再生成业务高模并执行资产一致性审计。 | 可选 `09-visual-direction-spec.json`、`10-visual-direction-review.md`，以及 `11-design-system-review.md`、`12-high-fidelity-prototype-spec.json`、`13-high-fidelity-review.md` | Design System 已确认，所有资产先入系统，业务 Flow Page 只使用已登记实例且审计通过。 |
 
 ### Gate 与 Hard Stop
 
@@ -40,9 +40,37 @@ PRD skill 按以下六个阶段运行。各阶段产物会写入同一个需求�
 - 业务模型确认后，才可生成低保真原型。
 - 没有既有原型或视觉参考时，用户需要提供参考，或明确确认无参考继续。
 - 低保真反查通过后，才可生成 PRD、流程图和 BDD。
-- PRD/BDD 评审通过后，才可生成高保真原型。
+- PRD/BDD 评审通过后，才可进入高保真准备。
+- 无视觉来源时，必须先选择视觉方向；不得接受风险后直接生成高模。
+- Design System 经用户确认后，才可生成业务高模。
+- 旧 `Design System + Views` 文件必须先确认迁移映射，才可移动既有资产。
 
 当必要回答、参考决策、知识库、实际截图检查、Figma 工具或截图校验能力缺失时，skill 会执行 hard stop：保存当前阶段已经完成的产物，说明阻塞原因并停止，不生成后续阶段文件，也不虚构 Figma 结果。
+
+## Figma 设计治理
+
+Figma Design File 是产品/设计域的隔离边界。每个文件固定维护：
+
+```text
+01 Foundations
+02 Components
+03 Patterns
+04 View Templates
+10 LF · <业务流程>
+20 HF · <业务流程>
+```
+
+- 每个业务流程按保真度独占 Page；低高模共享稳定 `flowId`。
+- 修复和普通迭代更新原 Page，不因重试创建副本。
+- Token、组件、Pattern 和页面组合必须先进入对应基础 Page 并批准，高模 Flow Page 才能使用实例。
+- 新文件缺少基础 Page 时自动初始化；旧 `Design System + Views` 结构先只读生成迁移方案，确认后原位移动并保留组件 ID。
+- `skills/prd/scripts/Test-DesignGovernance.ps1` 用于校验 manifest、Flow Page 唯一性、Approved 资产依赖和零容忍一致性计数。
+
+运行静态治理测试：
+
+```powershell
+.\skills\prd\tests\Test-DesignGovernance.ps1
+```
 
 默认输出目录为：
 

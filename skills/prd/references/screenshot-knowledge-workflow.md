@@ -96,5 +96,20 @@
 - 信息密度与组件分组。
 - 所有 `mustPreserve`。
 - 所有关键区域的来源追踪。
+- 当前业务流程只占用一个 `10 LF · <流程名>` Page，且 `flowId + fidelity` 唯一。
+- `00 Flow Overview`、`10 Main Flow`、`20 Exception Flows`、`30 Empty & Error States`、`40 Interaction Notes` 等标准 Section 完整或明确标记不适用。
 
 每项标记 `pass | fail | not-applicable` 并附证据。任一关键项或 `mustPreserve` 失败时，修正低模并重新截图检查；通过前不得进入低模用户确认、PRD 或高模阶段。
+
+## 7. 高保真设计治理反查
+
+高模截图检查除视觉层级、信息密度和状态覆盖外，还必须结合 Figma 节点数据与 `03-figma-design-manifest.json` 检查：
+
+- `20 HF · <流程名>` 与低模共享同一 `flowId`，且各自 Page 唯一。
+- Flow Page 使用已批准 Component、Pattern 和 View Template 的实例。
+- 颜色、字体、圆角和阴影绑定已批准 semantic token。
+- `rawStyleCount=0`、`unexplainedDetachedInstanceCount=0`、`unregisteredLocalComponentCount=0`。
+- 本次新增资产的创建与批准发生在业务 Flow 实例之前。
+- 截图中的组件状态与 `PrototypeSpec.designSystemDependency`、`assetResolution` 一致。
+
+将结果保存到 `13-high-fidelity-review.md`。任一关键项失败时，修复、重新截图并重新运行 `scripts/Test-DesignGovernance.ps1`；通过前不得标记高模完成。

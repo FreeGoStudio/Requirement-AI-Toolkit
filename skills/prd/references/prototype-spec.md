@@ -1,20 +1,29 @@
 # PrototypeSpec
 
-Create a `PrototypeSpec` before every Figma call. Use it as the contract between product reasoning and `figma-console-mcp`.
+每次业务 Flow Figma 调用前创建 `PrototypeSpec`。视觉方向使用单独的 `09-visual-direction-spec.json`，不得冒充业务高模规格。
 
-Do not create a `PrototypeSpec` while `prototypeReferenceGate.userDecision` is `pending`. The reference gate must resolve first.
+在参考 gate 为 `pending`、旧结构迁移待确认或高模 Design System 未批准时，不得创建对应业务 `PrototypeSpec`。
 
 ## Required Shape
 
 ```json
 {
   "mode": "low-fidelity | high-fidelity",
+  "flowIdentity": {
+    "flowId": "",
+    "flowName": "",
+    "objective": "",
+    "fidelity": "low | high",
+    "changeType": "new-flow | fix | iteration | redesign"
+  },
   "figmaPageStrategy": {
-    "action": "create-new-page | update-existing-page",
+    "action": "create-new-page | update-existing-page | archive-and-create-replacement",
     "pageName": "",
     "targetPageId": "",
+    "pairedPageId": "",
     "reason": ""
   },
+  "designFile": {"fileId": "", "fileName": "", "manifestPath": "03-figma-design-manifest.json"},
   "productSurface": "b-side | c-side | mobile | desktop | mixed | unknown",
   "objective": "",
   "audience": "",
@@ -51,9 +60,30 @@ Do not create a `PrototypeSpec` while `prototypeReferenceGate.userDecision` is `
     "lowFidelityUsedOnlyForFlow": true,
     "visualSourceFound": false,
     "visualSourceTypes": [],
-    "userDecision": "provided-visual-reference | use-design-system | use-existing-high-fidelity | continue-without-visual-reference | pending | not-applicable",
-    "riskAccepted": false,
+    "userDecision": "use-approved-design-system | provided-visual-reference | use-existing-high-fidelity | generate-visual-directions | selected-visual-direction | pending | not-applicable",
     "notes": ""
+  },
+  "designSystemDependency": {
+    "status": "not-applicable | approved",
+    "tokenCollectionIds": [],
+    "componentIds": [],
+    "patternIds": [],
+    "viewTemplateIds": []
+  },
+  "assetResolution": [
+    {
+      "assetId": "",
+      "assetType": "token-collection | component | pattern | view-template",
+      "targetPageId": "",
+      "status": "approved",
+      "instanceIds": [],
+      "createdBeforeFlowInstance": true
+    }
+  ],
+  "conformanceRequirements": {
+    "rawStyleCount": 0,
+    "unexplainedDetachedInstanceCount": 0,
+    "unregisteredLocalComponentCount": 0
   },
   "visualReferences": [],
   "businessObjects": [],
@@ -70,70 +100,70 @@ Do not create a `PrototypeSpec` while `prototypeReferenceGate.userDecision` is `
 }
 ```
 
-## Field Guidance
+## Flow 与 Page
 
-- `mode`: Use `low-fidelity` for structure and flow; use `high-fidelity` only after PRD/BDD review approval.
-- `figmaPageStrategy`: Use `create-new-page` by default. Use `update-existing-page` only when the user explicitly asks to modify an existing page or provides a target page.
-- `productSurface`: Infer from the requirement and state the inference.
-- `sourceArtifacts`: List the confirmed requirement summary, PRD, BDD, prototype review notes, or user-provided files used.
-- `projectKnowledgeBase`: Record the resolved product knowledge base, manifest, search terms, candidates and selected screenshots. Resolve it with `Resolve-KnowledgeBase.ps1` and read only `<workspace-root>/Knowledge`; never use a user-specified root, environment variable, skill installation directory, nested shell directory, or fallback root.
-- `interfaceBaseline`: Reference `03-interface-baseline.json` and copy its operative structural constraints. Do not populate it unless selected screenshots were actually inspected.
-- `prototypeReferenceGate`: Record whether existing project prototypes were checked, whether one was found, whether visual references were requested, and the user's decision.
-- `highFidelityVisualReferenceGate`: Required when `mode` is `high-fidelity`. Record that low fidelity is only a flow/structure reference, then require a visual source or explicit risk acceptance.
-- `visualReferences`: List screenshots or image references supplied by the user. Include file path or URL, source, what to borrow, what not to borrow, and confidence.
-- `businessObjects`: Include object name, purpose, key attributes only when needed for screen clarity, and relevant statuses.
-- `states`: Include state name, owner, entry condition, exit condition, and visible UI effect.
-- `pages`: Include page name, purpose, actor, layout priority, key sections, primary action, secondary actions, and states shown.
-- `flows`: Include entry, ordered steps, decision points, completion state, and exception branches.
-- `components`: Include tables, forms, filters, detail panels, cards, dialogs, steppers, tabs, toasts, and navigation elements.
-- `interactions`: Include trigger, system response, validation, feedback, and resulting state transition.
-- `emptyStates` and `errorStates`: Include the user message, available recovery action, and owner.
-- `annotations`: Include business-rule notes that should appear near relevant frames.
-- `referenceTraceability`: Trace every key prototype region to a confirmed requirement or actually inspected screenshot, including source region, preserve/adapt/add decision and reason.
-- `openQuestions`: Include unresolved questions that should block or annotate prototype decisions.
+- `flowId` 在低模、高模和后续修复中保持稳定；使用 lowercase ASCII、数字和连字符。
+- `fidelity` 必须与 `mode` 一致。
+- 新流程 Page：`create-new-page`，命名 `10 LF · <流程名>` 或 `20 HF · <流程名>`。
+- `fix|iteration` 必须 `update-existing-page` 并提供现有 `targetPageId`。
+- `archive-and-create-replacement` 只用于用户明确要求保留旧版的根本重构。
+- `pairedPageId` 指向同一 `flowId` 的另一保真 Page；不存在时为空。
+- 生成前用 `03-figma-design-manifest.json` 和实时 Page 扫描按 `flowId + fidelity` 查重。
+
+## Design System Dependency
+
+- 低模可使用 `status=not-applicable`，但必须完成四个基础 Page 的文件治理。
+- 高模必须 `status=approved`，并列出实际使用的 Token Collection、Component、Pattern 和 View Template ID。
+- `assetResolution` 包含本次新增或扩展的每个资产。必须先在相应基础 Page 创建并批准，再创建 Flow Page 实例。
+- Flow Page 只使用实例和场景 override；不得 detach 或创建未登记本地组件。
+- `conformanceRequirements` 三个计数在正式高模中必须为 0。
 
 ## Low-Fidelity Rules
 
-- Prioritize information architecture, page flow, business status, and critical interactions.
-- Create a new Figma page by default for the low-fidelity prototype.
-- If screenshots are supplied, use them only to guide layout structure, information density, navigation patterns, and component placement.
-- Load the configured screenshot manifest, inspect one base screenshot and up to three relevant screenshots, and create `03-interface-baseline.json` before this spec.
-- Preserve every `mustPreserve` constraint and trace every key region to a requirement or inspected screenshot.
-- Use grayscale wireframe styling.
-- Avoid visual brand decisions, decorative imagery, and pixel-level layout tuning.
-- Represent repeated objects as realistic rows/cards with short labels.
-- Annotate uncertain rules directly on frames.
+- 只表达信息架构、状态、关键交互和业务流程，使用灰阶线框。
+- 先读取截图知识库并生成 `03-interface-baseline.json`；关键区域必须可追溯到需求或实际检查截图。
+- 一个流程独占一个低模 Page；主流程、异常、空错状态和交互注释放入标准 Section。
 
 ## High-Fidelity Rules
 
-- Base the spec on reviewed PRD/BDD and low-fidelity feedback.
-- Create a new Figma page by default for the high-fidelity prototype, separate from the low-fidelity page.
-- Do not treat low fidelity as a sufficient visual reference. Low fidelity may guide flow, grouping, and page structure only.
-- Require at least one high-fidelity visual source before generation: screenshot/reference image, existing high-fidelity Figma page, design system/component library, or brand UI guideline.
-- If no visual source is available, hard stop and ask the user to provide one or explicitly accept the risk of continuing without visual reference.
-- If screenshots are supplied, use them to guide visual hierarchy, spacing rhythm, component style, and interaction affordances while preserving the approved requirement.
-- Include visual hierarchy, spacing intent, component states, microcopy, validation messages, and realistic sample data.
-- Preserve the approved workflow and business rules.
-- Do not add new scope unless it is explicitly marked as a review change.
+- 只基于已评审 PRD/BDD、已确认低模和 Approved Design System。
+- 低模不得作为唯一视觉来源。
+- 没有视觉来源时先走视觉方向与 Design System gate；不存在“接受风险后直接高模”。
+- 所有视觉属性应绑定 semantic token，所有组件和页面组合来自已批准资产。
+- 不得增加未确认业务范围。
 
-## Screenshot Reference Rules
+## VisualDirectionSpec
 
-- Accept screenshots when the project has no existing Figma prototype or the user wants an external reference.
-- Before producing a prototype spec, first check for existing project prototypes or saved visual references. If none exist, ask the user whether to provide screenshots/reference images or continue without visual references.
-- Do not proceed while `prototypeReferenceGate.userDecision` is `pending`.
-- When the decision is pending, write only the reference decision file and ask the user for screenshots/reference images or confirmation to continue without them.
-- Ask what aspects to reuse if unclear: layout, flow pattern, table density, form structure, navigation, visual style, or microcopy tone.
-- Do not copy third-party branding, logos, proprietary content, or user data from screenshots unless the user owns the material and explicitly asks for it.
-- Record screenshot paths or URLs in `visualReferences`.
-- A recorded path is not evidence of inspection. Set the screenshot analysis gate to passed only after the image was actually opened and its observed structure was captured in `InterfaceBaseline`.
-- If the screenshot conflicts with confirmed business rules, follow the confirmed rules and note the conflict in `annotations`.
+没有视觉来源时，先保存：
 
-## High-Fidelity Visual Reference Gate
+```json
+{
+  "designFile": {"fileId": "", "fileName": ""},
+  "temporaryPage": {"pageName": "00 Visual Directions · <yyyyMMdd-HHmm>", "pageId": ""},
+  "candidateCount": 3,
+  "candidates": [
+    {
+      "directionId": "",
+      "name": "",
+      "rationale": "",
+      "colors": [],
+      "typography": [],
+      "spacing": [],
+      "radii": [],
+      "shadows": [],
+      "coreComponents": [],
+      "representativeView": {},
+      "bestFor": []
+    }
+  ],
+  "selection": {"status": "pending | selected", "directionIds": [], "combinationNotes": ""}
+}
+```
 
-Before high-fidelity generation:
+必须先截图、保存 review 并等待选择。选定方向固化并经用户确认后，才允许创建高模 `PrototypeSpec`。
 
-1. Treat the approved low-fidelity prototype as a flow/structure reference only.
-2. Check for visual sources: screenshots/reference images, existing high-fidelity Figma pages, design system/component library, or brand UI guidelines.
-3. If no visual source exists, ask the user to provide one or explicitly confirm continuing without a visual reference.
-4. Do not create the high-fidelity `PrototypeSpec` while `highFidelityVisualReferenceGate.userDecision` is `pending`.
-5. If the user accepts the risk, set `riskAccepted` to `true` and explain that visual quality may be less reliable.
+## Screenshot References
+
+- 截图路径被记录不等于已经检查；必须实际打开并记录观察结果。
+- 截图只提供结构或视觉指导，不得覆盖已确认业务规则。
+- 不复制第三方品牌、Logo、私有数据或无权使用的专有内容。

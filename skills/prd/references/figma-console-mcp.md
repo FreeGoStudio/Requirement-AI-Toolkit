@@ -1,148 +1,98 @@
 # figma-console-mcp Integration
 
-Use `figma-console-mcp` through the user's local Figma bridge plugin. Never claim a Figma file, frame, or component was created unless the MCP tool call succeeds.
+所有 Figma 读取、创建、更新、迁移和截图操作，只能使用本地 `figma-console-mcp` 的 `mcp__figma_console__*` 工具。不得安装、调用或回退到 Codex Figma 插件、Figma connector/app 或其他命名空间。
 
-Never call Figma while the prototype reference gate or high-fidelity visual reference gate is pending.
+不得在任何 gate 待确认时调用写操作，也不得声称未由工具返回的 Figma 结果。
 
-## Preflight
+## Tool Discovery
 
-Before any Figma generation:
+工具可能延迟加载。先精确搜索：
 
-1. Run the Figma Tool Discovery Preflight below.
-2. Confirm the local Figma bridge plugin is connected with the read-only smoke test.
-3. Check whether the current Figma file/project contains an existing prototype page relevant to this requirement.
-4. If no existing prototype or saved visual reference is found, ask the user to provide screenshots/reference images or confirm continuing without visual references.
-5. Prepare a complete `PrototypeSpec`.
-6. State whether the call is for low fidelity or high fidelity.
-7. Decide page behavior: create a new page by default; update an existing page only when the user explicitly asks to modify one.
+- `mcp__figma_console__figma_execute`
+- `mcp__figma_console__figma_capture_screenshot`
+- `mcp__figma_console__figma_take_screenshot`
+- `figma-console-mcp`
 
-## Tool Discovery Preflight
+缺失时再宽泛搜索 `figma console execute screenshot`，但最终只能接受 `mcp__figma_console__*` 命名空间。
 
-Figma tools may be lazy-loaded. Do not treat a missing first search result as proof that Figma is disconnected.
+必需能力：
 
-Required capability:
+- 执行：`mcp__figma_console__figma_execute`。
+- 截图：`mcp__figma_console__figma_capture_screenshot` 或 `mcp__figma_console__figma_take_screenshot`。
 
-- Execute capability: `figma_execute`.
-- Screenshot capability: either `figma_capture_screenshot` or `figma_take_screenshot`.
+执行能力缺失，或需要验证的阶段缺少截图能力时 hard stop，并把准确失败类型写入 `index.md`。
 
-Discovery steps:
+## Read-Only Preflight
 
-1. Use `tool_search` with exact queries for `figma_execute`, `figma_capture_screenshot`, `figma_take_screenshot`, and `figma-console-mcp`.
-2. If any required capability is not found, run a second broader search with `figma`, `screenshot`, and `execute`.
-3. Accept either screenshot alias. `figma_capture_screenshot` and `figma_take_screenshot` both satisfy the screenshot capability.
-4. Only after both exact and broad searches fail to expose `figma_execute` should the stage be considered tool-unavailable.
-5. Low-fidelity and high-fidelity completion both require a screenshot tool. If `figma_execute` is available but no screenshot tool is available, hard stop; do not mark an unverified draft complete.
+首次写操作前只读检查：
 
-If the execute tool is unavailable after both discovery passes, stop and tell the user:
+1. 活跃文件名、file ID、当前 Page 和 Page 数。
+2. 目标文件是否属于本需求的产品/设计域。
+3. 全部 Page 的 ID、名称和职责候选。
+4. 四个基础 Page 是否缺失或重复。
+5. 是否存在旧 `Design System + Views` 结构。
+6. 当前 Variables、Styles、Components、Patterns、View Templates 及状态。
+7. 与目标 `flowId + fidelity` 匹配的 Page。
 
-```text
-未检测到 Figma 执行工具。可能是 Codex 工具发现/懒加载尚未完成，而不是 Figma Desktop 断开。请重新搜索或等待工具面板加载 figma_execute，并确认 figma-console-mcp 已连接。下面是本次准备发送的 PrototypeSpec。
-```
+`Untitled` 文件名可以连接成功，但目标文件身份不明确时仍须 hard stop。Smoke test 不能创建、修改、移动、重命名或删除任何节点。
 
-Then output the `PrototypeSpec` and do not simulate tool results.
+## File Architecture Actions
 
-## Bridge Smoke Test
+- 新文件或没有旧结构的文件：在已获准的原型阶段自动创建缺失的标准基础 Page，并把返回 ID 写入 manifest。
+- 标准基础 Page 重复：停止，不自动合并。
+- 旧结构：只读生成 `legacyMigration.moves`，等待用户确认；确认后只原位移动，禁止复制组件代替移动。
+- 每次写操作后重新读取受影响 Page/节点，更新 manifest，再截图验证。
 
-After `figma_execute` is found and before any prototype generation, run a read-only smoke test that reads the active Figma document context, such as current file name, current page name, and page count.
+## Page Strategy
 
-Rules:
-
-- A successful smoke test means the bridge is connected. An `Untitled` file name is valid and must not be reported as disconnected.
-- The smoke test must not create, edit, delete, rename, or move any Figma nodes or pages.
-- If the smoke test fails, report the failure as a bridge/session problem, not as a missing tool.
-
-Use these categories when explaining a smoke test failure:
-
-- Figma Desktop is not open or has no active document.
-- The local bridge plugin is not running or not connected to Codex.
-- The session lacks permission or the active document cannot be accessed.
-- The execute tool exists but returned an unexpected runtime error.
-
-If the bridge smoke test fails, stop and tell the user:
+使用 manifest 和实时扫描决定：
 
 ```text
-Figma 执行工具已经可见，但桥接 smoke test 失败。请启动 Figma Desktop、打开本地桥接插件、保持目标文件处于激活状态，并确认 Codex 与 figma-console-mcp 的会话仍连接。下面是本次准备发送的 PrototypeSpec。
+flowId + fidelity 不存在        -> create-new-page
+已存在且 changeType=fix/iteration -> update-existing-page
+根本重构并明确保留旧版          -> archive-and-create-replacement
+存在多个正式 Page              -> hard stop
 ```
 
-Then output the `PrototypeSpec` and do not simulate tool results.
-
-If the prototype reference gate is pending, stop before preparing the `PrototypeSpec` and ask:
-
-```text
-未找到当前需求可复用的已有原型或参考图。请提供截图/参考图，或明确回复“无参考图，继续生成”。
-```
-
-If the high-fidelity visual reference gate is pending, stop before preparing the high-fidelity `PrototypeSpec` and ask:
-
-```text
-低保真只能作为流程和结构参考，不能单独支撑高保真视觉生成。请提供参考图、设计系统、已有高保真页面，或明确回复“无视觉参考，继续生成并接受风险”。
-```
+不得因工具重试、文案、样式、组件替换或同流程异常状态增加而新建 Page。
 
 ## Call Contract
 
-Send enough structured information for the bridge plugin to create or update frames:
+业务 Flow 调用必须包含：
 
-- Target file or current Figma document, if supplied by the user.
-- Page strategy: `create-new-page` by default, or `update-existing-page` only with an explicit user modification request.
-- Page name and target page id when applicable.
-- Prototype mode: low fidelity or high fidelity.
-- Product surface inference.
-- Prototype reference gate decision: existing prototype found, screenshots provided, or user confirmed no visual reference.
-- Knowledge-base manifest, actually inspected screenshots, `InterfaceBaseline`, and reference traceability for low fidelity.
-- For high fidelity, visual reference gate decision: visual source used or user accepted no-visual-reference risk.
-- Screenshot or image references, when supplied by the user, including which aspects to borrow.
-- Page/frame list.
-- Flow order and navigation links.
-- Component inventory.
-- Interaction annotations.
-- Business object/status annotations.
-- Review notes or open questions.
+- Design File ID/name 和 `03-figma-design-manifest.json`。
+- `flowIdentity`、Page strategy、目标/配对 Page ID。
+- 标准 Section、Frame 和原型连线。
+- 低模的知识库、InterfaceBaseline 和来源追踪。
+- 高模的 Approved Design System 依赖和资产解析。
+- 交互、业务状态、异常、空错状态和开放问题。
+- Conformance 要求。
 
-## Visual Reference Policy
+视觉方向调用必须包含临时 Page、三套候选的完整规格和截图要求。不得在同一调用中继续创建业务高模。
 
-When no existing project prototype is available, user-provided screenshots may be used as visual references.
+## Result Handling
 
-Rules:
+- 成功：记录返回的 file/page/node/component/variable ID，更新 manifest，截图并执行治理校验。
+- 失败：保存规格，记录原始错误和失败分类，停止；不要推断部分写入是否成功，下一次先只读重查。
+- 工具不可用：说明是工具未暴露；不要误报为 Desktop 断开。
+- Smoke test 失败：说明是 Desktop、Bridge/session、权限或运行时问题。
 
-- Always check for existing relevant Figma pages/prototypes before asking for screenshots.
-- If no existing prototype is found, explicitly ask the user to provide screenshots/reference images or confirm continuing without visual references.
-- Do not call Figma while the visual reference decision is still pending.
-- Pass screenshot paths, URLs, or uploaded image identifiers through the `visualReferences` field in `PrototypeSpec`.
-- State which aspects are being reused: layout, navigation, density, component style, spacing, or interaction affordance.
-- Do not copy logos, private data, or third-party brand-specific visuals unless the user confirms they own or may reuse them.
-- For low fidelity, translate screenshot references into neutral wireframe structure.
-- After low-fidelity generation, capture the full frame and pass the structure consistency gate defined in `screenshot-knowledge-workflow.md` before requesting user review.
-- For high fidelity, do not rely only on low fidelity. Use screenshots, design systems, existing high-fidelity pages, or brand UI guidelines as visual guidance. If absent, require explicit risk acceptance before calling Figma.
+## User Messages
 
-## Page Creation Policy
-
-Default behavior is to create a new Figma page for every prototype generation stage.
-
-Use these names unless the user provides a naming convention:
+执行工具缺失：
 
 ```text
-<需求名称> / Low Fidelity / <yyyyMMdd-HHmm>
-<需求名称> / High Fidelity / <yyyyMMdd-HHmm>
+未检测到 mcp__figma_console__figma_execute。请确认 figma-console-mcp 已在 Codex 中暴露；本次规格已保存，未调用其他 Figma 工具。
 ```
 
-Rules:
+Bridge smoke test 失败：
 
-- Low fidelity and high fidelity must be on separate Figma pages.
-- Do not place a new requirement's prototype on the currently open page by default.
-- Do not overwrite or append to a previous prototype page unless the user clearly says this is a modification.
-- If the user asks to modify an existing prototype, require or infer the target Figma page, record `figmaPageStrategy.action` as `update-existing-page`, and include the target page id/name in the `PrototypeSpec`.
-- If the MCP tool returns only frames and no page id, record the page name requested in the stage summary and `index.md`.
+```text
+Figma 执行工具可见，但只读 smoke test 失败。请保持目标 Figma Design File 激活并确认本地 Desktop Bridge 已连接；本次规格已保存。
+```
 
-## Expected Result Handling
+旧结构待迁移：
 
-After a successful MCP call:
-
-- Record the returned Figma file/page/frame identifiers or URL if provided.
-- Summarize what was created or updated.
-- Ask the user to review the prototype before moving past the gate.
-
-If the MCP call fails:
-
-- Report the exact failure in plain language.
-- Preserve the `PrototypeSpec`.
-- Suggest only connection, permission, active document, or plugin-state checks that are supported by the error.
+```text
+检测到旧 Design System/Views 结构。迁移映射已保存；请确认后再原位移动资产。本次未修改 Figma。
+```

@@ -1,0 +1,30 @@
+{
+  "designFile": {
+    "fileId": "file-001",
+    "fileName": "Trading Middleware",
+    "productDomain": "trading-middleware"
+  },
+  "pageRegistry": {
+    "foundationsPageId": "page-foundations",
+    "componentsPageId": "page-components",
+    "patternsPageId": "page-patterns",
+    "viewTemplatesPageId": "page-views"
+  },
+  "designSystem": {
+    "status": "approved",
+    "visualDirectionId": "direction-a",
+    "tokenCollections": [{"collectionId": "tokens-core", "name": "Core", "status": "approved"}],
+    "components": [{"componentId": "component-button", "name": "Button", "status": "approved"}],
+    "patterns": [{"patternId": "pattern-form", "name": "Form", "status": "approved"}],
+    "viewTemplates": [{"viewTemplateId": "view-upgrade", "name": "Upgrade", "status": "approved"}]
+  },
+  "flows": [
+    {
+      "flowId": "application-upgrade",
+      "flowName": "应用升级",
+      "objective": "完成应用升级并确认结果",
+      "pages": {"lowFidelityPageId": "page-lf-upgrade", "highFidelityPageId": "page-hf-upgrade"}
+    }
+  ],
+  "legacyMigration": {"required": false, "status": "not-applicable", "moves": []}
+}

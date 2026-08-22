@@ -1,98 +1,94 @@
 # 输出产物
 
-每个阶段产物都必须持久化到磁盘，不得只依赖聊天输出。
+每个阶段产物必须写入磁盘，不得只存在于聊天中。
 
 ## 输出目录
 
-如果用户提供了输出目录，使用该目录。
-
-如果用户没有提供输出目录，在当前 workspace 下创建目录：
+用户未指定时使用：
 
 ```text
 outputs/product-requirements/<yyyyMMdd-HHmm>-<short-requirement-slug>/
 ```
 
-规则：
+- 时间使用本地时间。
+- slug 只使用 lowercase ASCII、数字和连字符；产品不明确时使用 `new-requirement`。
+- 同一需求任务复用同一目录。
+- 阶段回复提供绝对路径。
 
-- `<yyyyMMdd-HHmm>` 使用本地时间。
-- `<short-requirement-slug>` 从产品或功能名称派生。
-- slug 只能使用小写 ASCII 字母、数字和连字符。
-- 如果产品名称不清楚，使用 `new-requirement`。
-- 同一需求线程的后续阶段复用同一个输出目录。
-- 阶段回复中必须包含输出目录的绝对路径。
+## 新版产物
 
-## 必要文件
-
-随着阶段推进创建文件：
+按阶段创建，不得预建占位文件：
 
 ```text
 00-raw-requirement.md
 01-clarification-questions.md
 02-business-model.md
 02-reference-decision.md
+03-figma-design-manifest.json
 03-interface-baseline.json
 04-low-fidelity-prototype-spec.json
 05-low-fidelity-structure-review.md
 06-prd.md
 07-flowchart.mmd
 08-bdd.feature
-09-high-fidelity-prototype-spec.json
-10-high-fidelity-review.md
+09-visual-direction-spec.json
+10-visual-direction-review.md
+11-design-system-review.md
+12-high-fidelity-prototype-spec.json
+13-high-fidelity-review.md
 references/
 index.md
 ```
 
-不得为未来阶段创建占位文件。只有到达对应阶段时，才创建或更新对应文件。
+- `03-figma-design-manifest.json` 从首次 Figma preflight 起持续更新。
+- `09`、`10` 只在没有可靠高模视觉来源时创建。
+- `11-design-system-review.md` 在首次批准或后续资产扩展确认时创建/更新。
+- 高模只能使用 `12`、`13` 新编号。
 
-如果用户提供截图或图片参考，且文件可在本地访问，将副本保存到 `references/`；如果不可本地访问，在 `index.md` 中记录其 URL 或标识符。
+## 旧任务续接
 
-知识库截图不复制到需求输出目录；在 `03-interface-baseline.json` 中记录其绝对路径、`screenId`、选择理由和实际检查状态。用户本次提供的截图仍按上条规则保存。
+旧目录中的 `09-high-fidelity-prototype-spec.json` 和 `10-high-fidelity-review.md` 只作为 legacy 产物读取，不重命名、不覆盖。续接高模前必须：
 
-在任何原型生成前，创建或更新 `02-reference-decision.md`，内容包括：
+1. 只读重建 `03-figma-design-manifest.json`。
+2. 通过四 Page、Flow Page 和资产治理检查。
+3. 创建新版 `12-high-fidelity-prototype-spec.json`，不得直接复用旧规格调用 Figma。
 
-- 是否已检查既有 Figma 页面/原型。
-- 是否找到相关既有原型。
-- 是否已请求截图/参考图。
-- 用户决策：使用既有原型、已提供参考、无参考继续、为高保真使用视觉来源，或接受风险并在无视觉参考下继续高保真。
-- 已接受视觉参考的路径、URL 或标识符。
-- 对于高保真，说明低保真是否仅作为流程/结构参考，以及将由什么视觉来源指导 UI。
+## References
 
-低保真生成前必须保存 `03-interface-baseline.json`。低保真生成并截图检查后保存 `05-low-fidelity-structure-review.md`，包含所有结构检查项、证据、失败修正和最终 gate 状态。
+- 用户提供且可本地访问的截图复制到 `references/`；不可复制时在 `index.md` 记录 URL/标识符。
+- workspace `Knowledge` 截图不复制；在 `03-interface-baseline.json` 记录绝对路径、screen ID、选择理由和实际检查状态。
 
-## 索引文件
+## Reference Decision
 
-维护 `index.md` 作为阶段清单。每当创建或更新阶段文件时，同步更新它。
+`02-reference-decision.md` 记录：
 
-使用以下结构：
+- 既有 Figma 原型和视觉来源检查结果。
+- 用户提供的参考及允许复用的方面。
+- 低模无参考继续的明确决定。
+- 高模使用 Approved Design System、外部视觉来源或视觉方向候选的路径。
+- 高模不存在“无视觉参考接受风险直接继续”的状态。
 
-```markdown
-# <需求名称>
+## Index
 
-- 输出目录: `<absolute path>`
-- 当前阶段: <stage name>
-- Figma: <not-started | unavailable | low-fidelity-created | high-fidelity-created>
+`index.md` 必须同步记录当前阶段、Figma 状态、Design File、manifest 状态、当前 gate 和全部已创建产物。
 
-## Artifacts
+Figma 状态使用：
 
-| Stage | File | Status |
-| --- | --- | --- |
-| Raw requirement | `00-raw-requirement.md` | done |
+```text
+not-started | unavailable | architecture-initialized | migration-pending |
+low-fidelity-created | visual-direction-pending | design-system-pending |
+design-system-approved | high-fidelity-created
 ```
 
 ## 回复要求
 
-每次阶段回复结尾都必须包含：
+每次完成阶段时列出：
 
-- 当前阶段。
-- 下一个 gate 是否因等待确认而阻塞。
-- 输出目录的绝对路径。
+- 当前阶段和下一 gate。
+- Design File 与 Figma 状态（如适用）。
+- 绝对输出目录。
 - 本阶段创建或更新的文件。
 
-## Figma 失败处理
+## Figma Failure
 
-如果 Figma Tool Discovery Preflight 或 bridge smoke test 失败，仍然保存：
-
-- 对应的 `PrototypeSpec` JSON 文件。
-- 在 `index.md` 中写入简短说明，将 Figma 标记为 `unavailable`，并记录失败类型：工具未暴露、bridge/session 执行失败，或缺少截图校验能力。
-
-然后停止，并用中文给出对应处理建议；不要把工具懒加载失败误报为 Figma Desktop 断开。
+preflight 或调用失败时仍保存已经允许生成的规格和 manifest，在 `index.md` 记录：工具未暴露、Bridge/session 失败、截图能力缺失或治理校验失败。然后停止，不得模拟结果或回退到其他 Figma 工具。
