@@ -14,7 +14,12 @@
 
 ## 2. Node.js 和 npm
 
-让用户打开 [Node.js 下载页](https://nodejs.org/en/download)，选择受支持的 LTS、Windows 安装包，保留 npm package manager 和 PATH 安装项；npm 随此安装包一起安装。
+先检查 Node.js、npm 和 npx 是否可用；已有可用版本则复用，不强制升级或降级。确需安装且用户请求安装或完整配置时：
+
+1. 检查 Windows 系统架构。此包适用于 x64；其他架构先说明不匹配，再从 [Node.js 官方下载页](https://nodejs.org/en/download) 核对适用包，不强行安装 x64 包。
+2. 告知将自动下载安装，从 [Node.js v24.21.0 x64 MSI 直链](https://nodejs.org/dist/v24.21.0/node-v24.21.0-x64.msi) 下载到本次任务独立临时目录。URL 不包含用户粘贴时可能附带的尾部空白。等待下载成功，检查文件非空且为 MSI 安装包；下载失败或返回网页时不执行。
+3. 下载完成后用 `Start-Process` 启动 `msiexec.exe`，传入 `/i "<实际 MSI 路径>" /passive /norestart`，使用 `-PassThru -WindowStyle Hidden`；正确引用含空格的路径，保留默认 npm package manager 和 PATH 安装项。分段检查进程，若需用户处理 UAC，明确提示当前操作，不重复索取已授权的安装许可。
+4. 检查安装退出码：`0` 后继续验证，`3010` 表示安装完成但需要重启，告知用户且不自动重启；其他退出码报告实际错误。即使退出码成功，也要验证命令可用，不能把安装器启动成功当作完成。用户仅要求检查时只报告状态。
 
 完成后在新终端检查 `node --version`、`npm --version`、`npx --version`。如 PowerShell 仅阻止 npm/npx 的 `.ps1` 启动脚本，尝试 `npm.cmd --version`、`npx.cmd --version`，不因此要求重装或放宽全局执行策略。PATH 尚未刷新时重开 Codex 后复查。
 

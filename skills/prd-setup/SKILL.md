@@ -12,7 +12,7 @@ description: "在 Windows 上安装、检查或修复 prd 技能与本地 Figma 
 - 确定用户要首次配置、检查连接还是排障；只处理对应范围。已有正常配置直接复用。
 - 首次配置按 **Figma Desktop → Node.js 和 npm → Figma token → prd / MCP → Desktop Bridge → 连接验收** 推进。读取 [配置步骤](references/setup.md)，每次引导当前未完成的一步，确认完成后继续；不能一开始就让用户填 MCP 或运行 Bridge。
 - **先检查并自动安装 Figma Desktop**：结合 Windows 已安装应用记录、常见安装目录中的可执行文件或运行进程判断；未运行不等于未安装。检测不到时说明“未检测到”，允许用户提供自定义路径。未安装则直接从 [Windows 安装包](https://www.figma.com/download/desktop/win) 自动下载，下载完成后启动安装，按配置步骤检查结果，再引导用户登录；不要只给下载页让用户自行寻找安装包。网页版或字体安装器不算桌面版。
-- **再引导安装 Node.js 和 npm**：给出 [Node.js 下载页](https://nodejs.org/en/download)，选择 Windows LTS 安装包，保留 npm 安装项。安装后重新打开终端，检查 `node --version`、`npm --version`、`npx --version`；当前 Codex 未继承新 PATH 时提示重启，不能直接判为安装失败。已有可用版本则跳过重装。
+- **再自动安装 Node.js 和 npm**：未安装时从用户指定的 [Node.js v24.21.0 Windows x64 MSI](https://nodejs.org/dist/v24.21.0/node-v24.21.0-x64.msi) 自动下载，下载完成后安装，保留 npm 和 PATH 安装项；按配置步骤检查架构、安装结果及 `node --version`、`npm --version`、`npx --version`。当前 Codex 未继承新 PATH 时提示重启，不能直接判为安装失败。已有可用版本则复用，不强制降级或重装。
 - **然后引导获取 Figma token**：按配置步骤中的账号菜单路径逐步说明创建与保存方式。已有可用 token 则复用；只询问是否已准备好，不索取 token 内容。未准备好时留在这一步，不启动连接验收。
 
 ## 2. 配置 prd 与 MCP
