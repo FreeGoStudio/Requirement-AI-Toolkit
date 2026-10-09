@@ -25,6 +25,7 @@ description: "在 Windows 上安装、检查或修复 prd 技能与本地 Figma 
 
 - 获取目标测试文件链接；尚未提供时先完成独立的本机检查。让用户打开有编辑权限的 Figma Desktop 文件并运行 Desktop Bridge。
 - 需要导入 Bridge 时，按配置步骤先验证 `manifest.json`，将其所在文件夹的实际绝对路径放在独立纯文本代码块中供复制，再说明粘贴到文件选择窗口地址栏、回车、选择 `manifest.json` 并打开；不能只写“上述文件”或只给可点击链接。
+- 导入后明确提示：在 Plugins & widgets 的 Development 列表点击 **Figma Desktop Bridge** 这一行，等待插件窗口打开并保持开启，再继续验收；不能把导入成功当作已启动。
 - 精确发现 `mcp__figma_console__figma_execute` 和 `figma_capture_screenshot` / `figma_take_screenshot`，缺失再搜索 `figma console execute screenshot`。只使用本地 `mcp__figma_console__*`，不自动换其他 Figma 服务。
 - 先执行只读探测，核对实际 file ID、文件名及 Page 与用户目标一致，并实际调用截图工具。工具未暴露、Bridge 未连接、权限失败和截图失败分别报告。
 - 用户要求完整读写验收且已指定测试文件时，在独立的“连接验收”页创建含“连接成功”文字的 Frame。先检查同名页和节点，有本技能验收节点则复用；同名内容身份不明时不覆盖。仅检查连接的请求保持只读，不触碰业务页面。
