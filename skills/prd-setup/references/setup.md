@@ -1,8 +1,31 @@
-# 缺项时才读的配置步骤
+# 首次配置与缺项补齐
 
-## 基础软件与 prd
+## 1. Figma Desktop
 
-缺软件时引导安装 [Figma Desktop](https://www.figma.com/downloads/)、[Node.js 受支持的 LTS](https://nodejs.org/en/download) 和在线安装所需的 [Git](https://git-scm.com/downloads)。安装后重新打开 Codex，让新 PATH 生效。登录和账号操作由用户完成。
+先检查是否安装；常见位置为 `%LOCALAPPDATA%\Figma`，但路径不存在不能排除其他安装位置。结合 Windows 卸载注册表中的 Figma 记录、实际可执行文件或用户提供的路径判断，不只查进程。
+
+未安装时，让用户打开 [Figma 下载页](https://www.figma.com/downloads/)，选择适合电脑架构的 Desktop app for Windows，完成安装并登录。确认能打开桌面版后继续。
+
+## 2. Node.js 和 npm
+
+让用户打开 [Node.js 下载页](https://nodejs.org/en/download)，选择受支持的 LTS、Windows 安装包，保留 npm package manager 和 PATH 安装项；npm 随此安装包一起安装。
+
+完成后在新终端检查 `node --version`、`npm --version`、`npx --version`。如 PowerShell 仅阻止 npm/npx 的 `.ps1` 启动脚本，尝试 `npm.cmd --version`、`npx.cmd --version`，不因此要求重装或放宽全局执行策略。PATH 尚未刷新时重开 Codex 后复查。
+
+## 3. 从 Figma 获取 token
+
+按 [Figma 官方步骤](https://developers.figma.com/docs/rest-api/personal-access-tokens/) 引导用户：
+
+1. 登录 Figma，回到文件浏览首页，点击左上角账号菜单 → Settings。
+2. 打开 Security → Personal access tokens → Generate new token。
+3. 设置名称（若界面要求）、有效期与权限。文件读取选择 File content Read（`file_content:read`）；其他权限按实际功能添加。
+4. 点击 Generate token，立即复制并私密保存；该 token 只在生成时提供复制机会。下一步由用户填入本机 MCP 配置的 `FIGMA_ACCESS_TOKEN`。
+
+只需用户确认“已准备好”，不能要求粘贴到聊天、写入仓库或显示在日志。已有有效 token 时复用，无须再生成。
+
+## 4. 安装 prd
+
+在线安装前检查 Git；缺失时引导安装 [Git](https://git-scm.com/downloads) 并重开终端验证。
 
 有本工具库 checkout 时，先检查安装脚本，再从仓库根目录运行：
 
@@ -14,7 +37,7 @@
 
 项目未建立时，让用户将业务文件夹添加为 Codex 项目；已有项目复用。环境验收不要求先准备业务知识库。
 
-## 本地 MCP
+## 5. 本地 MCP
 
 优先复用能通过验收的版本。原快速上手文档使用 `1.40.9` 作为复现版本，并非“最新版”；新装或升级时核对 [Figma Console MCP 上游说明](https://github.com/southleft/figma-console-mcp) 的版本、Node 要求与插件路径，再在测试文件验收。
 
@@ -30,11 +53,11 @@ args = ["-y", "figma-console-mcp@1.40.9"]
 FIGMA_ACCESS_TOKEN = "REPLACE_WITH_YOUR_FIGMA_TOKEN"
 ```
 
-用户在 Figma 账号设置的 Personal access tokens 中创建本人 token，文件读取需要 File content Read，其他权限按实际功能核对。让用户在本机私密填写，不能要求粘贴到聊天、写入仓库或显示在日志。保留已有效配置的 token；占位值未替换时报告未完成。
+让用户将第 3 步准备好的 token 私密填入本机配置。保留已有有效 token；占位值未替换时报告未完成，不启动连接验收。
 
 配置方式依据 [Codex MCP 官方文档](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)。遇到平台差异先查实际启动错误，不盲目替换命令。
 
-## Desktop Bridge
+## 6. Desktop Bridge
 
 1. 重新加载 MCP（必要时重启 Codex），确认服务启动成功。
 2. 在 Figma Desktop 打开测试文件，进入 Plugins → Development → Import plugin from manifest。

@@ -7,14 +7,21 @@ description: "在 Windows 上安装、检查或修复 prd 技能与本地 Figma 
 
 用中文带用户把 Codex、prd 和 Figma Desktop 连通。直接完成已授权的配置工作；只把登录、私密 token 填写、桌面插件导入等当前工具无法完成的步骤交给用户。每次仅给当前需要的操作，不重复整篇教程。
 
-## 1. 检查现状
+## 1. 先引导安装，再准备 token
 
 - 确定用户要首次配置、检查连接还是排障；只处理对应范围。已有正常配置直接复用。
-- 检查 `node --version`、`npm --version`、`npx --version`；在线安装 prd 时检查 `git --version`。报告实际 prd 路径及 MCP 是否已配置，读取配置时只输出脱敏字段，不打印 token。
-- 技能目录为 `$CODEX_HOME/skills`，未设置时用 `%USERPROFILE%\.codex\skills`。检查完整的 `prd/SKILL.md` 及其引用资源，区分缺失、重复安装和当前聊天未加载。
-- 缺项时按 [配置步骤](references/setup.md) 补齐。用户仅要求检查时，不改配置、不安装软件。
+- 首次配置按 **Figma Desktop → Node.js 和 npm → Figma token → prd / MCP → Desktop Bridge → 连接验收** 推进。读取 [配置步骤](references/setup.md)，每次引导当前未完成的一步，确认完成后继续；不能一开始就让用户填 MCP 或运行 Bridge。
+- **先检查并引导安装 Figma Desktop**：结合 Windows 已安装应用记录、常见安装目录中的可执行文件或运行进程判断；未运行不等于未安装。检测不到时说明“未检测到”，允许用户提供自定义路径。未安装则给出 [Figma 下载页](https://www.figma.com/downloads/)，引导安装桌面版并登录，确认能打开桌面应用；网页版或字体安装器不算桌面版。
+- **再引导安装 Node.js 和 npm**：给出 [Node.js 下载页](https://nodejs.org/en/download)，选择 Windows LTS 安装包，保留 npm 安装项。安装后重新打开终端，检查 `node --version`、`npm --version`、`npx --version`；当前 Codex 未继承新 PATH 时提示重启，不能直接判为安装失败。已有可用版本则跳过重装。
+- **然后引导获取 Figma token**：按配置步骤中的账号菜单路径逐步说明创建与保存方式。已有可用 token 则复用；只询问是否已准备好，不索取 token 内容。未准备好时留在这一步，不启动连接验收。
 
-## 2. 连接并验收
+## 2. 配置 prd 与 MCP
+
+- 前三步完成后才补齐 prd 与 MCP；在线安装 prd 时检查 `git --version`。报告实际 prd 路径及 MCP 是否已配置，读取配置时只输出脱敏字段，不打印 token。
+- 技能目录为 `$CODEX_HOME/skills`，未设置时用 `%USERPROFILE%\.codex\skills`。检查完整的 `prd/SKILL.md` 及其引用资源，区分缺失、重复安装和当前聊天未加载。
+- 按 [配置步骤](references/setup.md) 配置本地 MCP，引导用户将已准备的 token 私密填入本机配置。用户仅要求检查时，不改配置、不安装软件。
+
+## 3. 连接并验收
 
 - 获取目标测试文件链接；尚未提供时先完成独立的本机检查。让用户打开有编辑权限的 Figma Desktop 文件并运行 Desktop Bridge。
 - 精确发现 `mcp__figma_console__figma_execute` 和 `figma_capture_screenshot` / `figma_take_screenshot`，缺失再搜索 `figma console execute screenshot`。只使用本地 `mcp__figma_console__*`，不自动换其他 Figma 服务。
@@ -22,7 +29,7 @@ description: "在 Windows 上安装、检查或修复 prd 技能与本地 Figma 
 - 用户要求完整读写验收且已指定测试文件时，在独立的“连接验收”页创建含“连接成功”文字的 Frame。先检查同名页和节点，有本技能验收节点则复用；同名内容身份不明时不覆盖。仅检查连接的请求保持只读，不触碰业务页面。
 - 写入后重新读取节点并截图，核对文字可见、截图可打开、真实链接指向目标节点。截图失败时保留已有节点，修复后重拍，不重复创建。
 
-## 3. 仅在失败时排障
+## 4. 仅在失败时排障
 
 | 现象 | 下一步 |
 | --- | --- |
@@ -34,7 +41,7 @@ description: "在 Windows 上安装、检查或修复 prd 技能与本地 Figma 
 
 每次修复后重做同一验收。相同错误连续两次无新证据时停止重复操作，报告实际错误和下一项所需操作；不循环重装或扩大清理范围。
 
-## 4. 简短交接
+## 5. 简短交接
 
 汇报实际状态：**配置完成 / 只读验证通过 / 读写验收通过**，未执行的项目明确写“未验收”。附实际技能路径、已验证的 Figma 链接和剩余人工步骤，不把配置存在当作连接成功。
 
