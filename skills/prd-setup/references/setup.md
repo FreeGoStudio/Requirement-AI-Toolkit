@@ -71,6 +71,7 @@ FIGMA_ACCESS_TOKEN = "REPLACE_WITH_YOUR_FIGMA_TOKEN"
 ## 6. Desktop Bridge
 
 1. 重新加载 MCP（必要时重启 Codex），确认服务启动成功。
-2. 在 Figma Desktop 打开测试文件，进入 Plugins → Development → Import plugin from manifest。
-3. 原文版本的 manifest 位于 `%USERPROFILE%\.figma-console-mcp\plugin\manifest.json`；先检查文件存在，若版本不同则采用服务输出或上游记录的实际路径。
-4. 运行 Figma Desktop Bridge 并保持开启，回到主流程验收。端口自动选择，不固定改成 9223。
+2. 先定位并验证 `manifest.json`：原文版本位于 `%USERPROFILE%\.figma-console-mcp\plugin\manifest.json`，若版本不同则采用服务输出或上游记录的实际路径。文件不存在时先排查，不让用户导入不存在的文件。
+3. 将已验证文件的**父文件夹绝对路径**单独放在 `text` 代码块中，使用 Windows 反斜杠，展开环境变量和用户名。代码块只含一行路径，不加引号、命令、占位符或 Markdown 链接；不能只说“上述文件”。
+4. 紧接路径给出操作：在 Figma Desktop 打开有编辑权限的测试文件 → Plugins → Development → Import plugin from manifest；在弹出的文件选择窗口按 `Ctrl+L`，粘贴刚才的文件夹路径并回车，选择 `manifest.json`，点击“打开”。
+5. 导入后运行 Figma Desktop Bridge 并保持开启，回到主流程验收。端口自动选择，不固定改成 9223。
