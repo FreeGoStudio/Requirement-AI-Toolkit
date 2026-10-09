@@ -3,7 +3,9 @@ param(
   [string]$Branch = "main",
   [string]$CodexHome = $env:CODEX_HOME,
   [string]$InstallRoot = (Join-Path $env:TEMP "Requirement-AI-Toolkit"),
-  [switch]$NoBackup
+  [switch]$NoBackup,
+  [ValidateSet("prd", "prd-setup")]
+  [string]$SkillName = "prd"
 )
 
 $ErrorActionPreference = "Stop"
@@ -47,7 +49,7 @@ if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) {
 $args = @(
   "-ExecutionPolicy", "Bypass",
   "-File", $installer,
-  "-SkillName", "prd",
+  "-SkillName", $SkillName,
   "-CodexHome", $CodexHome
 )
 
