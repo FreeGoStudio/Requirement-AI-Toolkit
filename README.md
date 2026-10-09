@@ -19,6 +19,14 @@ skills/prd
 
 安装后可以在 Codex 中使用 `$prd` 或“产品需求工具”触发中文 PRD、BDD、流程图和 Figma 原型工作流。
 
+首次配置或连接排障可使用 `prd-setup`，负责环境检查、MCP 配置、Desktop Bridge 和连接验收。已有本地仓库时安装：
+
+```powershell
+.\scripts\install-skill.ps1 -SkillName prd-setup
+```
+
+新开 Codex 聊天输入 `$prd-setup 帮我配置 prd 和 Figma`。日常需求制作继续使用 `$prd`。
+
 ## 工作流阶段
 
 PRD skill 按以下六个阶段运行。各阶段产物会写入同一个需求输出目录；只有到达对应阶段时才创建文件，不会提前生成空白占位文件。

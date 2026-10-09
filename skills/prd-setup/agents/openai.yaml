@@ -1,0 +1,4 @@
+interface:
+  display_name: "PRD 环境准备"
+  short_description: "检查并配置 prd 与 Figma 连接，完成验收和常见故障排查"
+  default_prompt: "使用 $prd-setup 检查我的环境，补齐 prd 与 Figma 连接配置并引导验收。"
