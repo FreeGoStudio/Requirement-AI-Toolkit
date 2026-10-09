@@ -4,7 +4,13 @@
 
 先检查是否安装；常见位置为 `%LOCALAPPDATA%\Figma`，但路径不存在不能排除其他安装位置。结合 Windows 卸载注册表中的 Figma 记录、实际可执行文件或用户提供的路径判断，不只查进程。
 
-未安装时，让用户打开 [Figma 下载页](https://www.figma.com/downloads/)，选择适合电脑架构的 Desktop app for Windows，完成安装并登录。确认能打开桌面版后继续。
+未安装且用户请求安装或完整配置时，自动完成下载和启动安装：
+
+1. 告知将从 [Figma Windows 安装包直链](https://www.figma.com/download/desktop/win) 下载并安装，无需重复请求安装许可。
+2. 使用支持重定向的下载工具（如 PowerShell `Invoke-WebRequest -UseBasicParsing -Uri ... -OutFile ...`），下载到本次任务独立临时目录中的 `FigmaSetup.exe`。等待下载成功，检查文件非空且为 Windows 可执行安装包；下载失败或返回网页时不执行文件。
+3. 下载完成后用 `Start-Process -FilePath <实际安装包路径> -PassThru -WindowStyle Hidden` 启动安装，不猜测静默参数。分段检查进程和安装状态，保持进度反馈。若出现需要用户操作的安装界面或 UAC，明确告诉用户当前要完成的操作；不要声称已自动完成该交互。
+4. 安装进程结束后检查 Figma 可执行文件、安装记录及实际启动结果；不能只凭进程启动成功或安装器退出就报告安装完成。若安装器启动子进程，继续核对安装结果。
+5. 安装完成后引导用户打开 Figma Desktop 并登录，再进入 Node.js 和 npm 步骤。已有可用桌面版则复用，不重复下载；用户仅要求检查时只报告状态。
 
 ## 2. Node.js 和 npm
 
