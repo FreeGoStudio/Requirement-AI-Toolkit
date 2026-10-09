@@ -70,9 +70,10 @@ FIGMA_ACCESS_TOKEN = "REPLACE_WITH_YOUR_FIGMA_TOKEN"
 
 ## 6. Desktop Bridge
 
-1. 重新加载 MCP（必要时重启 Codex），确认服务启动成功。
+1. 首次配置先引导创建设计草稿：在 Figma Desktop 回到文件首页，进入当前团队的 **Drafts（草稿）**，点击新建入口并选择 **Design（设计文件 / New design file）**，进入空白画布；不要选择 FigJam、Slides 或 Make。可命名为“PRD 连接验收”，保留 Untitled 也可以。已有本次配置的设计草稿或已连接的 Design 文件时直接复用。创建方式参考 [Figma 官方说明](https://help.figma.com/hc/en-us/articles/360038511153-Create-a-new-file)。
 2. 先定位并验证 `manifest.json`：原文版本位于 `%USERPROFILE%\.figma-console-mcp\plugin\manifest.json`，若版本不同则采用服务输出或上游记录的实际路径。文件不存在时先排查，不让用户导入不存在的文件。
 3. 将已验证文件的**父文件夹绝对路径**单独放在 `text` 代码块中，使用 Windows 反斜杠，展开环境变量和用户名。代码块只含一行路径，不加引号、命令、占位符或 Markdown 链接；不能只说“上述文件”。
-4. 紧接路径给出操作：在 Figma Desktop 打开有编辑权限的测试文件 → Plugins → Development → Import plugin from manifest；在弹出的文件选择窗口按 `Ctrl+L`，粘贴刚才的文件夹路径并回车，选择 `manifest.json`，点击“打开”。
+4. 紧接路径给出操作：在刚创建或复用的 **Design 草稿画布**中，选择 Plugins → Development → Import plugin from manifest；在弹出的文件选择窗口按 `Ctrl+L`，粘贴刚才的文件夹路径并回车，选择 `manifest.json`，点击“打开”。
 5. 导入后，在 **Plugins & widgets** 的 **Development** 列表中，点击 **Figma Desktop Bridge** 这一行（带 Development 标签、下方显示刚导入的 manifest 路径），启动插件。这里选择已导入的插件，不选 New plugin、New widget 或再次 Import from manifest；不能只笼统写“运行 Bridge”。若列表已关闭，重新打开 Plugins → Development，选择 Figma Desktop Bridge。
 6. 等待 Bridge 插件窗口打开并保持开启，再回到 Codex 继续连接验收。列表中出现插件只表示导入成功，不代表插件已经运行或连接已通过。端口自动选择，不固定改成 9223。
+7. 工具已加载时直接对当前草稿做页面读取和截图验收。仅在新增 MCP 尚未加载时提示重新加载或重启 Codex；让用户保持草稿和 Bridge 开启，恢复后输入“继续 prd-setup 连接验收”。不要求发送测试文件链接，不要求重建草稿或重复导入插件。
