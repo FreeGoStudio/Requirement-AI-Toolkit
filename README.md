@@ -19,7 +19,7 @@ skills/prd
 
 安装后可以在 Codex 中使用 `$prd` 或“产品需求工具”触发中文 PRD、BDD、流程图和 Figma 原型工作流。
 
-首次配置或连接排障可使用 `prd-setup`，负责环境检查、MCP 配置、Desktop Bridge 和连接验收。在 PowerShell 中一行安装（需要 Git）：
+首次配置或连接排障可使用 `prd-setup`，负责环境检查、Figwright MCP 配置、Figwright 插件 和连接验收。在 PowerShell 中一行安装（需要 Git）：
 
 ```powershell
 iwr -UseB https://raw.githubusercontent.com/FreeGoStudio/Requirement-AI-Toolkit/main/scripts/install-prd-setup.ps1 | iex

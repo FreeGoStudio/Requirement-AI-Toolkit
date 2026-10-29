@@ -18,8 +18,8 @@ description: "中文产品需求工具。用户调用 $prd，或提到产品需�
 - 不得虚构 Figma 文件、Page、Frame、组件、截图或工具结果。
 - 每阶段产物必须落盘。任务开始先读 `references/output-artifacts.md`，阶段回复列出输出目录和本阶段文件。
 - Figma Design File 是产品设计隔离边界。Folder/Project 只组织文件，不是 Page 或设计资产的隔离边界。
-- 任何 Figma 阶段都必须读取 `references/design-governance.md`、`references/prototype-spec.md` 和 `references/figma-console-mcp.md`。
-- 只使用本地 `figma-console-mcp` 的 `mcp__figma_console__*` 工具；不得回退到其他 Figma 插件、connector 或 app。
+- 任何 Figma 阶段都必须读取 `references/design-governance.md`、`references/prototype-spec.md` 和 `references/figwright.md`。
+- 只使用 Figwright 的 `mcp__figwright__*` 工具；不得回退到其他 Figma 插件、connector 或 app。
 
 ## Workflow
 
@@ -92,7 +92,7 @@ description: "中文产品需求工具。用户调用 $prd，或提到产品需�
 
 - 澄清问题、业务模型或前置评审未确认。
 - 参考 gate 为 `pending`，或知识库截图未实际检查。
-- `mcp__figma_console__figma_execute`、Bridge smoke test 或截图能力不可用。
+- Figwright 工具未暴露、`ping` 未确认插件连接、阶段所需读写工具或截图能力不可用。
 - 目标 Design File 身份不明确。
 - 标准基础 Page 重复，或同一 `flowId + fidelity` 存在多个正式 Page。
 - 旧结构迁移待确认。
@@ -103,7 +103,7 @@ description: "中文产品需求工具。用户调用 $prd，或提到产品需�
 ## Reference Loading
 
 - 所有阶段：`references/output-artifacts.md`。
-- 所有 Figma 阶段：`references/design-governance.md`、`references/prototype-spec.md`、`references/figma-console-mcp.md`。
+- 所有 Figma 阶段：`references/design-governance.md`、`references/prototype-spec.md`、`references/figwright.md`。
 - 低模：`references/screenshot-knowledge-workflow.md`、`references/knowledge-bases.json`。
 - PRD/BDD：`references/prd-template.md`、`references/bdd-template.md`。
 

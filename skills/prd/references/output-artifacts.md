@@ -91,4 +91,4 @@ design-system-approved | high-fidelity-created
 
 ## Figma Failure
 
-preflight 或调用失败时仍保存已经允许生成的规格和 manifest，在 `index.md` 记录：工具未暴露、Bridge/session 失败、截图能力缺失或治理校验失败。然后停止，不得模拟结果或回退到其他 Figma 工具。
+preflight 或调用失败时仍保存已经允许生成的规格和 manifest，在 `index.md` 记录：工具未暴露、Figwright 插件/session 失败、截图能力缺失或治理校验失败。然后停止，不得模拟结果或回退到其他 Figma 工具。

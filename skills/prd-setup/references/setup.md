@@ -23,18 +23,7 @@
 
 完成后在新终端检查 `node --version`、`npm --version`、`npx --version`。如 PowerShell 仅阻止 npm/npx 的 `.ps1` 启动脚本，尝试 `npm.cmd --version`、`npx.cmd --version`，不因此要求重装或放宽全局执行策略。PATH 尚未刷新时重开 Codex 后复查。
 
-## 3. 从 Figma 获取 token
-
-按 [Figma 官方步骤](https://developers.figma.com/docs/rest-api/personal-access-tokens/) 引导用户：
-
-1. 登录 Figma，回到文件浏览首页，点击左上角账号菜单 → Settings。
-2. 打开 Security → Personal access tokens → Generate new token。
-3. 设置名称（若界面要求）、有效期与权限。文件读取选择 File content Read（`file_content:read`）；其他权限按实际功能添加。
-4. 点击 Generate token，立即复制并私密保存；该 token 只在生成时提供复制机会。下一步由用户填入本机 MCP 配置的 `FIGMA_ACCESS_TOKEN`。
-
-只需用户确认“已准备好”，不能要求粘贴到聊天、写入仓库或显示在日志。已有有效 token 时复用，无须再生成。
-
-## 4. 安装 prd
+## 3. 安装 prd
 
 在线安装前检查 Git；缺失时引导安装 [Git](https://git-scm.com/downloads) 并重开终端验证。
 
@@ -48,32 +37,25 @@
 
 项目未建立时，让用户将业务文件夹添加为 Codex 项目；已有项目复用。环境验收不要求先准备业务知识库。
 
-## 5. 本地 MCP
+## 4. Figwright MCP
 
-优先复用能通过验收的版本。原快速上手文档使用 `1.40.9` 作为复现版本，并非“最新版”；新装或升级时核对 [Figma Console MCP 上游说明](https://github.com/southleft/figma-console-mcp) 的版本、Node 要求与插件路径，再在测试文件验收。
+以 [Figwright 上游安装说明](https://github.com/awdr74100/figwright#setup) 和当前工具定义为准。先复用已有服务，首次配置时核对当前 Node.js 要求与插件版本。
 
-在 Codex 的 MCP 设置中添加本地 STDIO 服务，或备份实际生效的用户配置后仅修改同名段。配置文件通常为 `$CODEX_HOME/config.toml`，未设置时为 `%USERPROFILE%\.codex\config.toml`。保留其他服务和用户设置，不重复追加表。
-
-以下为原文的固定版本示例：
+在实际生效的客户端 MCP 配置中添加名为 `figwright` 的 STDIO 服务。Codex TOML 配置示例：
 
 ```toml
-[mcp_servers.figma-console]
+[mcp_servers.figwright]
 command = "npx"
-args = ["-y", "figma-console-mcp@1.40.9"]
-[mcp_servers.figma-console.env]
-FIGMA_ACCESS_TOKEN = "REPLACE_WITH_YOUR_FIGMA_TOKEN"
+args = ["-y", "@figwright/mcp@latest"]
 ```
 
-让用户将第 3 步准备好的 token 私密填入本机配置。保留已有有效 token；占位值未替换时报告未完成，不启动连接验收。
+只修改对应服务段，保留其他配置。Windows 启动失败时先检查 `Get-Command node,npx,npx.cmd`、客户端 PATH 和实际启动错误，按安装位置使用可执行入口。已有稳定版本直接复用；升级时同时核对服务与插件版本。此连接流程无需配置 Figma personal access token。
 
-配置方式依据 [Codex MCP 官方文档](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)。遇到平台差异先查实际启动错误，不盲目替换命令。
+## 5. Figwright 插件
 
-## 6. Desktop Bridge
-
-1. 首次配置先引导创建设计草稿：在 Figma Desktop 回到文件首页，进入当前团队的 **Drafts（草稿）**，点击新建入口并选择 **Design（设计文件 / New design file）**，进入空白画布；不要选择 FigJam、Slides 或 Make。可命名为“PRD 连接验收”，保留 Untitled 也可以。已有本次配置的设计草稿或已连接的 Design 文件时直接复用。创建方式参考 [Figma 官方说明](https://help.figma.com/hc/en-us/articles/360038511153-Create-a-new-file)。
-2. 先定位并验证 `manifest.json`：原文版本位于 `%USERPROFILE%\.figma-console-mcp\plugin\manifest.json`，若版本不同则采用服务输出或上游记录的实际路径。文件不存在时先排查，不让用户导入不存在的文件。
-3. 将已验证文件的**父文件夹绝对路径**单独放在 `text` 代码块中，使用 Windows 反斜杠，展开环境变量和用户名。代码块只含一行路径，不加引号、命令、占位符或 Markdown 链接；不能只说“上述文件”。
-4. 紧接路径给出操作：在刚创建或复用的 **Design 草稿画布**中，选择 Plugins → Development → Import plugin from manifest；在弹出的文件选择窗口按 `Ctrl+L`，粘贴刚才的文件夹路径并回车，选择 `manifest.json`，点击“打开”。
-5. 导入后，在 **Plugins & widgets** 的 **Development** 列表中，点击 **Figma Desktop Bridge** 这一行（带 Development 标签、下方显示刚导入的 manifest 路径），启动插件。这里选择已导入的插件，不选 New plugin、New widget 或再次 Import from manifest；不能只笼统写“运行 Bridge”。若列表已关闭，重新打开 Plugins → Development，选择 Figma Desktop Bridge。
-6. 等待 Bridge 插件窗口打开并保持开启，再回到 Codex 继续连接验收。列表中出现插件只表示导入成功，不代表插件已经运行或连接已通过。端口自动选择，不固定改成 9223。
-7. 工具已加载时直接对当前草稿做页面读取和截图验收。仅在新增 MCP 尚未加载时提示重新加载或重启 Codex；让用户保持草稿和 Bridge 开启，恢复后输入“继续 prd-setup 连接验收”。不要求发送测试文件链接，不要求重建草稿或重复导入插件。
+1. 从 [Figwright Releases](https://github.com/awdr74100/figwright/releases/latest) 下载插件 zip，解压到稳定目录；以实际发布附件为准，不猜附件名或本机路径。
+2. 在 Figma Desktop 首页进入 Drafts，新建 Design 文件并打开画布；已有验收草稿则复用，不选 FigJam、Slides 或 Make。
+3. 检查解压目录中的 `manifest.json` 及其引用资源确实存在。把实际所在目录的绝对路径单独放在纯文本代码块，指导用户在文件选择器地址栏粘贴，再选择 `manifest.json`。
+4. 在 Figma 菜单 Plugins → Development → Import plugin from manifest 导入；随后 Plugins → Development → Figwright 启动插件。仅导入不算运行，保持插件运行并检查连接状态。
+5. 发现并调用 `mcp__figwright__ping`，确认端到端插件连接；再按技能入口执行文件绑定、页面读取和截图验收。工具已可用时不要求重启客户端。
+6. 服务/插件版本不兼容时按上游说明更新对应部分，再重复验收。不能仅凭插件显示 Connected 宣布所有读写与截图均通过。

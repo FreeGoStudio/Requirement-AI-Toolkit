@@ -5,7 +5,7 @@ interface:
 dependencies:
   tools:
     - type: "mcp"
-      value: "figma-console-mcp"
-      description: "通过本地 Figma 桥接插件创建或更新低保真与高保真原型。"
+      value: "figwright"
+      description: "通过 Figwright MCP 与 Figma 内运行的 Figwright 插件创建或更新低保真与高保真原型。"
 policy:
   allow_implicit_invocation: true

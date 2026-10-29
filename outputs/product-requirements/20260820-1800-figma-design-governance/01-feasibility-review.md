@@ -159,7 +159,7 @@ Figma 官方说明：Page 用于组织 File 内的画布；组件、样式和 Va
 - 高模 Frame 与低模 screen/flow 的映射完整率；
 - 新资产是否先在 Design System 注册。
 
-建议正式高模的最低门槛为：关键视觉属性 token 绑定率 100%、未说明的 detached instance 为 0、关键交互组件 Approved 引用率 100%。间距 token 覆盖率是否能被当前 Bridge 稳定检查，应先做技术验证。
+建议正式高模的最低门槛为：关键视觉属性 token 绑定率 100%、未说明的 detached instance 为 0、关键交互组件 Approved 引用率 100%。间距 token 覆盖率是否能被当前 Figwright 稳定检查，应先做技术验证。
 
 ## 当前 Skill 的具体缺口
 
@@ -186,11 +186,11 @@ Figma 官方说明：Page 用于组织 File 内的画布；组件、样式和 Va
 
 ## 最终判断
 
-- **可行性：高。** `figma-console-mcp` 若能读取/创建 variables、components、instances 和 node IDs，就能落地核心闭环。
+- **可行性：高。** Figwright 若能读取/创建 variables、components、instances 和 node IDs，就能落地核心闭环。
 - **合理性：方向合理，原始粒度略重。** 应把“全页面组件化”改为“模板化 + 场景实例化”，把“所有新设计先入库”改为“基础原语/通用资产先入库，一次性组合候选化”。
 - **预期收益：高。** 对跨需求、跨批次风格一致性帮助显著，也会改善修改传播和审计能力。
 - **主要成本：中高。** 需要资产命名、状态、版本、迁移和审计规则；早期生成速度会稍慢，但返工会下降。
-- **建议：实施。** 先做单文件最小版本，验证 Bridge 对 Variables、Components、Instances 的读写与检查能力，再决定是否升级为多文件 Library 模式。
+- **建议：实施。** 先做单文件最小版本，验证 Figwright 对 Variables、Components、Instances 的读写与检查能力，再决定是否升级为多文件 Library 模式。
 
 ## 补充规则：一个业务流程独占一个 Page
 
