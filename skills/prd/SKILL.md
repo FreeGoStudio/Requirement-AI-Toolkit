@@ -1,6 +1,6 @@
 ---
 name: prd
-description: "中文产品需求工具。用户调用 $prd，或需要需求澄清、PRD、BDD、流程图、低保真或高保真 HTML 原型时使用。按需求成熟度探索问题、比较方案并收敛业务模型，产出可浏览的 HTML 需求文档与交互原型。"
+description: "中文产品需求工具。用户调用 $prd，或需要需求澄清、PRD、BDD、流程图、HTML 原型及其 GitLab 文档交付时使用。探索并收敛业务模型，生成可浏览文档与原型；按授权准备分支、预览和 MR，由产品经理确认需求与发布时机。"
 ---
 
 # 产品需求与 HTML 原型
@@ -14,6 +14,7 @@ description: "中文产品需求工具。用户调用 $prd，或需要需求澄�
 - 进入原型阶段时读取 `references/html-output.md`、`references/design-governance.md`、`references/prototype-spec.md`。直接生成本地 HTML/CSS/JavaScript，不依赖设计平台账号、插件或远程设计服务。
 - 按以下评审节点推进，已有明确确认可沿用。前置业务确认不足时，仅等待依赖该决策的正式产物与原型变更；可继续独立的探索、比较和草案整理，不假定确认通过。
 - 区分文件生成、自动校验、浏览器实际验证和用户验收。无浏览器能力时保存可执行产物并标记待验证，不虚报截图或交互通过，不推进依赖该检查的评审。
+- 产品经理负责确认需求和发布时机，分支、图片路径、提交和 MR 交给技能处理。用户要求交付到 GitLab/VitePress 时读取 `references/delivery-workflow.md`；普通本地生成不自动推送或发布。已有文档可直接进入交付流程，无需重走需求与原型生成阶段。
 
 ## 1. 需求接收、探索与比较
 
@@ -50,6 +51,10 @@ description: "中文产品需求工具。用户调用 $prd，或需要需求澄�
 ## 7. 高保真原型
 
 保存 `12-high-fidelity-prototype-spec.json`，先登记并批准新增设计资产，再在 `prototypes/high/<flowId>.html` 使用共享样式/组件。保留低模相同 flowId 与 screenId。运行治理校验，检查实际代码依赖、浏览器渲染、响应式、键盘操作与业务状态，保存 `13-high-fidelity-review.html`。失败项修复并复查后请求最终验收。
+
+## 8. 按需交付与发布
+
+按 `references/delivery-workflow.md` 准备可人工检查的本地预览、发布差异和 MR。沿用已有需求确认，不把文档上传、MR 合并或流水线成功当作业务验收；上线由用户明确授权，已给出的有效授权不重复询问。
 
 ## 阻塞与恢复
 
