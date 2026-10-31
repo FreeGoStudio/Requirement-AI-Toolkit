@@ -1,194 +1,69 @@
 # Requirement AI Toolkit
 
-Requirement-AI-Toolkit 是一组面向 Codex 的产品需求工作流 skill。
+面向 Codex 的中文产品需求工作流技能，直接生成可在浏览器打开的 HTML 需求文档与低/高保真交互原型。
 
-当前核心 skill 是：
+- `skills/prd`：问题探索、业务方案比较、范围收敛、业务模型、参考分析、低模、PRD/流程图/BDD、视觉方向、设计系统与高模评审。
+- `skills/prd-setup`：技能安装与本地 HTML 预览环境检查。
 
-```text
-skills/prd
-```
+## 使用与产出
 
-`prd` 是短命名，代表 Product Requirement Document / Product Requirement Prototyping Workflow。它用于将原始需求转化为结构化需求交付物，包括：
-
-- 需求澄清问题
-- PRD 文档
-- BDD 验收标准
-- 原型规格说明
-- Figma 输出约束
-- 最终需求交付物
-
-安装后可以在 Codex 中使用 `$prd` 或“产品需求工具”触发中文 PRD、BDD、流程图和 Figma 原型工作流。
-
-首次配置或连接排障可使用 `prd-setup`，负责环境检查、Figwright MCP 配置、Figwright 插件 和连接验收。在 PowerShell 中一行安装（需要 Git）：
-
-```powershell
-iwr -UseB https://raw.githubusercontent.com/FreeGoStudio/Requirement-AI-Toolkit/main/scripts/install-prd-setup.ps1 | iex
-```
-
-这条命令安装 `prd-setup`；原有 `install-from-git.ps1 | iex` 命令仍默认安装 `prd`。运行 `$prd-setup` 后会检查并补齐缺失的 `prd`。已有本地仓库也可以安装：
-
-```powershell
-.\scripts\install-skill.ps1 -SkillName prd-setup
-```
-
-新开 Codex 聊天输入 `$prd-setup 帮我配置 prd 和 Figma`。日常需求制作继续使用 `$prd`。
-
-## 工作流阶段
-
-PRD skill 按以下六个阶段运行。各阶段产物会写入同一个需求输出目录；只有到达对应阶段时才创建文件，不会提前生成空白占位文件。
-
-| 阶段 | 目标与主要动作 | 主要产物 | 进入下一阶段的条件 |
-| --- | --- | --- | --- |
-| 1. 原始需求接收 | 复述目标、受众、角色和产品端形态，识别未解决假设并提出业务规则、状态、权限、异常和成功标准等澄清问题。 | `00-raw-requirement.md`、`01-clarification-questions.md` | 用户回答必要的澄清问题。 |
-| 2. 业务收敛 | 将用户回答整理为业务对象、对象关系、状态流转、主流程、异常流程和开放风险。 | `02-business-model.md` | 用户明确确认业务模型。 |
-| 3. 低保真原型 | 执行参考 gate，建立 Design File 治理清单，读取 workspace 截图形成界面基线，再按 `flowId + fidelity` 创建或更新唯一低模 Page。 | `02-reference-decision.md`、`03-figma-design-manifest.json`、`03-interface-baseline.json`、`04-low-fidelity-prototype-spec.json` | 四个基础 Page 已登记、参考检查通过、流程 Page 无重复且低模生成可验证。 |
-| 4. 原型反查 | 截取完整低保真 frame，与界面基线对照检查壳层、导航、内容区、弹窗关系、信息密度和 `mustPreserve`，发现问题后先修正再复查。 | `05-low-fidelity-structure-review.md` | 关键结构检查全部通过，并由用户确认低保真原型或给出修正意见。 |
-| 5. 需求产物 | 基于已确认的业务模型和低保真反馈，生成可评审的中文 PRD、Mermaid 流程图和中文 BDD 验收场景。 | `06-prd.md`、`07-flowchart.mmd`、`08-bdd.feature` | 用户完成 PRD/BDD 评审，并明确批准进入高保真阶段。 |
-| 6. 视觉方向、Design System 与高保真 | 使用 Approved Design System；无视觉参考时先生成三套视觉方向，选定后固化并确认 Design System，再生成业务高模并执行资产一致性审计。 | 可选 `09-visual-direction-spec.json`、`10-visual-direction-review.md`，以及 `11-design-system-review.md`、`12-high-fidelity-prototype-spec.json`、`13-high-fidelity-review.md` | Design System 已确认，所有资产先入系统，业务 Flow Page 只使用已登记实例且审计通过。 |
-
-### Gate 与 Hard Stop
-
-该工作流不是一次性生成全部文件。以下关键节点必须等待用户明确确认：
-
-- 澄清问题回答完成后，确认业务模型。
-- 业务模型确认后，才可生成低保真原型。
-- 没有既有原型或视觉参考时，用户需要提供参考，或明确确认无参考继续。
-- 低保真反查通过后，才可生成 PRD、流程图和 BDD。
-- PRD/BDD 评审通过后，才可进入高保真准备。
-- 无视觉来源时，必须先选择视觉方向；不得接受风险后直接生成高模。
-- Design System 经用户确认后，才可生成业务高模。
-- 旧 `Design System + Views` 文件必须先确认迁移映射，才可移动既有资产。
-
-当必要回答、参考决策、知识库、实际截图检查、Figma 工具或截图校验能力缺失时，skill 会执行 hard stop：保存当前阶段已经完成的产物，说明阻塞原因并停止，不生成后续阶段文件，也不虚构 Figma 结果。
-
-## Figma 设计治理
-
-Figma Design File 是产品/设计域的隔离边界。每个文件固定维护：
+安装后在新聊天输入：
 
 ```text
-01 Foundations
-02 Components
-03 Patterns
-04 View Templates
-10 LF · <业务流程>
-20 HF · <业务流程>
+$prd 帮我澄清这个产品需求，并按阶段生成 HTML 需求文档和可交互的 HTML 原型。
 ```
 
-- 每个业务流程按保真度独占 Page；低高模共享稳定 `flowId`。
-- 修复和普通迭代更新原 Page，不因重试创建副本。
-- Token、组件、Pattern 和页面组合必须先进入对应基础 Page 并批准，高模 Flow Page 才能使用实例。
-- 新文件缺少基础 Page 时自动初始化；旧 `Design System + Views` 结构先只读生成迁移方案，确认后原位移动并保留组件 ID。
-- `skills/prd/scripts/Test-DesignGovernance.ps1` 用于校验 manifest、Flow Page 唯一性、Approved 资产依赖和零容忍一致性计数。
+默认写入 `outputs/product-requirements/<yyyyMMdd-HHmm>-<slug>/`，以 `index.html` 作为交付入口。所有评审文档均为 HTML；规格与清单保留 JSON，流程图与 BDD 同时保留 `.mmd`、`.feature` 源文件。目录整体复制后可本地打开，默认不需要构建、账号、远程服务或 CDN。
 
-运行静态治理测试：
+| 阶段 | 交付 | 下一步条件 |
+| --- | --- | --- |
+| 探索、比较与收敛 | 原始需求、含探索与必要比较的澄清 HTML、业务模型 HTML | 必要问题已回答，方案与范围随业务模型确认 |
+| 参考与低模 | 参考决策、界面基线、规格、prototypes/low/ | 参考决策明确，实际截图已分析 |
+| 低模反查 | 浏览器交互、截图与结构评审 HTML | 关键检查通过，用户确认 |
+| 需求文档 | 06-prd.html、07-flowchart.html、08-bdd.html 与源文件 | PRD/BDD 已批准 |
+| 视觉方向与设计系统 | 必要的视觉候选、design-system/ 与评审 HTML | 方向及设计系统已确认 |
+| 高模 | prototypes/high/、高模规格与评审 HTML | 代码依赖、浏览器交互和视觉检查通过，用户验收 |
+
+探索深度按需求成熟度调整：模糊需求先辨认真实目标与遗漏场景，有实质取舍才比较 2–3 个业务方案；已确认的简单修改直接核对缺口。区分事实、假设、建议与已确认决策，不把候选方案当作新增范围。等待决策只阻止依赖它的正式生成，可以继续独立分析和待确认草案。探索记录复用澄清与业务模型 HTML，正式需求文档仍在低模确认后生成；旧任务不补做历史比较。
+
+低高模共享稳定 flowId 与 screenId，每个流程/保真度保留一个正式入口，修复更新原文件。高模复用已批准的 CSS token、组件、组合与模板。浏览器能力缺失时可保存文件及静态检查结果，实际渲染/交互标记待验证，不虚报完成。
+
+## 安装
+
+已有本地仓库时安装当前检出版本（本分支修改尚未推送时优先此方式）：
 
 ```powershell
-.\skills\prd\tests\Test-DesignGovernance.ps1
+./scripts/install-skill.ps1 -SkillName prd
+./scripts/install-skill.ps1 -SkillName prd-setup
 ```
 
-默认输出目录为：
+默认安装到 `%USERPROFILE%/.codex/skills`；设置 CODEX_HOME 时安装到其 skills 子目录。已有版本默认先备份，`-NoBackup` 可关闭备份。安装后新开聊天，运行 `$prd-setup` 检查 HTML 预览，日常使用 `$prd`。
 
-```text
-<workspace-root>\outputs\product-requirements\<yyyyMMdd-HHmm>-<short-requirement-slug>\
-```
-
-同一需求任务的后续阶段复用该目录，并通过 `index.md` 记录当前阶段、Figma 状态和已生成产物。用户明确指定输出目录时，使用用户指定路径。
-
-## 知识库目录
-
-PRD skill 只从 Codex 当前 workspace 根目录下的 `Knowledge` 读取项目知识库：
-
-```text
-<workspace-root>\Knowledge\
-├─ manifests\
-│  └─ POS\
-│     └─ screens.json
-└─ screenshot\
-   └─ POS\
-      └─ *.png
-```
-
-`manifests\POS\screens.json` 和 `screenshot\POS` 必须同时存在。任一项缺失时，知识库解析状态为 `blocked`；skill 不会读取用户指定目录、环境变量、安装目录或 fallback 目录。
-
-在业务 workspace 根目录中解析知识库：
+从远程安装需要 Git。HTML 分支推送后，可明确指定该分支：
 
 ```powershell
-.\skills\prd\scripts\Resolve-KnowledgeBase.ps1 `
-  -ProductId POS `
-  -WorkspaceRoot "<workspace-root>"
+$installer = Join-Path $env:TEMP 'install-requirement-ai-toolkit.ps1'
+Invoke-WebRequest -UseBasicParsing -Uri 'https://raw.githubusercontent.com/FreeGoStudio/Requirement-AI-Toolkit/codex/html-prototype-output/scripts/install-from-git.ps1' -OutFile $installer
+& $installer -Branch 'codex/html-prototype-output' -SkillName prd
 ```
 
-维护截图后，同步 manifest 中的自动元数据：
+安装 prd-setup 时将 SkillName 改为 prd-setup。远程安装器默认 Branch 仍为 main，安装其他分支时必须显式传参。也支持 RepoUrl、CodexHome、InstallRoot 与 NoBackup 参数。
+
+## 截图知识库
+
+保留工作区截图参考流程：`<workspace-root>/Knowledge/manifests/POS/screens.json` 与 `Knowledge/screenshot/POS/` 同时存在才算知识库可用。不使用安装目录或环境变量作为知识库回退。用户参考优先，任何入选截图必须实际打开分析。无参考时须记录用户明确的继续决定。
 
 ```powershell
-.\skills\prd\scripts\Sync-ScreenshotManifest.ps1 `
-  -KnowledgeRoot "<workspace-root>\Knowledge" `
-  -ManifestPath "manifests\POS\screens.json"
+./skills/prd/scripts/Resolve-KnowledgeBase.ps1 -ProductId POS -WorkspaceRoot '<workspace-root>'
+./skills/prd/scripts/Sync-ScreenshotManifest.ps1 -KnowledgeRoot '<workspace-root>/Knowledge' -ManifestPath 'manifests/POS/screens.json'
+./skills/prd/scripts/Test-ScreenshotManifest.ps1 -KnowledgeRoot '<workspace-root>/Knowledge' -ManifestPath 'manifests/POS/screens.json'
 ```
 
-校验 manifest、截图文件和图片尺寸：
+## 校验
 
 ```powershell
-.\skills\prd\scripts\Test-ScreenshotManifest.ps1 `
-  -KnowledgeRoot "<workspace-root>\Knowledge" `
-  -ManifestPath "manifests\POS\screens.json"
+./skills/prd/tests/Test-DesignGovernance.ps1
+./skills/prd/scripts/Test-DesignGovernance.ps1 -ManifestPath '<输出目录>/03-html-design-manifest.json' -PrototypeSpecPath '<输出目录>/04-low-fidelity-prototype-spec.json' -Phase postwrite
 ```
 
-修改仓库中的 skill 后，需要重新运行安装脚本，并新开一个 Codex 任务使新规则生效：
-
-```powershell
-.\scripts\install-skill.ps1 -SkillName prd
-```
-
-## 推荐安装方式
-
-在 PowerShell 中执行：
-
-```powershell
-iwr -UseB https://raw.githubusercontent.com/FreeGoStudio/Requirement-AI-Toolkit/main/scripts/install-from-git.ps1 | iex
-```
-
-脚本会自动：
-
-- 从 GitHub 下载或更新仓库到临时目录。
-- 调用本仓库的通用本地安装脚本。
-- 安装 `prd` skill。
-- 如已有旧版本，默认先备份再安装。
-
-安装完成后，建议新开一个 Codex 线程测试：
-
-```text
-Use $prd.
-```
-
-或直接说：
-
-```text
-使用产品需求工具
-```
-
-## 指定 Git 地址或分支
-
-如果使用 fork 或私有仓库，可以先下载脚本再传参数：
-
-```powershell
-$script = "$env:TEMP\install-requirement-ai-toolkit.ps1"
-iwr -UseB https://raw.githubusercontent.com/FreeGoStudio/Requirement-AI-Toolkit/main/scripts/install-from-git.ps1 -OutFile $script
-powershell -ExecutionPolicy Bypass -File $script -RepoUrl "https://github.com/your-org/Requirement-AI-Toolkit.git" -Branch "main"
-```
-
-如果不想备份旧版本，直接覆盖安装：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File $script -NoBackup
-```
-
-## 本地安装方式
-
-如果已经 clone 了仓库，也可以直接运行：
-
-```powershell
-.\scripts\install-skill.ps1 -SkillName prd
-```
-
-默认安装到 `%USERPROFILE%\.codex\skills`。如设置了 `CODEX_HOME`，则安装到 `$env:CODEX_HOME\skills`。
+治理脚本检查路径、流程唯一性、更新策略、参考决策与高模资产批准；postwrite 验证登记文件确实存在。浏览器渲染、链接锚点、交互、响应式、打印以及真实资产复用另按 `skills/prd/references/html-output.md` 验证。静态检查通过不等于最终验收。

@@ -83,11 +83,11 @@
 }
 ```
 
-缺少来源的关键区域不得进入 Figma 调用。
+缺少来源的关键区域不得进入 HTML 生成。
 
 ## 6. 结构一致性 Gate
 
-低模生成后必须使用 Figma 截图能力捕获完整 frame，与 `InterfaceBaseline` 对照并保存 `05-low-fidelity-structure-review.md`。逐项检查：
+低模生成后必须使用 浏览器截图能力捕获完整页面，与 `InterfaceBaseline` 对照并保存 `05-low-fidelity-structure-review.html`。逐项检查：
 
 - 画布尺寸和比例。
 - 全局壳层与固定导航。
@@ -96,20 +96,11 @@
 - 信息密度与组件分组。
 - 所有 `mustPreserve`。
 - 所有关键区域的来源追踪。
-- 当前业务流程只占用一个 `10 LF · <流程名>` Page，且 `flowId + fidelity` 唯一。
-- `00 Flow Overview`、`10 Main Flow`、`20 Exception Flows`、`30 Empty & Error States`、`40 Interaction Notes` 等标准 Section 完整或明确标记不适用。
+- 当前业务流程只占用一个 `prototypes/low/<flowId>.html` 正式入口，且 `flowId + fidelity` 唯一。
+- 流程概览、主流程、异常、空错状态与交互说明 完整或明确标记不适用。
 
 每项标记 `pass | fail | not-applicable` 并附证据。任一关键项或 `mustPreserve` 失败时，修正低模并重新截图检查；通过前不得进入低模用户确认、PRD 或高模阶段。
 
 ## 7. 高保真设计治理反查
 
-高模截图检查除视觉层级、信息密度和状态覆盖外，还必须结合 Figma 节点数据与 `03-figma-design-manifest.json` 检查：
-
-- `20 HF · <流程名>` 与低模共享同一 `flowId`，且各自 Page 唯一。
-- Flow Page 使用已批准 Component、Pattern 和 View Template 的实例。
-- 颜色、字体、圆角和阴影绑定已批准 semantic token。
-- `rawStyleCount=0`、`unexplainedDetachedInstanceCount=0`、`unregisteredLocalComponentCount=0`。
-- 本次新增资产的创建与批准发生在业务 Flow 实例之前。
-- 截图中的组件状态与 `PrototypeSpec.designSystemDependency`、`assetResolution` 一致。
-
-将结果保存到 `13-high-fidelity-review.md`。任一关键项失败时，修复、重新截图并重新运行 `scripts/Test-DesignGovernance.ps1`；通过前不得标记高模完成。
+结合 HTML/CSS/JavaScript 源文件、浏览器 DOM 和 `03-html-design-manifest.json` 检查低高模 flowId/screenId 映射、已批准资产的实际引用、语义 token 和交互状态。执行 design-governance.md 的代码与截图审计，保存 `13-high-fidelity-review.html`；失败时修复、重新操作与截图，通过前不标记完成。
