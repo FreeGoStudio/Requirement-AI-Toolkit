@@ -1,115 +1,54 @@
 ---
 name: prd
-description: "中文产品需求工具。用户调用 $prd，或提到产品需求创建、需求澄清、PRD、BDD、流程图、低保真、高保真或 Figma 原型时使用。将原始需求转为经确认的业务模型、需求产物和受 Design System 约束的 Figma 原型。"
+description: "中文产品需求工具。用户调用 $prd，或需要需求澄清、PRD、BDD、流程图、低保真或高保真 HTML 原型时使用。将原始需求转为经确认的业务模型、可浏览的 HTML 需求文档与交互原型。"
 ---
 
-# PRD Skill
+# 产品需求与 HTML 原型
 
-## Purpose
+用中文开展需求澄清、业务收敛和评审，直接写出可在浏览器打开的 HTML 文档与低/高保真原型。代码标识和 Mermaid/Gherkin 语法可保留英文。
 
-把原始产品需求转化为业务模型、中文 PRD、Mermaid 流程图、中文 BDD，以及经过结构与设计治理检查的 Figma 低/高保真原型。
+## 核心规则
 
-所有面向用户的自然语言回复必须使用中文。代码标识、文件名、JSON 字段名、工具名和 Mermaid/Gherkin 语法可以保留英文。
+- 以用户原始需求及明确确认作为业务依据，不虚构 API、数据库字段、发布计划或业务规则。开放问题显式保留。
+- 任务开始读取 `references/output-artifacts.md`，复用同一输出目录；仅创建已到达阶段的文件。
+- 进入原型阶段时读取 `references/html-output.md`、`references/design-governance.md`、`references/prototype-spec.md`。直接生成本地 HTML/CSS/JavaScript，不依赖设计平台账号、插件或远程设计服务。
+- 按以下评审节点推进，已有明确确认可沿用。前置业务确认不足时保存已完成产物并等待，不假定通过。
+- 区分文件生成、自动校验、浏览器实际验证和用户验收。无浏览器能力时保存可执行产物并标记待验证，不虚报截图或交互通过，不推进依赖该检查的评审。
 
-## Core Rules
+## 1. 原始需求接收
 
-- 按 gate 推进；未获得当前阶段要求的明确确认，不得进入下一主要阶段。
-- Hard stop 后立即停止，不得补充假设、生成下游产物或调用 Figma。
-- 不得虚构 Figma 文件、Page、Frame、组件、截图或工具结果。
-- 每阶段产物必须落盘。任务开始先读 `references/output-artifacts.md`，阶段回复列出输出目录和本阶段文件。
-- Figma Design File 是产品设计隔离边界。Folder/Project 只组织文件，不是 Page 或设计资产的隔离边界。
-- 任何 Figma 阶段都必须读取 `references/design-governance.md`、`references/prototype-spec.md` 和 `references/figwright.md`。
-- 只使用 Figwright 的 `mcp__figwright__*` 工具；不得回退到其他 Figma 插件、connector 或 app。
+复述目标、受众、角色、产品端形态和未解决假设。提出对象、状态、权限、异常、数据来源与成功标准等必要问题，保存 `00-raw-requirement.html` 和 `01-clarification-questions.html`，等待回答。
 
-## Workflow
+## 2. 业务收敛
 
-### 1. 原始需求接收
+将回答整理为对象、关系、状态流转、主流程、异常和风险，保存 `02-business-model.html`，要求用户确认。确认前不生成业务原型。
 
-- 复述目标、受众、角色、产品端形态和未解决假设。
-- 提出业务规则、对象、状态、权限、异常、数据来源和成功标准的澄清问题。
-- 保存 `00-raw-requirement.md` 和 `01-clarification-questions.md`，等待回答。
+## 3. 低保真原型
 
-### 2. 业务收敛
+- 读取 `references/screenshot-knowledge-workflow.md` 与 `references/knowledge-bases.json`，检查既有原型及参考来源。
+- 保存 `02-reference-decision.html`。无参考时请用户提供参考或明确确认无参考继续；决策 pending 时不生成低模。
+- 实际查看入选截图，保存 `03-interface-baseline.json`；无参考获准继续时标记低置信度及需求来源，不伪造截图。
+- 扫描已有输出，建立或更新 `03-html-design-manifest.json`，按稳定 `flowId + fidelity` 定位唯一入口。
+- 保存 `04-low-fidelity-prototype-spec.json`，通过 preflight 校验后写入 `prototypes/low/<flowId>.html`。灰阶表达结构，使用模拟数据演示已确认的主流程、异常和状态。
 
-- 将回答整理为业务对象、关系、状态流转、主流程、异常流程和开放风险。
-- 保存 `02-business-model.md`，要求用户明确确认。
-- 未确认前不得调用 Figma。
+## 4. 低保真反查
 
-### 3. 低保真原型
+在浏览器打开原型，实际操作并截图，对照界面基线检查壳层、导航、内容区、弹窗、信息密度、mustPreserve 与来源追踪。运行 postwrite 校验，保存 `05-low-fidelity-structure-review.html`。关键问题修正并复查后请求用户确认。
 
-- 读取 `references/screenshot-knowledge-workflow.md` 和 `references/knowledge-bases.json`，执行原型参考 gate。
-- 参考决策为 `pending` 时只保存 `02-reference-decision.md` 并 hard stop。
-- 只从 `<workspace-root>/Knowledge` 解析知识库；实际打开入选截图并生成 `03-interface-baseline.json`。
-- 执行 Figma 只读 preflight，确认目标 Design File，扫描 Page、资产和 `flowId + fidelity`。
-- 创建或更新 `03-figma-design-manifest.json`。缺少四个标准基础 Page 时，在已获准的原型阶段自动初始化；重复 Page 时 hard stop。
-- 旧文件存在 `Design System + Views` 时只生成迁移计划；用户确认前不得移动、复制、重命名或删除资产。
-- 保存并校验 `04-low-fidelity-prototype-spec.json`，再创建或更新唯一的 `10 LF · <流程名>` Page。
+## 5. 需求文档
 
-### 4. 低保真反查
+低模确认后读取 `references/prd-template.md` 和 `references/bdd-template.md`，生成 `06-prd.html`、`07-flowchart.html` 和 `08-bdd.html`。同时保留 `07-flowchart.mmd` 与带中文语言声明的 `08-bdd.feature` 作为可编辑源文件。需求规则链接到原型对应 screen/state 锚点；流程图须实际可见，不能仅显示源码。用户批准 PRD/BDD 后进入高保真准备。
 
-- 截取完整 Frame，按 `InterfaceBaseline` 检查壳层、区域关系、信息密度、业务状态和来源追踪。
-- 同时检查流程 Page 唯一性、Section 结构及低高模 `flowId` 映射。
-- 保存 `05-low-fidelity-structure-review.md`；关键失败项修复并复查通过后，才请求用户确认。
+## 6. 视觉方向与设计系统
 
-### 5. 需求产物
+低模只作结构参考。已有经批准设计系统时复用；有品牌或高模参考时据此建立 CSS token、组件、组合与模板，并在 `design-system/index.html` 展示与评审。无视觉来源时保存 `09-visual-direction-spec.json`，默认生成三套可浏览候选 `visual-directions/index.html`，截图并保存 `10-visual-direction-review.html`，等待选择。选择后固化设计系统，保存 `11-design-system-review.html`，用户明确确认后才能标记 approved。
 
-- 低模确认后读取 `references/prd-template.md` 和 `references/bdd-template.md`。
-- 保存 `06-prd.md`、`07-flowchart.mmd` 和 `08-bdd.feature`。
-- 用户批准 PRD/BDD 后才进入高保真。
+## 7. 高保真原型
 
-### 6. 视觉方向与 Design System
+保存 `12-high-fidelity-prototype-spec.json`，先登记并批准新增设计资产，再在 `prototypes/high/<flowId>.html` 使用共享样式/组件。保留低模相同 flowId 与 screenId。运行治理校验，检查实际代码依赖、浏览器渲染、响应式、键盘操作与业务状态，保存 `13-high-fidelity-review.html`。失败项修复并复查后请求最终验收。
 
-- 低模只能作为流程/结构参考，不是高模视觉来源。
-- 检查截图、品牌规范、既有高模和已批准 Design System。
-- 已有 Approved Design System 时执行资产解析；缺少 Design System 资产时，先在对应基础 Page 创建并登记，业务 Page 不得先行创建。
-- 有视觉参考但没有 Approved Design System 时，基于参考固化 Token、组件、Pattern 和 View Template，截图后要求用户确认。
-- 没有视觉参考时，保存 `09-visual-direction-spec.json`，在临时 `00 Visual Directions · <时间>` Page 默认生成三套方向并保存 `10-visual-direction-review.md`。
-- 用户选择或组合方向后，将结果固化到四个基础 Page，保存 `11-design-system-review.md` 并要求明确确认。
-- Design System 未确认为 `approved` 时 hard stop；不得用“接受风险”绕过。
-- 确认后将候选 Page 重命名为 `90 Archive · Visual Directions · <时间>`。
+## 阻塞与恢复
 
-### 7. 高保真原型与审计
+业务确认或参考决策未完成、入选截图未查看、同一流程存在重复正式入口、规格校验失败、设计系统未批准时，不进入对应下游阶段。保存实际错误和待验收项到 `index.html`。恢复时读取原始需求、最新确认和实际文件，不用摘要代替需求，不以重试为由生成重复原型。
 
-- 保存并校验 `12-high-fidelity-prototype-spec.json`。
-- 每个新增 Token、组件、Pattern、页面组合必须先在 Design System 登记为 `approved`，再由 `20 HF · <流程名>` 使用实例和场景 override。
-- 禁止未登记本地组件、未解释的 raw style 和 detached instance。
-- 截图并执行结构与设计系统一致性审计，保存 `13-high-fidelity-review.md`。
-- 审计失败时修复并复查，不得标记高模完成。
-
-## Gates
-
-必须获得明确确认：
-
-- 业务模型确认后才能生成低模。
-- 无低模参考时，用户提供参考或明确确认无参考继续。
-- 旧 Figma 文件迁移计划确认后才能移动既有资产。
-- 低模反查确认后才能生成 PRD/BDD。
-- PRD/BDD 批准后才能进入高模。
-- 视觉方向选择后才能固化 Design System。
-- Design System 明确确认后才能生成业务高模。
-
-## Hard Stops
-
-- 澄清问题、业务模型或前置评审未确认。
-- 参考 gate 为 `pending`，或知识库截图未实际检查。
-- Figwright 工具未暴露、`ping` 未确认插件连接、阶段所需读写工具或截图能力不可用。
-- 目标 Design File 身份不明确。
-- 标准基础 Page 重复，或同一 `flowId + fidelity` 存在多个正式 Page。
-- 旧结构迁移待确认。
-- `PrototypeSpec` 或 `03-figma-design-manifest.json` 未通过治理校验。
-- Design System 未批准，或高模依赖未批准/未登记资产。
-- 结构审计或高模一致性审计存在未修复关键失败。
-
-## Reference Loading
-
-- 所有阶段：`references/output-artifacts.md`。
-- 所有 Figma 阶段：`references/design-governance.md`、`references/prototype-spec.md`、`references/figwright.md`。
-- 低模：`references/screenshot-knowledge-workflow.md`、`references/knowledge-bases.json`。
-- PRD/BDD：`references/prd-template.md`、`references/bdd-template.md`。
-
-## Output Standards
-
-- 产品产物应足以评审，但不得虚构后端 API、埋点、发布计划或数据库字段。
-- 开放问题必须显式保留，不得静默解决高风险假设。
-- Figma 调用失败时保存准备发送的规格和失败类型，不得模拟成功。
-- 每个阶段回复必须说明当前阶段、下一 gate、绝对输出目录和本阶段文件。
+每阶段回复给出当前阶段、下一确认点、绝对输出目录和本阶段文件链接。

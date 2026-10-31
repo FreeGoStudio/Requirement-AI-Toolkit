@@ -1,228 +1,98 @@
 param(
-  [Parameter(Mandatory = $true)]
-  [string]$ManifestPath,
-
+  [Parameter(Mandatory = $true)][string]$ManifestPath,
   [string]$PrototypeSpecPath,
-
-  [ValidateSet("preflight", "postwrite")]
-  [string]$Phase = "preflight"
+  [ValidateSet('preflight', 'postwrite')][string]$Phase = 'preflight'
 )
-
-$ErrorActionPreference = "Stop"
-
-function Read-JsonFile {
-  param([string]$Path, [string]$Label)
-  if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
-    throw "$Label not found: $Path"
-  }
-  try {
-    return Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json
-  } catch {
-    throw "$Label is not valid JSON: $Path. $($_.Exception.Message)"
-  }
+$ErrorActionPreference = 'Stop'
+function Require($Condition, [string]$Message) {
+  if (-not $Condition) { throw "HTML governance: $Message" }
 }
-
-function Test-NonEmptyString {
-  param($Value)
-  return $null -ne $Value -and $Value -is [string] -and -not [string]::IsNullOrWhiteSpace($Value)
+function Read-Json([string]$Path) {
+  Require (Test-Path -LiteralPath $Path -PathType Leaf) "Missing JSON: $Path"
+  Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json
 }
-
-function Add-RequiredStringError {
-  param([System.Collections.Generic.List[string]]$Errors, [string]$Path, $Value)
-  if (-not (Test-NonEmptyString $Value)) {
-    $Errors.Add("Missing required string: $Path")
-  }
+function Has-Text($Value) { return $Value -is [string] -and -not [string]::IsNullOrWhiteSpace($Value) }
+$manifest = Read-Json $ManifestPath
+$root = Split-Path -Parent ([IO.Path]::GetFullPath($ManifestPath))
+function Check-Path($Path, [bool]$MustExist) {
+  Require (Has-Text $Path) 'Missing relative file path'
+  Require ($Path -notmatch '[:\\?#]' -and -not [IO.Path]::IsPathRooted($Path)) "Not a portable relative path: $Path"
+  Require ($Path.Split('/') -notcontains '..' -and $Path.Split('/') -notcontains '.' -and $Path.Split('/') -notcontains '') "Non-canonical path: $Path"
+  $full = [IO.Path]::GetFullPath((Join-Path $root $Path))
+  Require ($full.StartsWith($root + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) "Path outside output directory: $Path"
+  if ($MustExist) { Require (Test-Path -LiteralPath $full -PathType Leaf) "Missing output file: $Path" }
 }
-
-function Get-ApprovedIds {
-  param($Items, [string]$IdProperty)
-  $set = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-  foreach ($item in @($Items)) {
-    if ($item.status -eq "approved" -and (Test-NonEmptyString $item.$IdProperty)) {
-      [void]$set.Add([string]$item.$IdProperty)
-    }
-  }
-  return $set
+Require ($manifest.schemaVersion -eq 1) 'Unsupported schemaVersion'
+Require (Has-Text $manifest.productDomain) 'Missing productDomain'
+Require ($manifest.designSystem.status -in @('absent', 'candidate', 'approved')) 'Invalid design system status'
+$assetMap = @{}
+foreach ($asset in @($manifest.designSystem.assets)) {
+  Require (Has-Text $asset.id) 'Missing asset id'
+  Require (-not $assetMap.ContainsKey($asset.id)) "Duplicate asset: $($asset.id)"
+  Require ($asset.type -in @('tokens', 'component', 'pattern', 'view-template')) 'Invalid asset type'
+  Require ($asset.status -in @('candidate', 'approved', 'deprecated')) 'Invalid asset status'
+  Require (Has-Text $asset.selector) 'Missing asset selector'
+  Check-Path $asset.path ($Phase -eq 'postwrite')
+  $assetMap[$asset.id] = $asset
 }
-
-$manifest = Read-JsonFile -Path $ManifestPath -Label "FigmaDesignManifest"
-$errors = [System.Collections.Generic.List[string]]::new()
-
-Add-RequiredStringError $errors "designFile.fileId" $manifest.designFile.fileId
-Add-RequiredStringError $errors "designFile.fileName" $manifest.designFile.fileName
-Add-RequiredStringError $errors "designFile.productDomain" $manifest.designFile.productDomain
-
-$pageFields = @(
-  "foundationsPageId",
-  "componentsPageId",
-  "patternsPageId",
-  "viewTemplatesPageId"
-)
-$pageIds = [System.Collections.Generic.List[string]]::new()
-foreach ($field in $pageFields) {
-  $value = $manifest.pageRegistry.$field
-  Add-RequiredStringError $errors "pageRegistry.$field" $value
-  if (Test-NonEmptyString $value) { $pageIds.Add([string]$value) }
-}
-if (($pageIds | Select-Object -Unique).Count -ne $pageIds.Count) {
-  $errors.Add("Standard foundation page IDs must be unique")
-}
-
-$validDesignSystemStatuses = @("absent", "initialized", "candidate", "approved")
-if ($manifest.designSystem.status -notin $validDesignSystemStatuses) {
-  $errors.Add("Invalid designSystem.status: $($manifest.designSystem.status)")
-}
-
-$flowIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-$flowPageIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+$flowMap = @{}
+$paths = @{}
 foreach ($flow in @($manifest.flows)) {
-  if (-not (Test-NonEmptyString $flow.flowId)) {
-    $errors.Add("Every flow requires flowId")
-    continue
-  }
-  if (-not $flowIds.Add([string]$flow.flowId)) {
-    $errors.Add("Duplicate flowId: $($flow.flowId)")
-  }
-  foreach ($pair in @(
-    @{ fidelity = "low"; value = $flow.pages.lowFidelityPageId },
-    @{ fidelity = "high"; value = $flow.pages.highFidelityPageId }
-  )) {
-    if (Test-NonEmptyString $pair.value) {
-      $key = "$($flow.flowId)|$($pair.fidelity)"
-      if (-not $flowPageIds.Add([string]$pair.value)) {
-        $errors.Add("A Flow Page ID is reused by multiple flow/fidelity entries: $($pair.value)")
-      }
-      if ($pageIds -contains $pair.value) {
-        $errors.Add("Flow Page cannot reuse a standard foundation Page ID: $key")
-      }
+  Require ($flow.flowId -cmatch '^[a-z0-9]+(?:-[a-z0-9]+)*$') 'Invalid flowId'
+  Require (Has-Text $flow.flowName) 'Missing flowName'
+  Require (-not $flowMap.ContainsKey($flow.flowId)) "Duplicate flowId: $($flow.flowId)"
+  $flowMap[$flow.flowId] = $flow
+  foreach ($fidelity in @('low', 'high')) {
+    $path = $flow.entries.$fidelity
+    if (Has-Text $path) {
+      Check-Path $path ($Phase -eq 'postwrite')
+      Require ($path -ceq "prototypes/$fidelity/$($flow.flowId).html") "Unexpected flow entry: $path"
+      Require (-not $paths.ContainsKey($path)) "Duplicate entry: $path"
+      $paths[$path] = $true
     }
   }
 }
-
-$validMigrationStatuses = @("not-applicable", "pending-confirmation", "approved", "complete")
-if ($manifest.legacyMigration.status -notin $validMigrationStatuses) {
-  $errors.Add("Invalid legacyMigration.status: $($manifest.legacyMigration.status)")
-}
-if ($manifest.legacyMigration.status -eq "pending-confirmation") {
-  foreach ($move in @($manifest.legacyMigration.moves)) {
-    if ($move.executed -eq $true) {
-      $errors.Add("Legacy migration move executed before confirmation: $($move.sourceNodeId)")
+if (Has-Text $PrototypeSpecPath) {
+  $spec = Read-Json $PrototypeSpecPath
+  $id = $spec.flowIdentity.flowId
+  $fidelity = $spec.flowIdentity.fidelity
+  Require ($id -cmatch '^[a-z0-9]+(?:-[a-z0-9]+)*$') 'Invalid spec flowId'
+  Require (Has-Text $spec.flowIdentity.flowName) 'Missing spec flowName'
+  Require (Has-Text $spec.flowIdentity.objective) 'Missing flow objective'
+  Require ($fidelity -in @('low', 'high') -and $spec.mode -eq "$fidelity-fidelity") 'Mode/fidelity mismatch'
+  Require ($spec.productDomain -eq $manifest.productDomain) 'Product domain mismatch'
+  Require ($spec.flowIdentity.changeType -in @('new-flow', 'fix', 'iteration', 'redesign')) 'Invalid changeType'
+  Require ($spec.prototypeReferenceGate.userDecision -in @('provided-reference', 'use-existing-prototype', 'continue-without-reference')) 'Reference decision pending or invalid'
+  Check-Path $spec.prototypeReferenceGate.evidence ($Phase -eq 'postwrite')
+  $path = $spec.htmlStrategy.entryPath
+  Check-Path $path ($Phase -eq 'postwrite')
+  Require ($path -ceq "prototypes/$fidelity/$id.html") 'Entry does not match flow/fidelity'
+  $existing = if ($flowMap.ContainsKey($id)) { $flowMap[$id].entries.$fidelity } else { $null }
+  $action = $spec.htmlStrategy.action
+  Require ($action -in @('create', 'update')) 'Invalid HTML action'
+  if ($spec.flowIdentity.changeType -in @('fix', 'iteration')) { Require ($action -eq 'update') 'Fix/iteration must update existing entry' }
+  if ($action -eq 'update' -or $Phase -eq 'postwrite') {
+    Require ((Has-Text $existing) -and $existing -ceq $path) 'Entry must match manifest'
+  } elseif ($action -eq 'create') {
+    Require (-not (Has-Text $existing)) 'Create would duplicate flow/fidelity'
+    Require (-not (Test-Path -LiteralPath (Join-Path $root $path))) 'Unregistered existing file would be overwritten'
+  }
+  Require (@($spec.screens).Count -gt 0) 'At least one screen is required'
+  $screens = @{}
+  foreach ($screen in @($spec.screens)) {
+    Require (Has-Text $screen.screenId) 'Missing screenId'
+    Require (-not $screens.ContainsKey($screen.screenId)) 'Duplicate screenId'
+    Require (@($screen.states).Count -gt 0) 'Screen requires states'
+    $screens[$screen.screenId] = $true
+  }
+  if ($fidelity -eq 'high') {
+    Require ($manifest.designSystem.status -eq 'approved' -and $spec.designSystemDependency.status -eq 'approved') 'High fidelity requires approved design system'
+    $types = @()
+    foreach ($assetId in @($spec.designSystemDependency.assetIds)) {
+      Require ($assetMap.ContainsKey($assetId) -and $assetMap[$assetId].status -eq 'approved') "Unapproved asset dependency: $assetId"
+      $types += $assetMap[$assetId].type
     }
+    Require ($types -contains 'tokens' -and $types -contains 'component') 'High fidelity requires tokens and component dependencies'
   }
 }
-
-if (Test-NonEmptyString $PrototypeSpecPath) {
-  $spec = Read-JsonFile -Path $PrototypeSpecPath -Label "PrototypeSpec"
-  Add-RequiredStringError $errors "flowIdentity.flowId" $spec.flowIdentity.flowId
-  Add-RequiredStringError $errors "flowIdentity.flowName" $spec.flowIdentity.flowName
-  Add-RequiredStringError $errors "flowIdentity.objective" $spec.flowIdentity.objective
-  Add-RequiredStringError $errors "figmaPageStrategy.pageName" $spec.figmaPageStrategy.pageName
-
-  $expectedFidelity = if ($spec.mode -eq "low-fidelity") { "low" } elseif ($spec.mode -eq "high-fidelity") { "high" } else { "" }
-  if (-not $expectedFidelity) { $errors.Add("Invalid mode: $($spec.mode)") }
-  if ($spec.flowIdentity.fidelity -ne $expectedFidelity) {
-    $errors.Add("flowIdentity.fidelity must match mode")
-  }
-  if ($spec.flowIdentity.changeType -notin @("new-flow", "fix", "iteration", "redesign")) {
-    $errors.Add("Invalid flowIdentity.changeType: $($spec.flowIdentity.changeType)")
-  }
-  if ($spec.designFile.fileId -ne $manifest.designFile.fileId) {
-    $errors.Add("PrototypeSpec designFile.fileId does not match manifest")
-  }
-
-  $manifestFlow = @($manifest.flows) | Where-Object { $_.flowId -eq $spec.flowIdentity.flowId } | Select-Object -First 1
-  $expectedPageId = if ($expectedFidelity -eq "low") { $manifestFlow.pages.lowFidelityPageId } else { $manifestFlow.pages.highFidelityPageId }
-  $action = $spec.figmaPageStrategy.action
-  if ($action -notin @("create-new-page", "update-existing-page", "archive-and-create-replacement")) {
-    $errors.Add("Invalid figmaPageStrategy.action: $action")
-  }
-  if ($spec.flowIdentity.changeType -in @("fix", "iteration") -and $action -ne "update-existing-page") {
-    $errors.Add("fix/iteration must use update-existing-page")
-  }
-  if ($action -eq "update-existing-page") {
-    Add-RequiredStringError $errors "figmaPageStrategy.targetPageId" $spec.figmaPageStrategy.targetPageId
-    if ((Test-NonEmptyString $expectedPageId) -and $spec.figmaPageStrategy.targetPageId -ne $expectedPageId) {
-      $errors.Add("update-existing-page targetPageId does not match manifest")
-    }
-  }
-  if ($action -eq "create-new-page" -and $Phase -eq "preflight" -and (Test-NonEmptyString $expectedPageId)) {
-    $errors.Add("create-new-page would duplicate an existing flowId + fidelity Page")
-  }
-  if ($action -eq "create-new-page" -and $Phase -eq "postwrite") {
-    Add-RequiredStringError $errors "figmaPageStrategy.targetPageId after write" $spec.figmaPageStrategy.targetPageId
-    if ($spec.figmaPageStrategy.targetPageId -ne $expectedPageId) {
-      $errors.Add("Created Page ID does not match manifest after write")
-    }
-  }
-  if ($action -eq "archive-and-create-replacement" -and $spec.flowIdentity.changeType -ne "redesign") {
-    $errors.Add("archive-and-create-replacement requires changeType=redesign")
-  }
-  if ($action -eq "archive-and-create-replacement") {
-    Add-RequiredStringError $errors "figmaPageStrategy.targetPageId" $spec.figmaPageStrategy.targetPageId
-    if ((Test-NonEmptyString $expectedPageId) -and $spec.figmaPageStrategy.targetPageId -ne $expectedPageId) {
-      $errors.Add("Archived targetPageId does not match manifest")
-    }
-  }
-
-  if ($spec.mode -eq "high-fidelity") {
-    if ($manifest.designSystem.status -ne "approved") {
-      $errors.Add("High fidelity requires designSystem.status=approved")
-    }
-    if ($spec.designSystemDependency.status -ne "approved") {
-      $errors.Add("High fidelity requires designSystemDependency.status=approved")
-    }
-
-    $approved = @{
-      token = Get-ApprovedIds $manifest.designSystem.tokenCollections "collectionId"
-      component = Get-ApprovedIds $manifest.designSystem.components "componentId"
-      pattern = Get-ApprovedIds $manifest.designSystem.patterns "patternId"
-      view = Get-ApprovedIds $manifest.designSystem.viewTemplates "viewTemplateId"
-    }
-    foreach ($id in @($spec.designSystemDependency.tokenCollectionIds)) {
-      if (-not $approved.token.Contains([string]$id)) { $errors.Add("Unapproved token collection dependency: $id") }
-    }
-    foreach ($id in @($spec.designSystemDependency.componentIds)) {
-      if (-not $approved.component.Contains([string]$id)) { $errors.Add("Unapproved component dependency: $id") }
-    }
-    foreach ($id in @($spec.designSystemDependency.patternIds)) {
-      if (-not $approved.pattern.Contains([string]$id)) { $errors.Add("Unapproved pattern dependency: $id") }
-    }
-    foreach ($id in @($spec.designSystemDependency.viewTemplateIds)) {
-      if (-not $approved.view.Contains([string]$id)) { $errors.Add("Unapproved view template dependency: $id") }
-    }
-    foreach ($asset in @($spec.assetResolution)) {
-      if ($asset.status -ne "approved") { $errors.Add("Asset resolution is not approved: $($asset.assetId)") }
-      if ($asset.createdBeforeFlowInstance -ne $true) { $errors.Add("Asset was not created before Flow instance: $($asset.assetId)") }
-      $expectedTarget = switch ($asset.assetType) {
-        "token-collection" { $manifest.pageRegistry.foundationsPageId }
-        "component" { $manifest.pageRegistry.componentsPageId }
-        "pattern" { $manifest.pageRegistry.patternsPageId }
-        "view-template" { $manifest.pageRegistry.viewTemplatesPageId }
-        default { $null }
-      }
-      if (-not $expectedTarget) { $errors.Add("Invalid assetType: $($asset.assetType)") }
-      elseif ($asset.targetPageId -ne $expectedTarget) { $errors.Add("Asset target Page mismatch: $($asset.assetId)") }
-      $approvedSet = switch ($asset.assetType) {
-        "token-collection" { $approved.token }
-        "component" { $approved.component }
-        "pattern" { $approved.pattern }
-        "view-template" { $approved.view }
-        default { $null }
-      }
-      if ($approvedSet -and -not $approvedSet.Contains([string]$asset.assetId)) {
-        $errors.Add("Asset resolution is not registered as approved: $($asset.assetId)")
-      }
-    }
-    foreach ($counter in @("rawStyleCount", "unexplainedDetachedInstanceCount", "unregisteredLocalComponentCount")) {
-      if ($spec.conformanceRequirements.$counter -ne 0) {
-        $errors.Add("conformanceRequirements.$counter must be 0")
-      }
-    }
-  }
-}
-
-if ($errors.Count -gt 0) {
-  throw "Design governance validation failed:`n- $($errors -join "`n- ")"
-}
-
-Write-Output "Design governance validation passed."
+Write-Output 'HTML design governance validation passed (browser verification is separate).'

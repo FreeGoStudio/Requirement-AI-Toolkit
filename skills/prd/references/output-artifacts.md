@@ -1,94 +1,22 @@
-# 输出产物
+# HTML 输出产物
 
-每个阶段产物必须写入磁盘，不得只存在于聊天中。
+默认目录为 `<workspace-root>/outputs/product-requirements/<yyyyMMdd-HHmm>-<short-requirement-slug>/`，使用用户当地时间；slug 使用小写 ASCII、数字与连字符。用户指定目录时优先使用。后续阶段复用目录，不预建空白文件。
 
-## 输出目录
+| 阶段 | 产物 |
+| --- | --- |
+| 接收 | 00-raw-requirement.html、01-clarification-questions.html |
+| 收敛 | 02-business-model.html、02-reference-decision.html |
+| 低模 | 03-html-design-manifest.json、03-interface-baseline.json、04-low-fidelity-prototype-spec.json、prototypes/low/<flowId>.html |
+| 反查 | 05-low-fidelity-structure-review.html、screenshots/ |
+| 需求 | 06-prd.html、07-flowchart.html、07-flowchart.mmd、08-bdd.html、08-bdd.feature |
+| 方向（需要时） | 09-visual-direction-spec.json、visual-directions/index.html、10-visual-direction-review.html |
+| 设计系统 | design-system/index.html、design-system/tokens.css、design-system/components.css、design-system/components.js（需要交互组件时）、11-design-system-review.html |
+| 高模 | 12-high-fidelity-prototype-spec.json、prototypes/high/<flowId>.html、13-high-fidelity-review.html |
 
-用户未指定时使用：
+所有面向评审者的正文均为 UTF-8 HTML，JSON 与源文件作为辅助产物。`index.html` 是交付入口，随阶段更新当前状态、已生成文件的相对链接、确认记录、实际错误及待验收条件。只链接已存在文件，明确区分 generated、validated、browser-verified、accepted。
 
-```text
-outputs/product-requirements/<yyyyMMdd-HHmm>-<short-requirement-slug>/
-```
+原型按流程与保真度各保留一个正式入口，迭代更新原路径。旧任务续接时先读原文与确认记录，保留历史证据；建立当前 HTML 清单，不把旧格式产物当作已经生成的 HTML。
 
-- 时间使用本地时间。
-- slug 只使用 lowercase ASCII、数字和连字符；产品不明确时使用 `new-requirement`。
-- 同一需求任务复用同一目录。
-- 阶段回复提供绝对路径。
+`02-reference-decision.html` 记录既有原型检查、可复用参考、用户无参考继续的决定，以及高模采用的视觉来源或方向选择。用户截图可复制到 references/；Knowledge 截图保留绝对路径、screenId 与实际检查记录。
 
-## 新版产物
-
-按阶段创建，不得预建占位文件：
-
-```text
-00-raw-requirement.md
-01-clarification-questions.md
-02-business-model.md
-02-reference-decision.md
-03-figma-design-manifest.json
-03-interface-baseline.json
-04-low-fidelity-prototype-spec.json
-05-low-fidelity-structure-review.md
-06-prd.md
-07-flowchart.mmd
-08-bdd.feature
-09-visual-direction-spec.json
-10-visual-direction-review.md
-11-design-system-review.md
-12-high-fidelity-prototype-spec.json
-13-high-fidelity-review.md
-references/
-index.md
-```
-
-- `03-figma-design-manifest.json` 从首次 Figma preflight 起持续更新。
-- `09`、`10` 只在没有可靠高模视觉来源时创建。
-- `11-design-system-review.md` 在首次批准或后续资产扩展确认时创建/更新。
-- 高模只能使用 `12`、`13` 新编号。
-
-## 旧任务续接
-
-旧目录中的 `09-high-fidelity-prototype-spec.json` 和 `10-high-fidelity-review.md` 只作为 legacy 产物读取，不重命名、不覆盖。续接高模前必须：
-
-1. 只读重建 `03-figma-design-manifest.json`。
-2. 通过四 Page、Flow Page 和资产治理检查。
-3. 创建新版 `12-high-fidelity-prototype-spec.json`，不得直接复用旧规格调用 Figma。
-
-## References
-
-- 用户提供且可本地访问的截图复制到 `references/`；不可复制时在 `index.md` 记录 URL/标识符。
-- workspace `Knowledge` 截图不复制；在 `03-interface-baseline.json` 记录绝对路径、screen ID、选择理由和实际检查状态。
-
-## Reference Decision
-
-`02-reference-decision.md` 记录：
-
-- 既有 Figma 原型和视觉来源检查结果。
-- 用户提供的参考及允许复用的方面。
-- 低模无参考继续的明确决定。
-- 高模使用 Approved Design System、外部视觉来源或视觉方向候选的路径。
-- 高模不存在“无视觉参考接受风险直接继续”的状态。
-
-## Index
-
-`index.md` 必须同步记录当前阶段、Figma 状态、Design File、manifest 状态、当前 gate 和全部已创建产物。
-
-Figma 状态使用：
-
-```text
-not-started | unavailable | architecture-initialized | migration-pending |
-low-fidelity-created | visual-direction-pending | design-system-pending |
-design-system-approved | high-fidelity-created
-```
-
-## 回复要求
-
-每次完成阶段时列出：
-
-- 当前阶段和下一 gate。
-- Design File 与 Figma 状态（如适用）。
-- 绝对输出目录。
-- 本阶段创建或更新的文件。
-
-## Figma Failure
-
-preflight 或调用失败时仍保存已经允许生成的规格和 manifest，在 `index.md` 记录：工具未暴露、Figwright 插件/session 失败、截图能力缺失或治理校验失败。然后停止，不得模拟结果或回退到其他 Figma 工具。
+浏览器或截图能力缺失时可保存已授权文件和静态校验结果，将实际渲染与交互列为待验证；不得将其标记为通过，也不推进依赖该验收的下一阶段。

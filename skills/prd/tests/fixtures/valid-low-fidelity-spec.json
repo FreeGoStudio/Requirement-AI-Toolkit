@@ -1,21 +1,34 @@
 {
   "mode": "low-fidelity",
+  "productDomain": "demo",
   "flowIdentity": {
-    "flowId": "application-upgrade",
-    "flowName": "应用升级",
-    "objective": "完成应用升级并确认结果",
+    "flowId": "login",
+    "flowName": "登录",
+    "objective": "完成登录",
     "fidelity": "low",
-    "changeType": "fix"
+    "changeType": "iteration"
   },
-  "figmaPageStrategy": {
-    "action": "update-existing-page",
-    "pageName": "10 LF · 应用升级",
-    "targetPageId": "page-lf-upgrade",
-    "pairedPageId": "page-hf-upgrade",
-    "reason": "修复既有流程"
+  "htmlStrategy": {
+    "action": "update",
+    "entryPath": "prototypes/low/login.html"
   },
-  "designFile": {"fileId": "file-001", "fileName": "Trading Middleware", "manifestPath": "03-figma-design-manifest.json"},
-  "designSystemDependency": {"status": "not-applicable", "tokenCollectionIds": [], "componentIds": [], "patternIds": [], "viewTemplateIds": []},
-  "assetResolution": [],
-  "conformanceRequirements": {"rawStyleCount": 0, "unexplainedDetachedInstanceCount": 0, "unregisteredLocalComponentCount": 0}
+  "prototypeReferenceGate": {
+    "userDecision": "continue-without-reference",
+    "evidence": "02-reference-decision.html"
+  },
+  "designSystemDependency": {
+    "status": "not-applicable",
+    "assetIds": []
+  },
+  "screens": [
+    {
+      "screenId": "login-form",
+      "states": [
+        "idle",
+        "error",
+        "success"
+      ]
+    }
+  ],
+  "interactions": []
 }
