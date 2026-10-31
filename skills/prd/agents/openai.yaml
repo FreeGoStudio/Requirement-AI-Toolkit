@@ -1,6 +1,6 @@
 interface:
   display_name: "产品需求工具"
-  short_description: "从原始需求到可浏览的 HTML 需求文档、BDD 与交互原型评审"
-  default_prompt: "使用 $prd 将这个产品想法转化为澄清后的 HTML 需求文档、BDD 和 HTML 交互原型。用中文沟通。"
+  short_description: "按需求成熟度探索、比较与收敛，生成 HTML 需求文档和交互原型"
+  default_prompt: "使用 $prd 按这个需求的成熟度探索问题、比较必要的业务方案并确认范围，再生成 HTML 需求文档、BDD 和 HTML 交互原型。用中文沟通。"
 policy:
   allow_implicit_invocation: true
