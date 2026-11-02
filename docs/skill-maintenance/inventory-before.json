@@ -1,0 +1,591 @@
+{
+  "roots": [
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\skills",
+      "source": "user-codex",
+      "scope": "current-session",
+      "namespace": "",
+      "exists": true
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.agents\\skills",
+      "source": "user-agents",
+      "scope": "current-session",
+      "namespace": "",
+      "exists": true
+    },
+    {
+      "path": "D:\\workspace\\Requirement-AI-Toolkit\\.agents\\skills",
+      "source": "project-or-ancestor-candidate",
+      "scope": "current-session",
+      "namespace": "",
+      "required": false,
+      "exists": false
+    },
+    {
+      "path": "D:\\workspace\\Requirement-AI-Toolkit\\.codex\\skills",
+      "source": "project-or-ancestor-candidate",
+      "scope": "current-session",
+      "namespace": "",
+      "required": false,
+      "exists": false
+    },
+    {
+      "path": "D:\\workspace\\.agents\\skills",
+      "source": "project-or-ancestor-candidate",
+      "scope": "current-session",
+      "namespace": "",
+      "required": false,
+      "exists": false
+    },
+    {
+      "path": "D:\\workspace\\.codex\\skills",
+      "source": "project-or-ancestor-candidate",
+      "scope": "current-session",
+      "namespace": "",
+      "required": false,
+      "exists": false
+    },
+    {
+      "path": "D:\\.agents\\skills",
+      "source": "project-or-ancestor-candidate",
+      "scope": "current-session",
+      "namespace": "",
+      "required": false,
+      "exists": false
+    },
+    {
+      "path": "D:\\.codex\\skills",
+      "source": "project-or-ancestor-candidate",
+      "scope": "current-session",
+      "namespace": "",
+      "required": false,
+      "exists": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-bundled\\computer-use\\26.1027.30824\\skills",
+      "source": "plugin:openai-bundled/computer-use@26.1027.30824",
+      "scope": "current-session",
+      "namespace": "computer-use",
+      "exists": true
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-bundled\\visualize\\1.0.66\\skills",
+      "source": "plugin:openai-bundled/visualize@1.0.66",
+      "scope": "current-session",
+      "namespace": "visualize",
+      "exists": true
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\defense-factory\\0.1.1\\skills",
+      "source": "plugin:openai-curated-remote/defense-factory@0.1.1",
+      "scope": "current-session",
+      "namespace": "defense-factory",
+      "exists": true
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\pages\\0.1.26\\skills",
+      "source": "plugin:openai-curated-remote/pages@0.1.26",
+      "scope": "current-session",
+      "namespace": "pages",
+      "exists": true
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\sites\\1.1.2\\skills",
+      "source": "plugin:openai-curated-remote/sites@1.1.2",
+      "scope": "current-session",
+      "namespace": "sites",
+      "exists": true
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\work-pets\\0.1.6\\skills",
+      "source": "plugin:openai-curated-remote/work-pets@0.1.6",
+      "scope": "current-session",
+      "namespace": "work-pets",
+      "exists": true
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\plugin-management\\0.1.0\\skills",
+      "source": "plugin:openai-curated-remote/plugin-management@0.1.0",
+      "scope": "current-session",
+      "namespace": "plugin-management",
+      "exists": true
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\documents\\26.1026.10807\\skills",
+      "source": "plugin:openai-primary-runtime/documents@26.1026.10807",
+      "scope": "current-session",
+      "namespace": "documents",
+      "exists": true
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\pdf\\26.1026.10807\\skills",
+      "source": "plugin:openai-primary-runtime/pdf@26.1026.10807",
+      "scope": "current-session",
+      "namespace": "pdf",
+      "exists": true
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\presentations\\26.1026.10807\\skills",
+      "source": "plugin:openai-primary-runtime/presentations@26.1026.10807",
+      "scope": "current-session",
+      "namespace": "presentations",
+      "exists": true
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\spreadsheets\\26.1026.10807\\skills",
+      "source": "plugin:openai-primary-runtime/spreadsheets@26.1026.10807",
+      "scope": "current-session",
+      "namespace": "spreadsheets",
+      "exists": true
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\template-creator\\26.1026.10807\\skills",
+      "source": "plugin:openai-primary-runtime/template-creator@26.1026.10807",
+      "scope": "current-session",
+      "namespace": "template-creator",
+      "exists": true
+    }
+  ],
+  "entries": [
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\skills\\.system\\imagegen\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\skills\\.system\\imagegen\\SKILL.md",
+      "name": "imagegen",
+      "description": "Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas.",
+      "source": "user-codex",
+      "namespace": "",
+      "scope": "current-session",
+      "sha256": "706d4d96e1d5c9e6023fe3ccabba1bb34b364024d344fd25b8515ec7d28fe3c4",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\skills\\.system\\openai-docs\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\skills\\.system\\openai-docs\\SKILL.md",
+      "name": "openai-docs",
+      "description": "Use for Codex models/pricing, scheduled tasks, skills, settings, setup, troubleshooting, customization, automations, and self-knowledge—including 'you,' 'your,' 'this app,' or 'this coding agent' when they refer to Codex—and for OpenAI APIs/products and ChatGPT Work. Also use for model choice/migration, prompting, SDKs, Responses, Realtime, agents, evals, and Chat/Work/Codex comparisons. Do not use for generic app/software tasks that merely mention Codex.",
+      "source": "user-codex",
+      "namespace": "",
+      "scope": "current-session",
+      "sha256": "8ce8021101bcea594ff92ee6cfd8ca7641a49ee66d7bc6070555f1a33fc239d9",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\skills\\.system\\review-agent\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\skills\\.system\\review-agent\\SKILL.md",
+      "name": "review-agent",
+      "description": "Perform a read-only, defect-first review of a specified code change and return every actionable finding. Use when another agent delegates review of uncommitted changes, a base-branch diff, a commit, or custom review instructions.",
+      "source": "user-codex",
+      "namespace": "",
+      "scope": "current-session",
+      "sha256": "bb46315f6bc4b7051c05f807d19b1689b20418ac6c42590406d805c10fa2fd1a",
+      "sessionDiscovered": false,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\skills\\.system\\skill-creator\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\skills\\.system\\skill-creator\\SKILL.md",
+      "name": "skill-creator",
+      "description": "Create or update a Codex skill with appropriately scoped instructions and any needed supporting resources.",
+      "source": "user-codex",
+      "namespace": "",
+      "scope": "current-session",
+      "sha256": "cccd291077ec57c6f50ca6529f0f3fb93212da09473effb2fcec808e81b21288",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\skills\\.system\\skill-installer\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\skills\\.system\\skill-installer\\SKILL.md",
+      "name": "skill-installer",
+      "description": "Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos).",
+      "source": "user-codex",
+      "namespace": "",
+      "scope": "current-session",
+      "sha256": "2892d8b2fb11631132118f340aed80ae17e59d5a571fc2c4f4a4a7e73f139d52",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\skills\\csharp-concurrency-coach\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\skills\\csharp-concurrency-coach\\SKILL.md",
+      "name": "csharp-concurrency-coach",
+      "description": "Coach Chinese-speaking learners through persistent, hands-on C# and .NET concurrency study from language prerequisites to CLR internals and Windows diagnostics. Use for starting or continuing a learning plan, reviewing concurrency concepts, running bounded labs, assessing mastery, or learning from a C# concurrency bug; do not invoke for ordinary C# implementation that has no learning intent.",
+      "source": "user-codex",
+      "namespace": "",
+      "scope": "current-session",
+      "sha256": "0e46e660150f35cfb65b5def30a00f1391695e3ee6590954cab63e811e44bb70",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\skills\\english-learning-coach\\SKILL.md",
+      "resolvedPath": "D:\\workspace\\english-learning-skill\\SKILL.md",
+      "name": "english-learning-coach",
+      "description": "Coach a beginner adult through persistent, session-based American English foundation study with Chinese explanations, adaptive practice, crash recovery, and cross-day spaced review. Use when the user wants to start, continue, or review English learning, including foundation work toward future IELTS or TOEFL goals; do not claim exam scoring or mock-exam support in this version.",
+      "source": "user-codex",
+      "namespace": "",
+      "scope": "current-session",
+      "sha256": "762581cc599d86b06d22ea13d29dedfaa099bfe69378511e4a472179e650ddb1",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\skills\\fg-notes-model\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\skills\\fg-notes-model\\SKILL.md",
+      "name": "fg-notes-model",
+      "description": "记录、整理和持续维护用户自己的认知模型笔记；适用于保存原始想法、更新既有理解、检查反例边界并关联本地模型。不要用于普通事实查询、文章总结、资料摘抄或聊天归档。",
+      "source": "user-codex",
+      "namespace": "",
+      "scope": "current-session",
+      "sha256": "e37952837e7fdd7669a3ac4b2f2d31a3351a1e138328eb60506a622335430077",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\skills\\game-design-iteration\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\skills\\game-design-iteration\\SKILL.md",
+      "name": "game-design-iteration",
+      "description": "用中文协助游戏设计与周期开发迭代，建立项目设计罗盘、筛选玩法假设、推进原型与试玩验证、维护实验决策和周及四周复盘，并跨会话恢复进度。适用于开始或继续游戏迭代、规划玩法实验、整理试玩反馈、判断设计取舍和开发偏航；普通游戏代码修复且无设计迭代意图时不必使用。",
+      "source": "user-codex",
+      "namespace": "",
+      "scope": "current-session",
+      "sha256": "3bf27c99baf89554e05ce9d0ecdf294f888202bf2ec7c0efb0f17be7727c6f56",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\skills\\prd\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\skills\\prd\\SKILL.md",
+      "name": "prd",
+      "description": "中文产品需求工具。用户调用 $prd，或需要需求澄清、PRD、BDD、流程图、HTML 原型及其 GitLab 文档交付时使用。探索并收敛业务模型，生成可浏览文档与原型；按授权准备分支、预览和 MR，由产品经理确认需求与发布时机。",
+      "source": "user-codex",
+      "namespace": "",
+      "scope": "current-session",
+      "sha256": "21bd6f9028b9c9621fbe27368e8fd66cccc65562756acdc68e4459994a2b0c9b",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\skills\\prd-setup\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\skills\\prd-setup\\SKILL.md",
+      "name": "prd-setup",
+      "description": "在 Windows 上安装、检查或修复 prd 技能及本地 HTML 预览环境。适用于首次配置、换电脑和预览失败；业务需求与原型制作交给 prd。",
+      "source": "user-codex",
+      "namespace": "",
+      "scope": "current-session",
+      "sha256": "e93d276b1e834baab20c7134831f089068babbe5c6be28a574569795c1e317eb",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\skills\\product-requirement-prototyping\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\skills\\product-requirement-prototyping\\SKILL.md",
+      "name": "product-requirement-prototyping",
+      "description": "Turn raw product requirements into clarified business rules, converged business objects, state models, workflow checks, Chinese PRDs, Mermaid flowcharts, BDD acceptance scenarios, and Figma low/high fidelity prototypes. Use when Codex needs to support product managers creating requirements, generating clarification questions, calling figma-console-mcp through a Figma bridge plugin, reverse-checking prototypes, or producing review-ready product artifacts. 中文触发: 产品需求工具, 使用产品需求工具, 产品需求原型工具, 使用产品需求原型工具, 产品需求原型助手, 产品需求创建, 需求澄清, 低保真原型, 高保真原型, PRD, 流程图, BDD, Figma 原型.",
+      "source": "user-codex",
+      "namespace": "",
+      "scope": "current-session",
+      "sha256": "857d18d7436334ad2902d4c0ddcf6d63c2eb21cc10e95983d108d5017a4d098d",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\skills\\task-list-development\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\skills\\task-list-development\\SKILL.md",
+      "name": "task-list-development",
+      "description": "按授权任务清单追溯完整资料、核对相关架构和已有实现，按依赖推荐或推进开发、验证及本地提交，并从原文跨会话恢复。适用于清单驱动开发或下一任务推荐；普通问答、仅生成清单或无清单的简单修改不强制使用。",
+      "source": "user-codex",
+      "namespace": "",
+      "scope": "current-session",
+      "sha256": "e2b9246791242f14dfeca2b88b6d7ab857735773eadcd4d604b84940618c55d4",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\skills\\wbs\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\skills\\wbs\\SKILL.md",
+      "name": "wbs",
+      "description": "将已确认需求拆成中文业务工作包与可独立交付的实施任务，并维护编号、归属、依赖及已有规划。用户要求 WBS、任务拆分、任务分解、工作包或生成任务清单时使用；不用于按清单执行代码开发或仅编写 PRD。",
+      "source": "user-codex",
+      "namespace": "",
+      "scope": "current-session",
+      "sha256": "4fd1e1031bfc2c7e5866768490ec43da108e1ffc3b3277ed0f374c77c38156d8",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.agents\\skills\\figma-build\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.agents\\skills\\figma-build\\SKILL.md",
+      "name": "figma-build",
+      "description": "Build a Figma design from code or a description — the reverse of figma-codegen. Reuses the connected file's existing design system (components, variables, styles) instead of drawing primitives with hardcoded values. Triggers whenever the user wants something created or updated IN Figma from code or a spec — e.g. 'build this in Figma', 'create a Figma design for this', 'push this component/screen to Figma', 'turn this React/Vue into a Figma design', 'recreate this UI in Figma', 'make a Figma version of …', 'design a landing page/screen in Figma' — or whenever a coding artifact (a component, page, or spec) appears alongside a request to author in a connected Figma file. Works for full screens, sections, single components, or design-system assets.",
+      "source": "user-agents",
+      "namespace": "",
+      "scope": "current-session",
+      "sha256": "4a9f2a99d3afe145b8d6aa7c65fe4954cd8cda09c396298813384da3163d0d18",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.agents\\skills\\figma-codegen\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.agents\\skills\\figma-codegen\\SKILL.md",
+      "name": "figma-codegen",
+      "description": "Generate framework-aware code from a Figma design. Reads the project's stack profile and emits code matching the existing framework (React/Vue/Svelte/Next/etc.) and styling (Tailwind/CSS/CSS-in-JS), reusing existing components and design tokens instead of regenerating from scratch. Triggers whenever the user wants a Figma design turned into code — e.g. 'code this design', 'implement this frame', 'build this screen/component', 'turn this Figma into React/Vue', 'convert this design to code' — or whenever a Figma URL or the current Figma selection appears alongside a coding request. Works for full screens, single sections, or one component.",
+      "source": "user-agents",
+      "namespace": "",
+      "scope": "current-session",
+      "sha256": "8ff2a6e4c0da9e46c50d38cda18cf9ebbb410411046796e69cada376d7cf440b",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.agents\\skills\\sqlserver-select\\SKILL.md",
+      "resolvedPath": "D:\\workspace\\JQB\\DatabaseSkill\\SKILL.md",
+      "name": "sqlserver-select",
+      "description": "Run parameterized, read-only SELECT and CTE queries against named Microsoft SQL Server connections on Windows. Use when Codex needs to inspect schemas or retrieve database data; do not use for writes, DDL, stored procedures, or transaction control.",
+      "source": "user-agents",
+      "namespace": "",
+      "scope": "current-session",
+      "sha256": "781f29e86079b21ea9ff21050c3a51394c4494086c62afd60b18a54e237184e3",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-bundled\\computer-use\\26.1027.30824\\skills\\computer-use\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-bundled\\computer-use\\26.1027.30824\\skills\\computer-use\\SKILL.md",
+      "name": "computer-use",
+      "description": "Control Windows apps from ChatGPT",
+      "source": "plugin:openai-bundled/computer-use@26.1027.30824",
+      "namespace": "computer-use",
+      "scope": "current-session",
+      "sha256": "8211e4b11a19a0dc4f0ace91096c74c5b36037ca4cb2c8988f0f535bb209e951",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-bundled\\visualize\\1.0.66\\skills\\visualize\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-bundled\\visualize\\1.0.66\\skills\\visualize\\SKILL.md",
+      "name": "visualize",
+      "description": "Create visualizations and interactive tools directly in conversation. Proactively use to show how something works; explore 'what happens when', 'what changes', or 'help me understand'; compare or inspect; create simulations, maps, charts, graphs, and mockups. Use standard tools for static scientific figures.",
+      "source": "plugin:openai-bundled/visualize@1.0.66",
+      "namespace": "visualize",
+      "scope": "current-session",
+      "sha256": "64212a813b80900b028bf0abf37d8fc908c874bd250a94064a8364590e4c31a8",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\defense-factory\\0.1.1\\skills\\open-defense-factory\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\defense-factory\\0.1.1\\skills\\open-defense-factory\\SKILL.md",
+      "name": "open-defense-factory",
+      "description": "Open Codex Security Cloud for cloud security findings, scans, and continuous repository monitoring.",
+      "source": "plugin:openai-curated-remote/defense-factory@0.1.1",
+      "namespace": "defense-factory",
+      "scope": "current-session",
+      "sha256": "fb9781bec62eff3a67f54b55b705e28d26cdadd7e19a0420ba497ea508c42db4",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\pages\\0.1.26\\skills\\maintain-space\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\pages\\0.1.26\\skills\\maintain-space\\SKILL.md",
+      "name": "maintain-space",
+      "description": "Reconcile new evidence into existing ChatGPT Pages or a Space when the user requests upkeep. For a direct text correction, use write-page. Do not use for ordinary chat drafts, writing, or advice, or treat a selected Page as a request to save. Schedule future upkeep only when requested.",
+      "source": "plugin:openai-curated-remote/pages@0.1.26",
+      "namespace": "pages",
+      "scope": "current-session",
+      "sha256": "53570e6cb8663d370dce15ed0d67208876c3b13015832c352daa759213e7378e",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\pages\\0.1.26\\skills\\manage-schedules\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\pages\\0.1.26\\skills\\manage-schedules\\SKILL.md",
+      "name": "manage-schedules",
+      "description": "Review a ChatGPT Space page and its schedules, recommend useful recurring work, and create, update, or remove scheduled automations.",
+      "source": "plugin:openai-curated-remote/pages@0.1.26",
+      "namespace": "pages",
+      "scope": "current-session",
+      "sha256": "e0a464a83f15a6e896c5536cab775f667ebd0dd61eb64fe3c877a41935d64bd9",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\pages\\0.1.26\\skills\\organize-space\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\pages\\0.1.26\\skills\\organize-space\\SKILL.md",
+      "name": "organize-space",
+      "description": "Organize existing ChatGPT Pages and Space structure when the user requests changes to that structure. Do not use for ordinary chat drafts or advice; a selected Page alone does not authorize reorganization. A narrow text edit does not need this workflow.",
+      "source": "plugin:openai-curated-remote/pages@0.1.26",
+      "namespace": "pages",
+      "scope": "current-session",
+      "sha256": "fe553fb15809c972ae528d64917489e958f8cbf9432629caa79fd6da6b207da4",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\pages\\0.1.26\\skills\\write-page\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\pages\\0.1.26\\skills\\write-page\\SKILL.md",
+      "name": "write-page",
+      "description": "Create or edit requested Page/Space content, or use for prose you have already decided to save as a standalone Markdown file, only if the user did not explicitly request a Markdown file. Honor established formats, destinations, and repository documentation. A selected Page alone does not authorize a write.",
+      "source": "plugin:openai-curated-remote/pages@0.1.26",
+      "namespace": "pages",
+      "scope": "current-session",
+      "sha256": "39cb2ab7aa056cd00a38067f833cf5a7f19206e104e58320fc113ba699c14493",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\sites\\1.1.2\\skills\\sites\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\sites\\1.1.2\\skills\\sites\\SKILL.md",
+      "name": "sites",
+      "description": "Use Sites when the user wants a website built for them (including a landing page, portfolio, dashboard, portal, tracker, hub, game, event registration, or tool), requests changes to a website already built with Sites, wants to publish a website with Sites, or wants to manage Sites hosting.",
+      "source": "plugin:openai-curated-remote/sites@1.1.2",
+      "namespace": "sites",
+      "scope": "current-session",
+      "sha256": "00750ea5ca37e2b49afd2a57fee2149d22ee4f48af40bc094e6d2cee3e7bd1ad",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\sites\\1.1.2\\skills\\sites-remix\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\sites\\1.1.2\\skills\\sites-remix\\SKILL.md",
+      "name": "sites-remix",
+      "description": "Remix a Site built with the Sites plugin into a new Site. Use when the user has identified the source Site and asks to remix it.",
+      "source": "plugin:openai-curated-remote/sites@1.1.2",
+      "namespace": "sites",
+      "scope": "current-session",
+      "sha256": "34a249750d98e38f676fa391819593ab5c14e5f46f9137832a8c49180d47022d",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\work-pets\\0.1.6\\skills\\create-pet\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\work-pets\\0.1.6\\skills\\create-pet\\SKILL.md",
+      "name": "create-pet",
+      "description": "Create, repair, validate, preview, upload, or activate an animated v2 pet in ChatGPT Work mode from a character idea, brand cue, or reference image. Use for new ChatGPT Pets, custom mascots, non-pixel styles, and unattached sprite sheets requiring nine animation states plus sixteen look directions. Preserve Library artifacts and Pets MCP lifecycle behavior. Exclude real pets, standalone images, and other-app pets; clarify before invoking.",
+      "source": "plugin:openai-curated-remote/work-pets@0.1.6",
+      "namespace": "work-pets",
+      "scope": "current-session",
+      "sha256": "841354fb8116f8fdfd3b643b30828f5180196c594d3fed9b669b948b88892af1",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\work-pets\\0.1.6\\skills\\pets\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\work-pets\\0.1.6\\skills\\pets\\SKILL.md",
+      "name": "pets",
+      "description": "List, inspect, select, download, or delete animated pets in ChatGPT Work mode. Use for an explicit pet in ChatGPT or established ChatGPT Pets context. Exclude real-world and other-app pets; clarify before invoking.",
+      "source": "plugin:openai-curated-remote/work-pets@0.1.6",
+      "namespace": "work-pets",
+      "scope": "current-session",
+      "sha256": "1bf5d45fd6a6390aab777229293fb05cef7cf898aac882f8955e40c378e52fcd",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\work-pets\\0.1.6\\skills\\update-pet\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\work-pets\\0.1.6\\skills\\update-pet\\SKILL.md",
+      "name": "update-pet",
+      "description": "Inspect, validate, preview, repair, or update a custom pet in ChatGPT Work mode, including its name, description, or sprite sheet. Use for a pet in ChatGPT or established ChatGPT Pets context. Exclude real-world and other-app pets; clarify before invoking.",
+      "source": "plugin:openai-curated-remote/work-pets@0.1.6",
+      "namespace": "work-pets",
+      "scope": "current-session",
+      "sha256": "c63c98d67b6ad781a72a8f9837ba1fb5e2d2a8054a2562e4025890a97d8a0e67",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\plugin-management\\0.1.0\\skills\\plugin-management\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\plugin-management\\0.1.0\\skills\\plugin-management\\SKILL.md",
+      "name": "plugin-management",
+      "description": "Discover and suggest relevant plugins, inspect app permissions and dependencies, and manage plugin connections or removal. Use when the user asks about plugins or when a task would materially benefit from an external app, account, service, or data source that available tools cannot access.",
+      "source": "plugin:openai-curated-remote/plugin-management@0.1.0",
+      "namespace": "plugin-management",
+      "scope": "current-session",
+      "sha256": "653841cc21205269f08b0ce135891e1518dac616a766bcfb0b57d788d3f68b10",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\documents\\26.1026.10807\\skills\\documents\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\documents\\26.1026.10807\\skills\\documents\\SKILL.md",
+      "name": "documents",
+      "description": "Create, edit, redline, and comment on `.docx`, Word, and Google Docs-targeted document artifacts inside the container, with a strict render-and-verify workflow. Use `render_docx.py` to generate page PNGs (and optional PDF) for visual QA, then iterate until layout is flawless before delivering the final document.",
+      "source": "plugin:openai-primary-runtime/documents@26.1026.10807",
+      "namespace": "documents",
+      "scope": "current-session",
+      "sha256": "e3e5486c9e9f8c59ec89dd9de997bb76a4b65db7960d72437df2f5ed26a4df7f",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\pdf\\26.1026.10807\\skills\\pdf\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\pdf\\26.1026.10807\\skills\\pdf\\SKILL.md",
+      "name": "pdf",
+      "description": "Read, create, inspect, render, and verify PDF files where visual layout matters, including fillable AcroForms. Use Poppler rendering plus Python tools such as reportlab, pdfplumber, and pypdf for generation and extraction.",
+      "source": "plugin:openai-primary-runtime/pdf@26.1026.10807",
+      "namespace": "pdf",
+      "scope": "current-session",
+      "sha256": "5e14b4b8f944dc5e678ee703dfacf583010431d64d5d829902c5b2541f736c89",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\presentations\\26.1026.10807\\skills\\presentations\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\presentations\\26.1026.10807\\skills\\presentations\\SKILL.md",
+      "name": "Presentations",
+      "description": "Read, create or edit presentations. Default to Spaces; follow the routing rules for PowerPoint/PPT/PPTX, Google Slides, templates and existing decks.",
+      "source": "plugin:openai-primary-runtime/presentations@26.1026.10807",
+      "namespace": "presentations",
+      "scope": "current-session",
+      "sha256": "5d7b4c647eade7ea31460c3664c43ced1312b6a34b264bb7f5449272def93152",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\spreadsheets\\26.1026.10807\\skills\\excel-live-control\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\spreadsheets\\26.1026.10807\\skills\\excel-live-control\\SKILL.md",
+      "name": "excel-live-control",
+      "description": "Control an open or active Microsoft Excel workbook through the ChatGPT add-in or connected session. Use when the user tags the Microsoft Excel app in Codex or follows up on an established live Excel task. Do not use for standalone spreadsheet files or Google Sheets.",
+      "source": "plugin:openai-primary-runtime/spreadsheets@26.1026.10807",
+      "namespace": "spreadsheets",
+      "scope": "current-session",
+      "sha256": "55335802aeb641f8819f0020d4fa172b069376aaa00ab7934f3426d8a121509a",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\spreadsheets\\26.1026.10807\\skills\\spreadsheets\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\spreadsheets\\26.1026.10807\\skills\\spreadsheets\\SKILL.md",
+      "name": "Spreadsheets",
+      "description": "Use skill when user requests to create, modify, analyze, visualize, or work with spreadsheet files (`.xlsx`, `.xls`, `.csv`, `.tsv`) or Google Sheets with formulas, formatting, charts, tables, and recalculation. Do not use for live controlling Microsoft Excel app or a live Excel session.",
+      "source": "plugin:openai-primary-runtime/spreadsheets@26.1026.10807",
+      "namespace": "spreadsheets",
+      "scope": "current-session",
+      "sha256": "e7da45892e18a1c752714080687f526f63fbedc67636b6cc795c5de53950ffb3",
+      "sessionDiscovered": true,
+      "backup": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\template-creator\\26.1026.10807\\skills\\template-creator\\SKILL.md",
+      "resolvedPath": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\template-creator\\26.1026.10807\\skills\\template-creator\\SKILL.md",
+      "name": "template-creator",
+      "description": "Create or update a reusable personal Codex artifact-template skill. Use when the user invokes $template-creator or asks in natural language to create a reusable template from a reference document, presentation, spreadsheet, Google Docs, Slides, or Sheets link, ImageGen or Product Design image, email, Slack message, or Site project, or explicitly asks to edit or update a passed artifact-template skill. Do not use for one-off creation from an existing template.",
+      "source": "plugin:openai-primary-runtime/template-creator@26.1026.10807",
+      "namespace": "template-creator",
+      "scope": "current-session",
+      "sha256": "244bfef01d3e17c6013952ccf34621a90ddfee9c7828058245c3c46f51114944",
+      "sessionDiscovered": true,
+      "backup": false
+    }
+  ],
+  "duplicates": [],
+  "versions": [],
+  "errors": [
+    "Formal entry C:\\Users\\Administrator\\.codex\\skills\\prd: [Errno 2] No such file or directory: 'C:\\\\Users\\\\Administrator\\\\.codex\\\\skills\\\\prd\\\\.skill-install.json'",
+    "Formal entry C:\\Users\\Administrator\\.codex\\skills\\prd-setup: [Errno 2] No such file or directory: 'C:\\\\Users\\\\Administrator\\\\.codex\\\\skills\\\\prd-setup\\\\.skill-install.json'"
+  ],
+  "summary": "检查失败：2 项，请查看 errors。"
+}

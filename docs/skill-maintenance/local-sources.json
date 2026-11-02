@@ -1,0 +1,178 @@
+{
+  "observedAt": "2026-11-02 Asia/Shanghai",
+  "coverage": "Explicit session catalog roots plus checked current-project ancestors; not all caches or all other projects. Config.toml had no extra skill-path configuration. D:/ChatGPT contains copied artifacts, no SKILL.md found.",
+  "roots": [
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\skills",
+      "source": "user-codex",
+      "scope": "current-session",
+      "namespace": ""
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.agents\\skills",
+      "source": "user-agents",
+      "scope": "current-session",
+      "namespace": ""
+    },
+    {
+      "path": "D:\\workspace\\Requirement-AI-Toolkit\\.agents\\skills",
+      "source": "project-or-ancestor-candidate",
+      "scope": "current-session",
+      "namespace": "",
+      "required": false
+    },
+    {
+      "path": "D:\\workspace\\Requirement-AI-Toolkit\\.codex\\skills",
+      "source": "project-or-ancestor-candidate",
+      "scope": "current-session",
+      "namespace": "",
+      "required": false
+    },
+    {
+      "path": "D:\\workspace\\.agents\\skills",
+      "source": "project-or-ancestor-candidate",
+      "scope": "current-session",
+      "namespace": "",
+      "required": false
+    },
+    {
+      "path": "D:\\workspace\\.codex\\skills",
+      "source": "project-or-ancestor-candidate",
+      "scope": "current-session",
+      "namespace": "",
+      "required": false
+    },
+    {
+      "path": "D:\\.agents\\skills",
+      "source": "project-or-ancestor-candidate",
+      "scope": "current-session",
+      "namespace": "",
+      "required": false
+    },
+    {
+      "path": "D:\\.codex\\skills",
+      "source": "project-or-ancestor-candidate",
+      "scope": "current-session",
+      "namespace": "",
+      "required": false
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-bundled\\computer-use\\26.1027.30824\\skills",
+      "source": "plugin:openai-bundled/computer-use@26.1027.30824",
+      "scope": "current-session",
+      "namespace": "computer-use"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-bundled\\visualize\\1.0.66\\skills",
+      "source": "plugin:openai-bundled/visualize@1.0.66",
+      "scope": "current-session",
+      "namespace": "visualize"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\defense-factory\\0.1.1\\skills",
+      "source": "plugin:openai-curated-remote/defense-factory@0.1.1",
+      "scope": "current-session",
+      "namespace": "defense-factory"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\pages\\0.1.26\\skills",
+      "source": "plugin:openai-curated-remote/pages@0.1.26",
+      "scope": "current-session",
+      "namespace": "pages"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\sites\\1.1.2\\skills",
+      "source": "plugin:openai-curated-remote/sites@1.1.2",
+      "scope": "current-session",
+      "namespace": "sites"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\work-pets\\0.1.6\\skills",
+      "source": "plugin:openai-curated-remote/work-pets@0.1.6",
+      "scope": "current-session",
+      "namespace": "work-pets"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\plugin-management\\0.1.0\\skills",
+      "source": "plugin:openai-curated-remote/plugin-management@0.1.0",
+      "scope": "current-session",
+      "namespace": "plugin-management"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\documents\\26.1026.10807\\skills",
+      "source": "plugin:openai-primary-runtime/documents@26.1026.10807",
+      "scope": "current-session",
+      "namespace": "documents"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\pdf\\26.1026.10807\\skills",
+      "source": "plugin:openai-primary-runtime/pdf@26.1026.10807",
+      "scope": "current-session",
+      "namespace": "pdf"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\presentations\\26.1026.10807\\skills",
+      "source": "plugin:openai-primary-runtime/presentations@26.1026.10807",
+      "scope": "current-session",
+      "namespace": "presentations"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\spreadsheets\\26.1026.10807\\skills",
+      "source": "plugin:openai-primary-runtime/spreadsheets@26.1026.10807",
+      "scope": "current-session",
+      "namespace": "spreadsheets"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\template-creator\\26.1026.10807\\skills",
+      "source": "plugin:openai-primary-runtime/template-creator@26.1026.10807",
+      "scope": "current-session",
+      "namespace": "template-creator"
+    }
+  ],
+  "sessionPaths": [
+    "C:\\Users\\Administrator\\.codex\\skills\\csharp-concurrency-coach\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\skills\\english-learning-coach\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\skills\\fg-notes-model\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\skills\\game-design-iteration\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\skills\\prd\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\skills\\prd-setup\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\skills\\product-requirement-prototyping\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\skills\\task-list-development\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\skills\\wbs\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\skills\\.system\\imagegen\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\skills\\.system\\openai-docs\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\skills\\.system\\skill-creator\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\skills\\.system\\skill-installer\\SKILL.md",
+    "C:\\Users\\Administrator\\.agents\\skills\\figma-build\\SKILL.md",
+    "C:\\Users\\Administrator\\.agents\\skills\\figma-codegen\\SKILL.md",
+    "C:\\Users\\Administrator\\.agents\\skills\\sqlserver-select\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-bundled\\computer-use\\26.1027.30824\\skills\\computer-use\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-bundled\\visualize\\1.0.66\\skills\\visualize\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\defense-factory\\0.1.1\\skills\\open-defense-factory\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\pages\\0.1.26\\skills\\maintain-space\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\pages\\0.1.26\\skills\\manage-schedules\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\pages\\0.1.26\\skills\\organize-space\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\pages\\0.1.26\\skills\\write-page\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\sites\\1.1.2\\skills\\sites\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\sites\\1.1.2\\skills\\sites-remix\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\work-pets\\0.1.6\\skills\\create-pet\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\work-pets\\0.1.6\\skills\\pets\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\work-pets\\0.1.6\\skills\\update-pet\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-curated-remote\\plugin-management\\0.1.0\\skills\\plugin-management\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\documents\\26.1026.10807\\skills\\documents\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\pdf\\26.1026.10807\\skills\\pdf\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\presentations\\26.1026.10807\\skills\\presentations\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\spreadsheets\\26.1026.10807\\skills\\excel-live-control\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\spreadsheets\\26.1026.10807\\skills\\spreadsheets\\SKILL.md",
+    "C:\\Users\\Administrator\\.codex\\plugins\\cache\\openai-primary-runtime\\template-creator\\26.1026.10807\\skills\\template-creator\\SKILL.md"
+  ],
+  "formal": [
+    "C:\\Users\\Administrator\\.codex\\skills\\prd",
+    "C:\\Users\\Administrator\\.codex\\skills\\prd-setup"
+  ],
+  "aliases": [],
+  "resolvedLinks": {
+    "C:\\Users\\Administrator\\.codex\\skills\\english-learning-coach": "D:\\workspace\\english-learning-skill",
+    "C:\\Users\\Administrator\\.agents\\skills\\sqlserver-select": "D:\\workspace\\JQB\\DatabaseSkill"
+  }
+}

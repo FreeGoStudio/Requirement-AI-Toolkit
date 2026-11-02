@@ -1,0 +1,23 @@
+{
+  "SKILL.md": "21bd6f9028b9c9621fbe27368e8fd66cccc65562756acdc68e4459994a2b0c9b",
+  "agents/openai.yaml": "b7f4c0e9111b813211aec40cf20ae100c9fd5c0181b1f125d1a399e9ad25e598",
+  "references/bdd-template.md": "9f14fe3460ea85d7126f1398343066066fdb42a6e2d6664b44ad2a6ae3b062b8",
+  "references/delivery-workflow.md": "e9e8718884fd9789f380b2c6fb5add89cbfbbdb5fe2f9848ab899d6829480f66",
+  "references/design-governance.md": "3a923560800417353f3152b3df706dbc10779989c81339232220fb849d0ea694",
+  "references/html-output.md": "03894b4691ce99df11a40b71c30ba04b1f9f43700386ab13426e83f9214b72d8",
+  "references/knowledge-bases.json": "2a56fb3ac4f663ae74e66fd3476b553b2543c6e32ac6b1b054331a12fa151b48",
+  "references/output-artifacts.md": "dfc71f68307121f9bb034742ed665599600dca4795d3959114ea355582f8b714",
+  "references/prd-template.md": "22cb5192beb270a5532df4e9fe68b85072b7502deab9d046f69ef72824a3c763",
+  "references/prototype-spec.md": "a11647a90bfe29494cfc2c6af101b484722a2699b9f34bd5e9b08d3fdc38ff2c",
+  "references/requirement-discovery.md": "4bbae1e7a7bb223998592b71dc92e4a7714effaaecee3a6c91f5e67e3119327b",
+  "references/screenshot-knowledge-workflow.md": "50782f8379990fcd431c6c63cb0b3cba71012a5b31820753f714505d0f19a76a",
+  "scripts/Resolve-KnowledgeBase.ps1": "42aea19443605b8d8ff24886c5509cf59e73be5fd2f1eed8a153a657dc8a1056",
+  "scripts/Sync-ScreenshotManifest.ps1": "0632db73de2ca9963d4b1e324fc4cd03dfd5f12be78f91e5f7ad996cee28629e",
+  "scripts/Test-DesignGovernance.ps1": "4dcc49bc2e31849595b52a6d3f2e5329cd494111ed1baca52a074287945712f5",
+  "scripts/Test-ScreenshotManifest.ps1": "dc3cd0876ebad54e9b3eb16f1a377f53f5becbfcc13a11424997eece8645940e",
+  "tests/Test-DesignGovernance.ps1": "bcb2e7ea3b30533e9e9135771026d3e078932b1b9930e2ce15a943819d2aa004",
+  "tests/fixtures/valid-high-fidelity-spec.json": "81105ad3e7dbc1bf9a104c04c254fa8ed756e361fc70d5f8181029a278ecc96a",
+  "tests/fixtures/valid-low-fidelity-spec.json": "774945b37ad87969954e1a1dddf48c94edcd420b3609dd44c1de47e5001ac841",
+  "tests/fixtures/valid-manifest.json": "217119a2978c0e1838b625ea87b44639b0aec107e940b39010ba5ad8d66b94b1",
+  "tests/requirement-discovery-review.md": "4a38446020452fd9e37604af4722cf66ea316a6e2eaaa7aeb249affcf952beb9"
+}

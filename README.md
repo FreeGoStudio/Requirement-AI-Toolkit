@@ -41,7 +41,7 @@ $prd 帮我澄清这个产品需求，并按阶段生成 HTML 需求文档和可
 ./scripts/install-skill.ps1 -SkillName prd-setup
 ```
 
-默认安装到 `%USERPROFILE%/.codex/skills`；设置 CODEX_HOME 时安装到其 skills 子目录。已有版本默认先备份，`-NoBackup` 可关闭备份。安装后新开聊天，运行 `$prd-setup` 检查 HTML 预览，日常使用 `$prd`。
+默认安装到 `%USERPROFILE%/.codex/skills`；设置 CODEX_HOME 时安装到其 skills 子目录。安装需要 Git、Python 3.10+、PyYAML；源码先验证并提交。历史 ZIP 存在加载范围外的 `CODEX_HOME/skill-history`，不再生成可加载备份，`-NoBackup` 已停用。安装后新开聊天，运行 `$prd-setup` 检查 HTML 预览，日常使用 `$prd`。更新、回滚、差异处理及检查方法见 [技能维护约定](docs/skill-maintenance/README.md)。
 
 从远程安装需要 Git。HTML 分支推送后，可明确指定该分支：
 
@@ -51,7 +51,7 @@ Invoke-WebRequest -UseBasicParsing -Uri 'https://raw.githubusercontent.com/FreeG
 & $installer -Branch 'codex/html-prototype-output' -SkillName prd
 ```
 
-安装 prd-setup 时将 SkillName 改为 prd-setup。远程安装器默认 Branch 仍为 main，安装其他分支时必须显式传参。也支持 RepoUrl、CodexHome、InstallRoot 与 NoBackup 参数。
+安装 prd-setup 时将 SkillName 改为 prd-setup。远程安装器默认 Branch 仍为 main，安装其他分支时必须显式传参。也支持 RepoUrl、CodexHome、InstallRoot 参数；默认源码缓存位于 LOCALAPPDATA/Requirement-AI-Toolkit，保留完整 Git 历史。已有源码改动或分支分歧不会被 reset 覆盖。未推送的新安装机制应通过本地仓库调用，远程入口只有发布后才会更新。
 
 ## 截图知识库
 
