@@ -8,6 +8,8 @@
 
 ## 1 准备条件
 
+发布历史 HTML 时，旧的 localhost、回环地址或私网 IP 静态链接会按所选资源根目录转换为相对路径，保留查询参数和锚点。例如旧地址 `/pages/detail.html#success` 需要根目录内存在 `pages/detail.html`。转换仅影响发布副本，公网链接和本地源文件保持不变。缺少对应文件会报告路径并停止发布；动态拼接的 JavaScript 地址需要单独检查。
+
 准备好 Codex、**PowerShell 7**、**Python 3.10+**、管理员提供的工具包，以及单独提供的发布密码。所有命令在 PowerShell 7（`pwsh`）中执行，不使用 Windows PowerShell 5.1。电脑需要连接内网或 VPN，安装 Python 依赖时还需要访问软件包源。
 
 ```powershell

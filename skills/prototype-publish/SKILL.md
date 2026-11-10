@@ -25,6 +25,10 @@ description: "发布静态 HTML 原型到已配置的 Linux 临时服务器，�
 
 ## 执行与验收
 
+打包时自动处理静态引用中的 localhost、回环地址和私网 IP（含 IPv6）：按 URL 路径在资源根目录内寻找文件，转换为发布包内的相对链接，保留查询参数和状态锚点，并收集依赖。目录 URL 使用 index.html 或 index.htm。只改发布副本，不访问旧地址，不修改源文件，公网链接保留。找不到对应文件或路径越界时汇总报错并停止发布；不要猜测路径前缀或扩大资源根目录。
+
+支持 HTML 资源/页面属性、内联样式与事件、CSS url/import，以及 JavaScript 字面量 import/from/fetch/new URL 和 src/href/poster 赋值。变量或字符串动态拼接的 URL 不保证自动处理，发布前检查这些位置；共用脚本若在不同目录页面下需要不同相对地址，会明确阻止发布，需调整脚本引用方式。
+
 调用 `scripts/Invoke-PrototypePublish.ps1 -Action Publish`。服务器配置、运行时和凭据沿用 `%LOCALAPPDATA%/Requirement-AI-Toolkit/`，技能拆分或升级不重新初始化服务器。
 
 Prd 模式同步交付根目录文档的原型链接：共享 prototype-links.js 保存基础 URL，页面只保存 data-prototype-path（含查询参数和锚点）。开始发布先置为 pending，成功且 HTTP 校验通过后置为 published；失败或未配置时保留本地 href 并显示待发布。最近成功 URL 留在历史记录，不作为失败后的主链接。Html 模式不改写历史源 HTML。

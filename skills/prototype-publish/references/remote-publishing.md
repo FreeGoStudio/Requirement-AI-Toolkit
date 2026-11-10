@@ -4,6 +4,10 @@
 
 ## 配置一次
 
+历史原型中的本机地址会在发布副本中自动转换：例如资源根目录有 `pages/detail.html`，则 `http://192.168.1.10:3000/pages/detail.html?id=1#success` 从根入口转换为 `pages/detail.html?id=1#success`。不需要配置旧 IP；支持 localhost、回环和私网 IPv4/IPv6，以及省略协议的地址。URL 路径必须对应根目录内文件，目录地址查找 index.html/index.htm；不猜测多余路径前缀、不请求旧服务器。缺失、越界或引用未允许发布文档时停止发布。
+
+转换范围为 HTML 属性、CSS 引用及 JavaScript 常见静态字面量引用；公网链接保留，本地源文件不变。动态拼接地址须人工检查。共用脚本中的页面相对 URL 若因使用页面目录不同而无法一致转换，会报错，不输出可能跳错页面的版本。
+
 未配置或配置不完整时，技能先提示“尚未配置服务器，本次未发布”，询问缺失信息并引导 Configure → InstallRuntime（按需）→ Check，成功后继续原来的发布。脚本在启动运行时、打包和连接之前检查配置文件及必需字段，并返回具体缺项和操作提示；不自动选择示例服务器。密码只在本机安全提示中输入。已配置的用户不重复配置。
 
 在 Windows 上使用 PowerShell 7 执行以下命令。若服务器已经由管理员准备好，只运行 Configure、InstallRuntime 和 Check，直接使用发布账号，跳过下方 Initialize。日常 Publish 不需要 root 或 sudo，不因发布失败自动初始化服务器。

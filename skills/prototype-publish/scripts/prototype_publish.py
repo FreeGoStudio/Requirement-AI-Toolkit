@@ -19,6 +19,7 @@ from urllib.request import urlopen, Request
 import uuid
 from document_links import sync_document_links
 from publication_catalog import refresh_catalog
+from local_url_rewriter import CSS_URL, JS_URL, LocalUrlRewriter
 
 
 class PublishError(Exception):
@@ -36,8 +37,6 @@ def digest(data):
     return hashlib.sha256(data).hexdigest()
 
 
-CSS_URL = re.compile(r'url\(\s*([\'"]?)(.*?)\1\s*\)|@import\s+[\'"]([^\'"]+)[\'"]', re.I)
-JS_URL = re.compile(r'''(?P<prefix>\b(?:fetch|import)\s*\(\s*|\bnew\s+URL\s*\(\s*|\bfrom\s+|\bimport\s+|\.(?:src|href|poster)\s*=\s*|\.setAttribute\(\s*['"](?:src|href|poster)['"]\s*,\s*)(?P<quote>['"])(?P<url>[^'"\n]+)(?P=quote)''')
 RESOURCE_EXTENSIONS = {'.css', '.js', '.mjs', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.avif', '.ico', '.woff', '.woff2', '.ttf', '.otf', '.mp4', '.webm', '.mp3', '.wav'}
 
 
@@ -52,6 +51,8 @@ class Package:
         self.html_mode = mode == 'html' or (mode == 'auto' and (entry_path or not manifest_path.exists()))
         self.files = {}
         self.js_contexts = set()
+        self.script_sources = {}
+        self.rewriter = LocalUrlRewriter(self.root)
         if self.html_mode:
             if not entry_path:
                 if (self.root / 'index.html').is_file():
@@ -124,7 +125,10 @@ class Package:
         if path in self.files:
             if PurePosixPath(path).suffix.lower() in ('.js', '.mjs') and (path, document) not in self.js_contexts:
                 self.js_contexts.add((path, document))
-                self.javascript(path, self.files[path].decode('utf-8-sig'), document)
+                rewritten = self.rewriter.javascript(path, self.script_sources[path], document)
+                if rewritten.encode('utf-8') != self.files[path]:
+                    raise PublishError(f'共享脚本被不同目录的页面使用，无法生成一致的相对链接：{path}；请拆分脚本或将页面跳转移到各页面。')
+                self.javascript(path, rewritten, document)
             return
         suffix = PurePosixPath(path).suffix.lower()
         prototype_data = suffix == '.json' and (self.html_mode or PurePosixPath(path).parts[0] in ('assets', 'data', 'prototypes'))
@@ -143,6 +147,7 @@ class Package:
         if suffix in ('.html', '.htm', '.css', '.js', '.mjs', '.svg'):
             text = data.decode('utf-8-sig')
             if suffix in ('.html', '.htm', '.svg'):
+                text = self.rewriter.markup(path, text)
                 parser = ResourceParser(self, path)
                 parser.feed(text)
                 parser.close()
@@ -151,8 +156,13 @@ class Package:
                     text = re.sub(r'''(href\s*=\s*)(["'])([^"']+)\2''', lambda m: self.rewrite_home(path, m), text, flags=re.I)
                 self.files[path] = text.encode('utf-8')
             elif suffix == '.css':
+                text = self.rewriter.css(path, text)
+                self.files[path] = text.encode('utf-8')
                 self.css(path, text)
             else:
+                self.script_sources[path] = text
+                text = self.rewriter.javascript(path, text, document)
+                self.files[path] = text.encode('utf-8')
                 self.js_contexts.add((path, document))
                 self.javascript(path, text, document)
 
@@ -166,6 +176,8 @@ class Package:
     def build(self):
         for path in self.entries:
             self.add(path)
+        if self.rewriter.errors:
+            raise PublishError('以下本机或私网链接无法转换，未发布：\n' + '\n'.join(dict.fromkeys(self.rewriter.errors)))
         if self.html_mode and 'index.html' in self.files:
             return self.files
         links = ''.join(f'<li><a href="{quote(path)}">{html.escape(label)}</a></li>' for path, label in self.entries.items())
