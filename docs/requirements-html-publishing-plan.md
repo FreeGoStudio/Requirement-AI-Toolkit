@@ -1,518 +1,224 @@
-# 需求创建、产品原型持续迭代与 GitLab 自动发布实施方案
+# 通用多应用需求与持久原型管理平台——实施规范 v2.0
 
-- 更新日期：2026-11-10
-- 状态：待实施；本文不是已实现能力说明。
-- 需求依据：用户确认的唯一标识、取消低保真、requirements 目录、需求资料与产品原型分仓管理（2026-11-10 最新明确要求），以及产品原型持续迭代、独立集成候选、人工验收后受控合并、同产物晋级和历史版本绑定。
-- 当前范围：仅更新方案文档，不修改代码、部署配置或服务器。
+> 状态：待实施 / 待环境核验；本文不是已实现或已部署能力说明。
+> 日期：2026-11-10
+> 目标读者：Codex / AI Agent、研发工程师、产品负责人
+> 原则：平台规则通用化；项目通过配置声明 App；人类负责验收；AI 执行实现与辅助冲突解决。
+> 本轮范围：按用户提供的 v2.0 规范更新实施文档，不执行附件中的 P0/P1 指令，不修改代码、业务仓库、远程分支或部署。
+> 文档来源：通用多应用需求与持久原型管理平台_实施规范_v2.0.md，并整合此前已确认的分仓、候选验收、同产物晋级、历史标注和发布恢复约定。
 
-## 1. 目标与核心模型
+## 0. 执行摘要与决策
 
-一个产品使用独立的需求资料仓库与产品原型仓库，分别保存需求资料和一套持续演进的高保真 HTML 原型，通过需求 ID、仓库标识及精确版本引用关联。工具仓库 `Requirement-AI-Toolkit` 维护技能、模板、校验和发布能力。
+本平台用于管理“一个需求影响一个或多个可交互原型应用”的全生命周期：创建需求、自动建立分支、开发和预览、自动生成集成候选、CI 验证、AI 辅助解决冲突、人工验收、合并主线、长期追溯需求对应的原型与标注。
 
-需求负责记录变化，产品原型累积变化，发布快照保存历史。取消“每个需求独立维护一套原型源码和正式原型包”的设计，需求资料与产品原型必须分仓，不要求两个仓库同步提交或同时发布。
+**确定的架构决策**：
 
-| 对象 | 职责 |
-| --- | --- |
-| 需求资料 | 原始输入、确认、修改范围、文档、评审和验收记录 |
-| 产品原型源码 | 当前产品的页面、流程、交互和模拟数据 |
-| 需求分支 | 隔离未合入的修改，修改同一套产品原型源码 |
-| 需求预览 | 展示开发分支效果，不作为最终验收依据 |
-| 集成候选 | 保存冻结源版本与目标主线的集成结果及独立预览 |
-| 产品发布版本 | 主分支成功发布的不可变完整快照 |
-| 验收记录 | 绑定实际确认的不可变候选，发布后关联同一产物的正式版本 |
+1. **双仓库**：`{project}-requirements` 保存 PRD / 规范；`{project}-prototype` 是多应用 Monorepo，保存可运行原型及需求原型包。Plane 管需求流程，GitLab 管版本和 MR，VitePress 发布文档。
+2. **App 配置驱动**：平台没有 `pos`、`web-admin`、`mini-admin` 等硬编码枚举。每个项目在 `prototype.yaml` 注册任意数量、任意 ID 的 App。
+3. **代码按 App 划分**：`apps/{app-id}/src/`；**标注按需求归属、再按 App 划分**：`requirements/{requirement-id}/{app-id}/`；跨 App 流程：`requirements/{requirement-id}/flows/`。
+4. **分支按需求创建**：创建 Plane 需求时，平台幂等创建同名 Git 分支 `{requirement-id}`，记录创建时的 `origin_commit`；没有必要立即构建或部署。正式业务标识不依赖分支是否仍存在。
+5. **集成候选隔离**：从最新 `main` 创建 `integration/{requirement-id}/{attempt-id}`，把需求分支变更合入该候选。无冲突自动进行；Git 冲突交给隔离的 AI 执行器处理。所有候选必须经过 CI、预览与人工验收，**不得自动未经授权合入 `main`**。
+6. **验收绑定不可变身份**：至少锁定 PRD Commit、需求分支 Head SHA、目标 main SHA、候选 SHA、各 App Artifact SHA-256、标注修订、场景修订与验收人。审批成功不等于未来任何代码都可合并。
+7. **历史独立于分支**：需求合并、发布及历史引用验证通过后可删除无未交付改动的活动分支，历史需求预览使用验收快照：固定构建产物 + 场景 + 对应 App 标注。不要依赖长期运行的 MR Review App。
+8. **版本与快照分离**：`main` 每次合并形成新提交，但不强制每个需求打正式产品 Tag；历史需求快照可独立保存。正式产品基线 Tag 可按发布节奏创建。
+9. **存储三级管理**：在线热缓存、不可变归档、可选冷存储；历史快照引用去重，缓存可清理，正式验收归档不得被普通 GC 删除。
+10. **初期保持简单**：第一阶段不实现复杂微服务、MinIO、向量数据库、全面多 Agent 编排或独立大型管理门户。先验证完整闭环。
 
-目标服务器为私网 `10.94.164.176`。第一版采用 GitLab CI/CD、内网 Runner 和一个 Nginx 静态服务；优先复用现有事件接入能力，不强制新建独立 Webhook 服务；不为每个原型启动应用或容器，不包含外网入口或企业级统一登录。必要身份、授权与验收审计随首个闭环提供。
+### 非目标
 
-## 2. 创建需求与唯一标识
+- 不实现正式业务后端、真实支付、真实设备驱动或生产业务数据。
+- 不把原型等同于实际软件上线状态；原型验收与真实开发/上线状态独立。
+- 不实现一套新的 Git 版本控制系统；充分利用 GitLab 分支、MR、Commit、Tag、CI。
+- 不把每个需求做成独立的原型项目或长期容器。
 
-创建需求第一步提供标识输入，留空时自动生成。
+## 1. 术语与数据边界
 
-| 项目 | 规则 |
-| --- | --- |
-| 手动输入 | 仅英文字母和数字，至少包含一个字母和一个数字 |
-| 统一格式 | 去除首尾空白，统一转为小写 |
-| 自动生成 | req＋日期＋随机字母数字，例如 `req20261110a7f3c9` |
-| 唯一范围 | 同一产品的需求资料登记，包括已归档需求 |
-| 手动重复 | 提示重新输入，不擅自修改 |
-| 自动重复 | 重新生成并校验，直到唯一 |
-| 标识生命周期 | 名称修改、归档和下线均不改变或释放标识 |
+| 实体 | 唯一标识 | 职责 |
+|---|---|---|
+| Project | `project_id` | 一个业务产品或项目 |
+| Requirement | `project_id + requirement_id` | 稳定业务标识，与 Plane 原始 Work Item ID 映射 |
+| PRD Revision | `prd_repo + prd_path + prd_commit` | 对应需求文档的精确内容版本 |
+| Prototype Repository | `repo_id` | 可交互原型 Monorepo |
+| Prototype App | `project_id + app_id` | 可独立构建、预览及验收的应用；非技术平台枚举 |
+| Requirement Prototype Package | `project_id + requirement_id` | 对应需求的 App 标注、场景、步骤、跨 App 流程 |
+| Prototype Change | `change_id` | 一次可独立审查的原型变更；初期一个需求一个活动 Change |
+| Integration Attempt | `attempt_id` | 某次需求与具体 main 版本集成的尝试 |
+| Candidate | `candidate_commit` | 待验收的完整集成结果 |
+| Acceptance Snapshot | `snapshot_id` | 不可变的验收依据及对应可运行原型资产 |
+| Baseline | `tag` / `commit` | 整个产品的正式设计基线 |
 
-先校验格式，再检查登记及现有目录，包括旧目录映射，通过后创建 `requirements/<需求标识>/` 并登记。同机创建防止检查与创建之间的并发冲突。
+工具仓库 `Requirement-AI-Toolkit` 维护技能、模板、校验与发布能力，不作为某个产品的需求或原型业务仓库。
 
-不同分支并行创建时，合入检查再次校验唯一性，发布前仍保留最终检查；重复标识不得覆盖已有需求。合入前阻断需要配置相应的分支合并检查。
+业务状态分离：`requirement_status`、`prototype_change_status`、`development_status` 不能混用。PRD 已批准、原型已验收、软件已上线是三种不同事实。
 
-跨产品用“项目标识＋需求标识”定位。原型需求分支名称等于规范化后的需求 ID，例如 `req002`，登记同时保存原型仓库和分支。同一需求后续修订新增记录，同名分支重用规则实施前确定，不覆盖历史验收。
+一个需求可影响 0..N 个 App；一个 App 可被 N 个需求修改；一个需求未来可能关联多个 Prototype Change，因此数据库层不要将 Requirement 与 MR 写死为永久 1:1。
 
-## 3. 仓库与目录结构
+## 2. 仓库结构
 
-```text
-业务需求仓库/
-├─ README.md
-├─ requirements/
-│  └─ <需求标识>/
-│     ├─ index.html
-│     ├─ docs/
-│     │  ├─ prd.html
-│     │  ├─ flowchart.html
-│     │  └─ acceptance.html
-│     ├─ assets/                 # 需求文档专用资源
-│     ├─ working/
-│     │  ├─ discovery/
-│     │  ├─ specs/
-│     │  └─ reviews/
-│     ├─ sources/
-│     └─ acceptance-records.json # 正式验收及后续修订记录
-├─ publish/
-│  └─ projects.json           # 需求、原型仓库与分支关联
-└─ .gitlab-ci.yml
-
-产品原型仓库/
-├─ prototype/
-│  ├─ index.html
-│  ├─ flows/
-│  │  └─ <flowId>.html
-│  └─ assets/
-│     ├─ styles/
-│     ├─ scripts/
-│     ├─ images/
-│     └─ data/                   # 需要时保存模拟数据
-├─ design-system/
-├─ requirements/                # 原型耦合资产，不重复保存 PRD
-│  └─ <需求标识>/
-│     ├─ manifest.yaml
-│     ├─ annotations.yaml
-│     ├─ walkthrough.yaml
-│     └─ scenarios/
-│        ├─ default.yaml
-│        └─ error.yaml
-├─ tests/
-├─ publish/
-│  └─ projects.json
-└─ .gitlab-ci.yml
-```
-
-`requirements/` 替代 `outputs/product-requirements/`。需求目录保存需求资料，不再包含独立维护的 `prototypes/` 或产品设计系统。产品原型统一位于独立原型仓库的 `prototype/`，设计系统位于该原型仓库根目录；不设置低保真目录。
-
-`working/discovery/` 保存原始需求、明确确认和业务模型；`working/specs/` 记录本需求涉及的 flowId、screenId、修改规格及约束；`working/reviews/` 保存评审与验证记录。这些是持久资料，纳入 Git，不因不发布而清理。仅创建当前阶段所需文件。
-
-| 存储层 | 生命周期 |
-| --- | --- |
-| 需求资料、产品原型源码、设计系统 | 在 Git 中持续维护 |
-| CI 打包目录和压缩包 | 临时生成，不回写源码目录、不提交 Git |
-| 服务器或制品存储中的发布快照 | 不可变，按引用和保留策略维护 |
-
-历史快照不复制进每个需求目录。需求记录保存版本关联；日常发布状态由部署端维护。
-
-两个仓库的 requirements 目录职责不同：资料仓库保存 PRD、确认与验收记录；原型仓库保存标注、场景和演示步骤。原型需求包随代码原样进入 main，不复制 PRD 全文，不在验收后分流资产。具体协议见第 19 节。
-
-## 4. 需求实施与产品合入流程
+### 2.1 需求文档仓库
 
 ```text
-输入或生成需求 ID，在需求资料仓库登记
-    ↓
-从原型仓库最新 main 的具体 SHA 创建同名需求分支，记录当时已发布基线
-    ↓
-确认 PRD、流程和验收场景，检查并增量修改已有原型
-    ↓
-更新需求开发预览
-    ↓
-准备验收：冻结源提交和 PRD 修订，从最新 main 创建独立集成候选
-    ↓
-合并需求提交；有冲突则在隔离候选工作区处理
-    ↓
-构建、回归测试，保存不可变产物并部署候选预览
-    ↓
-人工验收候选，先持久化验收凭证和产物引用
-    ↓
-串行执行最终门禁：候选、源版本、PRD、目标 main 与验收依据一致
-    ↓
-通过 MR 将已验收候选 fast-forward 合入 main，不 squash、不 rebase
-    ↓
-晋级同一构建产物，登记正式基线并验证访问
-    ↓
-记录发布完成，验证历史引用后清理临时分支和入口
+{project}-requirements/
+├── requirements/
+│   ├── REQ-001/
+│   │   ├── prd.md
+│   │   └── decisions.md                # 可选，需求决策记录
+│   └── REQ-002/
+│       └── prd.md
+├── standards/
+├── .vitepress/
+└── README.md
 ```
 
-取消低保真生成及前置评审。已有能力满足要求时复用页面、flowId、screenId 和设计系统；高保真评审发现的业务问题回补需求资料。首次没有原型时先建立初始基线。
+- PRD 是业务规则、验收条件的文字权威来源；VitePress 为发布视图。
+- 文档仓库的 PRD 修订独立于原型仓库；原型 Change 必须引用当时确认的 `prd_commit`。
+- 不要求文档仓库每个需求使用一个长期分支；其 MR 流程与原型开发分支独立。
 
-需求分支用于开发，集成候选用于最终业务验收。验收的是与指定主线集成后的完整结果，而不是未经集成的开发预览。普通无冲突候选也必须测试；Git 无文本冲突不代表业务无冲突。
-
-正式 MR 的源必须是已验收候选分支，不能改为原需求分支，否则候选中的冲突修复可能遗漏。正式发布复用候选产物，不以重新构建的另一份产物代替。满足提交与产物一致性后，发布后执行访问及部署验证，不默认要求产品经理重复人工验收。
-
-分别记录验收通过、合并完成和发布完成。任一步失败均不标记完整交付；主线变化则重新集成、测试，并重新确认受影响内容。平台负责分支、集成和合并操作，产品经理关注需求、业务决策与验收。
-
-## 5. 分支与发布环境
-
-| 分支 | 命名 | 用途 |
-| --- | --- | --- |
-| 原型主分支 | `main`（以仓库配置为准） | 已通过候选验收并正式合入的完整原型 |
-| 需求开发分支 | 需求 ID，例如 `req002` | 保存需求独立修改 |
-| 集成候选分支 | `integration/req002-003` | 保存第 3 次集成尝试，独立于需求分支 |
-
-需求资料仓库的编辑分支沿用其约定，不要求机械创建第二个同名分支。平台记录精确的 source_commit、target_commit 和 candidate_commit，实际使用完整 SHA。
-
-创建需求使用最新 main SHA，同时记录当时已发布基线；两者可能因发布尚未完成而不同，不将未发布提交标记为在线版本。原始创建记录不可覆盖。
-
-每次候选从本次读取的目标 main SHA 创建，再合并冻结的需求源 SHA。不得反复向旧候选堆积集成结果；重新集成创建新的 Integration Attempt。候选进入可验收状态后不可变，修复或重新构建形成新尝试或新修订并重新绑定依据。
-
-| 操作 | 行为 |
-| --- | --- |
-| 创建空需求分支 | 仅登记，不启动原型构建或预览部署 |
-| 空闲需求 | 不主动同步所有分支；首次开发前自动检查最新主线，无独立提交时优先 fast-forward |
-| 更新已登记需求分支 | 有实际原型变化才构建开发预览 |
-| 准备验收 | 创建独立候选，构建、测试并生成固定预览 |
-| 更新需求资料仓库 | 按该仓库规则发布文档，不重发未变原型 |
-| 本地 commit | 不触发远端发布 |
-| 未登记分支 | 可执行检查，不自动部署 |
-| 候选验收通过 | 固定验收依据，进入受控合并流程 |
-| 候选合入 main | 晋级已验收产物，不重新构建替代 |
-
-创建分支不触发构建必须落实在事件和 CI 规则中。允许大量空闲分支，不因数量限制业务需求创建；不为每个分支启动独立应用或容器。
-
-候选和开发预览均包含完整产品，但用途和命名空间分开，均不得直接更新正式入口。实际远程推送、合并及部署按具体授权执行，本文仅规定目标系统行为。
-
-## 6. 发布单位、清单与增量规则
-
-发布单位调整为：按需求独立的文档包、按产品统一的原型包，以及按需更新的导航。分支预览复用同样的打包方式，但部署到独立环境。
-
-需求资料仓库的 `publish/projects.json` 保存项目标识、需求登记、资料路径、原型仓库与分支关联及文档发布配置。原型仓库独立维护原型包发布配置和依赖。跨仓引用保存仓库标识与精确提交，不能只存分支名。正式验收绑定以需求目录的验收记录为准，避免维护多个相互冲突的绑定来源。
-
-对最终发布文件计算指纹：
+### 2.2 多应用原型仓库
 
 ```text
-包指纹 = SHA-256（排序后的相对路径 + 各文件内容摘要）
+{project}-prototype/
+├── prototype.yaml
+├── apps/
+│   └── {app-id}/
+│       ├── src/
+│       ├── tests/
+│       ├── package.json               # 以 Web/Vite App 为例；其他类型允许其他配置
+│       └── vite.config.ts             # 非所有 App 必须有此文件
+├── packages/
+│   ├── prototype-sdk/                 # 稳定语义元素 ID、场景接口、消息协议
+│   ├── annotation-renderer/           # 标注展示适配层
+│   ├── scenario-engine/               # 固定状态/模拟数据
+│   └── shared-contracts/              # 有价值的共享契约；不强行共享 UI
+├── requirements/
+│   └── {requirement-id}/
+│       ├── manifest.yaml              # 需求影响的 App 清单、PRD 引用、验收范围
+│       ├── flows/                     # 跨 App 流程，可选
+│       └── {app-id}/
+│           ├── annotations.yaml
+│           ├── walkthrough.yaml
+│           └── scenarios/
+│               └── default.yaml
+├── tests/
+│   └── cross-app/
+├── schemas/                            # 配置与需求包 JSON Schema
+├── scripts/                            # lint、build、preview、schema validation
+├── pnpm-workspace.yaml                 # 选用 pnpm 时
+├── package.json
+├── AGENTS.md
+└── .gitlab-ci.yml
 ```
 
-比较基准是该包在目标环境中当前成功发布的内容，而不是上一条 Git 提交。分支预览和产品正式环境分别记录状态；首次进入某环境时，即使其他环境已有同内容，也须建立该环境的有效入口和记录。
+项目目前的实例可注册 `pos`、`web-admin`、`mini-admin` 三个 App（POS 端、Web 管理端、小程序掌柜端），**但这三个名称只出现在实例配置和示例中，不能出现在治理平台的硬编码分支里**。其他 ERP/CRM 项目应能声明其他 App 而不修改平台核心逻辑。
 
-| 变化 | 发布行为 |
-| --- | --- |
-| 只修改需求 A 文档 | 仅更新 A 文档，不重新发布产品原型 |
-| 修改产品原型 | 在对应分支环境发布产品原型包 |
-| 新建需求但未改原型 | 发布有效文档或导航，不制造新的产品原型内容版本 |
-| 共享设计系统资源变化 | 重新计算实际依赖它的包，内容变化才部署 |
-| 只修改过程记录 | 不更新页面包，除非显式发布内容确有变化 |
-| 保存验收记录 | 更新需求导航或文档关联，不产生新原型内容版本 |
-| 内容一致 | 跳过重复上传和版本切换 |
-| 上次失败 | 与最后成功状态比较，继续补发 |
-
-产品原型第一版完整打包，不按需求拆包。原型有变化时发布完整新快照，需求文档仍按需求增量发布。后续只有明确存在独立运行模块时才考虑按模块拆包。
-
-发布包包含必要 HTML、CSS、JavaScript、图片及模拟数据，不引用会被覆盖的共享运行资源。打包检查相对路径和缺失依赖，动态依赖须显式登记。版本复现不应依赖会变化的真实业务接口。
-
-指纹排除打包时间和流水线编号等部署元数据；生成器避免每次写入变化的时间而触发无意义发布。每次相关分支推送执行轻量状态检查，路径过滤不能漏掉失败补发。
-
-## 7. 自动合并、部署并发与失败恢复
-
-### 7.1 最终合并门禁
-
-同一产品的最终检查与合并串行执行，所有常规 main 更新必须经过同一受控入口。不能先在客户端读取 main，再无条件执行稍后的合并。
-
-合并时检查：验收凭证已持久化、候选 HEAD 和构建摘要一致、源版本及批准 PRD 未变化、当前 main 等于 target_commit、相关测试通过、无待决业务冲突、执行身份有权限。使用服务端合并能力及 fast-forward 约束拒绝过期结果，合并成功后核实 main 指向 candidate_commit。实施时验证实际 GitLab 能力与竞态行为，不将单个任务锁等同于全局保障。
-
-第一版采用严格失效规则：main、需求源 HEAD、批准 PRD 修订、候选或验收所用场景/标注发生变化时，旧凭证不授权新结果；创建新尝试并重新确认受影响内容。旧验收记录保留，过期只影响其当前合并资格。仅新增验收记录等元数据不算 PRD 内容修订。
-
-原型项目采用 fast-forward 合并且禁止 squash，验收后不得自动 rebase。平台合并身份与开发 Agent 分离，普通 Agent 不获得 main 直接推送或签发人工验收的能力。可信门禁与合并权限不能由候选代码任意修改。
-
-### 7.2 发布与恢复
-
-候选构建先可靠保存并校验，再提供验收。正式发布仅验证并晋级相同 build_id：取得正式部署锁、读取当前成功状态、验证归档与固定入口、原子切换产品入口、执行访问检查、登记正式基线及来源。文档包与开发预览仍按第 6 节正常构建发布。
-
-同一目标环境的部署串行，防止旧流水线覆盖新版本。预览与正式目录、状态及权限隔离，分支不能指定任意正式部署路径。
-
-上传或校验失败保留旧入口，切换后验证失败恢复上一入口。合并成功但发布失败时保留验收、合并及产物记录，标记发布待重试，不伪造发布成功、不自动撤销业务源码，也不清理恢复所需资料。失败重试幂等，不重复创建验收或正式版本。
-
-需求资料与原型跨仓发布部分成功时分别报告，仅补发缺口；正式导航只链接已经可用的对象。HTTP 检查不能替代候选验收中的浏览器交互和视觉确认。部署状态记录产品、环境、仓库、提交、产物摘要、流水线、当前及上一成功版本。
-
-目录或登记删除仅报告待下线，不自动清空线上内容。临时文件、凭据和内部运行状态不对外公开。
-
-## 8. 三层版本机制与访问入口
-
-| 层次 | 保存内容 | 用户操作 |
-| --- | --- | --- |
-| Git 提交 | 源码和需求资料历史 | 正常提交，无须手工命名版本 |
-| 发布版本 | 成功发布的完整不可变快照 | 系统自动生成标识和链接 |
-| 验收绑定 | 需求引用的固定候选及其后续正式发布映射 | 确认实际查看的候选验收通过 |
-
-版本标识由工具生成，可包含流水线编号及提交摘要，例如 `p-184-a7f3c9`。内容不变时可复用已有快照，但需记录当前提交或合入事件与该快照的对应关系，保证后续验收可以追溯。
-
-拟定访问路径如下，尚未配置：
-
-| 用途 | 路径 |
-| --- | --- |
-| 产品最新原型 | `/products/<项目>/prototype/` |
-| 产品固定原型版本 | `/products/<项目>/prototype/versions/<版本>/` |
-| 需求分支预览 | `/products/<项目>/previews/<分支键>/prototype/` |
-| 预览固定版本 | `/products/<项目>/previews/<分支键>/prototype/versions/<版本>/` |
-| 集成候选预览 | `/products/<项目>/integrations/<集成ID>/` |
-| 需求分支文档预览 | `/products/<项目>/previews/<分支键>/requirements/<需求>/docs/` |
-| 正式需求入口 | `/products/<项目>/requirements/<需求>/` |
-| 正式需求文档 | `/products/<项目>/requirements/<需求>/docs/` |
-| 文档固定版本 | `/products/<项目>/requirements/<需求>/docs/versions/<版本>/` |
-
-分支键由工具生成，避免分支名称字符和重名导致路径冲突。固定入口引导到具体版本路径，避免页面加载跨版本资源。最新入口不使用长缓存，版本资源可使用较长缓存。候选与正式入口解析到同一不可变产物地址，禁止通过修改构建 base 重新打包替代验收产物；验证深层刷新、懒加载和资源路径。
-
-正式需求页展示“查看需求文档”“查看开发预览”“查看待验收候选”“查看历史验收”“查看产品最新原型”，按状态提供有效入口；Plane 接入后待验收链接指向候选而非需求分支。未验收时明确显示待验收，并提供已登记的预览入口，不用最新版伪装验收结果。普通技术版本默认不要求用户管理。
-
-## 9. 验收绑定与文档引用
-
-人工验收针对不可变集成候选。第一版每个需求修订使用一个主要正式候选 MR；多次尝试保留记录，只允许有效尝试进入合并。未来多 MR 必须明确该修订的必需变更集合，不能把单个 MR 合并等同于需求全部完成。
-
-验收顺序：
-
-1. 确认批准的 PRD 修订、候选场景和测试结果，候选产物已可靠保存且可访问。
-2. 用户查看固定候选预览、验收标准、场景、标注及适用的 AI 冲突处理报告。
-3. 获取实际确认的 integration_id、candidate_commit 和 build_id，不重新读取漂移的最新入口。
-4. 在需求资料仓库持久化人工验收记录，确认写入成功后才开放合并门禁。自动化运行状态可作缓存，不能成为第二份可变验收权威来源。
-5. 平台按第 7 节合并并晋级同一产物；追加合并和发布映射，不改写原验收事实。
-
-验收记录包括产品与需求 ID、需求修订、需求资料仓库及批准 PRD 提交、原型仓库、integration_id、source_commit、target_commit、candidate_commit、候选摘要、场景与标注修订、测试引用、真实验收者、结果及时间。代理不得替代人工确认。验收记录自身提交不循环修改其引用的 PRD 修订。
-
-```text
-需求 A：验收候选 C → 持久化记录 → main 指向 C → 发布同一 build，登记版本 184
-需求 B：通过新候选验收并发布 → 产品版本 185
-
-需求 A 历史入口 → 原验收 build（对应版本 184）
-当前产品入口 → 185
-```
-
-验收通过但尚未发布时显示“已验收，待合并/待发布”，不显示交付完成。普通需求开发预览不作为最终验收凭据。后续主线改变不会改写历史，只会使尚未合并的候选过期。
-
-同一需求再次修改新增修订和验收记录；新一轮驳回不覆盖历史通过记录。历史默认展示最近一次成功发布且通过验收的修订，待发布候选另列；没有正式历史时明确提示，同时允许查看已保存的候选验收记录。
-
-需求文档引用固定原型地址和页面锚点，产品最新链接单独标明。候选链接须明确是待发布内容；不得把尚未发布目标登记为正式版本。引用变更只更新文档或导航，不重新生成原型内容。
-
-## 10. 回滚、保留和分支清理
-
-回滚产品最新入口只改变展示，不修改 Git 历史，也不改变需求验收绑定。若要后续开发继续基于旧行为，需要在源码中撤销相关变更并提交，避免下次部署恢复被回滚内容。
-
-需求文档可按需求回滚；产品原型回滚作用于统一产品入口，不能承诺只撤销某个需求而不影响其他需求。只撤销某需求的行为应通过源码变更和新产品版本实现，并验证相互依赖。
-
-必须保留当前版本、正式验收引用版本、明确留档的评审版本，以及被保留文档引用的原型版本。包资源随版本保存。其他普通发布版本的数量和期限实施时确定，未确认前不自动清理。
-
-候选已合并、同产物已成功发布且历史引用访问验证通过后，才可清理对应需求分支、候选分支和临时入口；确认需求分支无新增未交付提交。失败或待重试任务不得提前清理，任何清理不得删除被验收或评审引用的最后可恢复副本。归档需求不释放标识。历史记录只保存 Git 提交而没有可用快照，不算满足历史原型可访问的要求。
-
-## 11. 发布范围和环境条件
-
-文档包默认包含该需求的正式文档、必要资源及允许发布的导航信息。产品原型包包含产品原型及实际依赖的设计系统资源。工作记录、可编辑源文件默认不公开，需要时显式配置。
-
-CI 临时产物不提交 Git；日常部署不反向写源码仓库。用户确认触发的验收记录写入是单独的需求资料更新，若触发流水线只更新变化文档或导航，不重新发布未变的原型。
-
-实施前核实 GitLab 地址和版本、需求资料仓库与原型仓库、各自主分支、分支保护及合并检查、Runner 执行环境、服务器系统、Nginx 状态、端口与路径冲突、空间和网络连通性。Runner 须能访问 GitLab 和部署服务器，访问者须能连通该私网。
-
-部署使用专用账号和 SSH 密钥，核验主机密钥；凭据不写入仓库、方案、产物或日志。未授权的分支任务不能获得正式部署权限。GitLab 仓库权限不等同于页面访问权限。
-
-## 12. 旧产物兼容与迁移边界
-
-新需求使用 `requirements/`，新原型修改统一落在独立原型仓库的 `prototype/`。已有 `outputs/product-requirements/` 或需求内原型不自动删除、批量搬迁或机械合并。
-
-实施时先盘点旧产物，由用户明确哪一套作为当前产品原型基线。其他旧原型按实际来源保留为历史资料或导入固定快照；不能凭目录时间推断它已验收，也不能将多套不同需求原型直接覆盖到一起。
-
-旧需求通过登记映射兼容，分配标识时检查冲突。已有低保真只作历史资料，新流程不生成也不要求补齐。明确迁移时更新登记、内部链接和校验，验证依赖完整。
-
-本文的新产品级路径替代之前尚未实施的按需求原型路径设计；若环境核实时发现已有对外地址，先制定兼容映射，不擅自使历史链接失效。不借目录迁移修改业务规则。
-
-## 13. 实施范围与顺序
-
-| 阶段 | 工作与完成定义 |
-| --- | --- |
-| 核实基础 | 确认两个仓库、原型初始基线、实际平台组件、GitLab 版本与许可证、身份和部署环境 |
-| 自动创建需求分支 | 创建需求后自动建立同名分支，记录 main SHA 与当时已发布基线；事件幂等，空分支不构建 |
-| 无冲突最小闭环 | 一个真实需求完成候选生成、构建测试、固定预览、人工验收持久化、受控合并、同产物发布与历史访问 |
-| 并行与失败验证 | 两需求并行，验证候选过期、并发合并、源版本变化、发布失败重试、原验收不变 |
-| AI 冲突处理 | 隔离候选修复、上下文与报告、受影响回归、业务冲突人工决策、资源和重试上限 |
-| 标注与历史回放 | 实现需求包 Schema、语义定位、演示步骤、版本化 SDK、历史与当前视图、失效提示及兼容降级 |
-| 长期管理 | 完善归档恢复、缓存清理、语义差异、自动联动与对账；标注自动迁移与资产分流后置 |
-
-首个闭环即包含不可变验收产物的可靠保存、必要身份和验收审计；可以后置的是冷热恢复与清理优化。引入 AI 前，冲突进入待处理状态，不伪造成功或跳过测试。
-
-分支管理、集成、AI 冲突处理、预览、验收和归档可作为单体中的职责模块，不拆成六个微服务。Plane 负责工作项（接入后），GitLab 管理两个仓库及 MR，文档发布可复用 VitePress，Codex 执行隔离修改，OpenHands 为后续可选编排；先验证实际部署，不假定附件描述的组件已存在。
-
-同步调整技能、模板、规格、治理校验和说明时，仅围绕本方案明确的验收点。此轮只更新文档，不实施代码、迁移、远程合并或服务器变更。
-
-## 14. 验收标准
-
-| 场景 | 预期结果 |
-| --- | --- |
-| 创建需求 | 资料进入独立需求仓库 requirements；原型仓库从记录的 main SHA 创建同名分支，保存当时已发布基线 |
-| 重复事件或部分失败 | 幂等重试，不覆盖已有需求或他人分支；状态明确 |
-| 空闲分支 | 不主动构建、部署或批量同步，首次开发检查主线 |
-| 原型已有能力满足需求 | 复用页面，不复制整套源码，不恢复低保真阶段 |
-| 两个需求开发预览 | 隔离入口，不影响当前产品 |
-| 创建集成候选 | 从冻结的最新目标 SHA 集成冻结源 SHA，不覆盖需求分支；每次尝试独立 |
-| 无冲突集成 | 同样构建、场景测试和回归，不把无文本冲突当业务正确 |
-| AI 修复冲突 | 只改隔离候选，保留测试，报告影响；业务依据不明确时等待人工决策 |
-| 人工验收 | 查看固定候选，真实身份与 PRD、源/目标/候选 SHA、摘要、场景及标注绑定 |
-| 验收记录写入失败 | 阻止合并，不以临时内存状态代替凭证 |
-| 验收后 main、源或需求依据变化 | 旧凭证不授权新结果，建立新尝试并重新确认 |
-| 并发合并 | 所有正式更新受控，过期候选被拒绝，不存在检查后无条件合并窗口 |
-| 正式合并 | 合并候选而非原需求分支；main 指向验收候选 SHA，冲突修复完整保留 |
-| 正式发布 | 复用同一 build_id，不重新构建冒充已验收产物 |
-| 合并成功、发布失败 | 保留验收与合并记录，旧入口可用，发布可重试，不标记交付完成 |
-| 只改需求文档或验收记录 | 仅更新变化文档或导航，不重发未变原型 |
-| 同内容、多次构建 | 可复用产物，保留各次提交与执行来源 |
-| 旧流水线晚完成 | 不覆盖较新成功版本 |
-| 需求差异 | 比较实际 target 与 candidate，不混入早先并行需求的变化 |
-| 后续产品更新或需求修订 | 旧验收、旧文档和资源仍可访问，不覆盖历史 |
-| 分支和预览清理 | 发布及历史引用验证通过后才清理，不删除最后可恢复副本 |
-| 归档恢复或损坏 | 校验、并发去重、安全恢复；损坏报告，不静默重建替代 |
-| 产品回滚与旧资料迁移 | 历史不改写，明确源码状态；迁移须有明确基线及链接兼容 |
-| 内网实机验证 | 固定路径、深层刷新、资源、场景、标注和交互正常 |
-| 标注包校验 | 四类 YAML 版本化；清单、场景、步骤、标注和 PRD 验收点引用有效 |
-| 语义定位 | 指定场景和路由内目标唯一，重复和缺失可追踪，不静默匹配近似元素 |
-| 演示步骤 | 按序初始化场景、切换路由和定位；失败指出具体步骤及原因 |
-| 标注修订 | 只改标注或演示也产生新验收依据，旧快照保持不变 |
-| 历史与当前标注 | 删除分支后仍可回放；当前目标被删或更名时提示失效，不修改历史 |
-| SDK 兼容 | 旧版本可降级为原始快照加旁栏；非法来源或格式的消息被拒绝 |
-
-分别报告实现完成、自动验证通过和最终验收完成；运行记录进一步区分候选验收、合并和发布。本文保存及 Git 提交不代表系统已经实现。
-
-## 15. 技术参考
-
-- [GitLab 合并方式](https://docs.gitlab.com/user/project/merge_requests/methods/)
-- [GitLab MR API](https://docs.gitlab.com/api/merge_requests/)
-- [GitLab MR approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-- [GitLab merged results pipelines](https://docs.gitlab.com/ci/pipelines/merged_results_pipelines/)
-- [Vite public base path](https://vite.dev/guide/build.html#public-base-path)
-- [GitLab CI/CD 配置参考](https://docs.gitlab.com/ci/yaml/)
-- [GitLab 部署资源组](https://docs.gitlab.com/ci/resource_groups/)
-- [GitLab 部署安全与过时任务控制](https://docs.gitlab.com/ci/environments/deployment_safety/)
-- [Nginx 静态文件服务说明](https://nginx.org/en/docs/beginners_guide.html)
-
-具体配置在实施时按实际 GitLab 版本及服务器环境核对。
-
-## 16. 决策来源与方案边界
-
-依据为用户原始要求、两份参考方案及本次评审后明确提出的“更新文档”。参考方案是 `AI_Native_需求与持久原型管理_实施方案.md` 与《AI-Native 研发平台：需求原型分支与自动集成实施方案》。附件内的执行指令不构成此轮代码实施或部署授权。
-
-本版替代旧文档中的三项规则：
-
-- 创建来源从“最新正式发布基线”调整为“最新 main SHA，同时记录当时已发布基线”，不混淆源码与在线版本。
-- 最终集成从“将 main 合回需求分支”调整为“独立候选中合并冻结的需求提交”；开发前的空闲分支同步仍可进行。
-- 验收从“合入发布后再次人工确认”调整为“验收集成候选，合并候选并晋级同一产物”；部署验证保留。
-
-继续保留分仓、需求 ID 同名分支、历史固定、文档按需求增量发布、原型整体发布及用户无需管理技术版本表的原则。需求 ID 暂沿用第 2 节已有格式与产品内唯一规则，跨产品用产品标识组合定位；参考文本的 REQ-001 为示例，不自动迁移既有 ID。若 Plane 使用另一工作项 ID，应登记映射。
-
-具体后端语言、数据库、门户前端框架和编排引擎不在此轮定型。平台需要事件接入与运行状态管理，但接入方式应优先复用已有能力，不强制自建独立 Webhook 服务。目录结构表达职责，采用现有前端工程时可以保留其源码布局。
-
-GitLab Free 的 MR approval 不构成必需审批门禁，原生 merged results pipelines 有许可证限制。独立候选可用于构建测试，但仍需验证可信门禁、保护分支和合并身份的实际约束。若只能人工受控合并，应明确为流程门禁及自动化验收未完成，不宣称平台自动合并能力已经实现。
-
-## 17. 集成记录、状态与历史关系
-
-```yaml
-integration_id: int-req002-003
-product_id: pos
-requirement_id: req002
-requirement_revision: 1
-prototype_repository: pos-prototype
-source_branch: req002
-source_commit: <完整SHA>
-target_branch: main
-target_commit: <完整SHA>
-candidate_branch: integration/req002-003
-candidate_commit: <完整SHA>
-docs_repository: product-docs
-approved_prd_commit: <完整SHA>
-build_id: <产物内容摘要>
-scenario_revision: <场景修订>
-annotation_revision: <标注修订或不适用>
-manifest_digest: <需求包清单摘要>
-annotation_digest: <标注内容摘要>
-scenario_digest: <场景集合摘要>
-walkthrough_digest: <演示步骤摘要>
-sdk_version: <原型内置SDK版本>
-status: awaiting_acceptance
-```
-
-每次尝试还保存测试结果、冲突报告、创建者、时间、请求幂等键和失败原因。MR 以项目 ID 与 IID 联合定位；构建执行与内容产物分开记录，相同摘要可对应多个流水线来源。
-
-主流程状态：`pending → merging → testing → preview_ready → awaiting_acceptance → approved → merged → publishing → released`。有冲突进入 `resolving`；不明确的业务冲突进入 `needs_decision`。另有 `rejected`、`stale`、`failed`、`cancelled`，失败须记录阶段。发布失败保留已合并事实，可重试发布；驳回、过期后的重新集成建立新尝试，不改写旧记录。
-
-历史关系为“需求修订 → 集成尝试 → 人工验收记录 → 不可变产物 → 合并及正式基线”。origin_baseline 固定创建时 main SHA，另存当时发布版本；working_base_sha 只记录需求分支实际吸收的主线，候选使用自己的 target_commit。introduced_in 仅在首次完整成功发布时登记，不随以后发布改写。
-
-需求差异比较本次 target_commit 与 candidate_commit，另以人工语义清单解释业务变化。origin_baseline 到 target 的变化属于背景，不直接算作本需求改动。
-
-并行示例：`req001`、`req002` 均从 v0.0.1 创建；`req002` 的候选先验收、合并并发布 v0.0.2。随后从 v0.0.2 对应主线创建 `req001` 的新候选，再合并其冻结源提交，测试验收后发布 v0.0.3。`req002` 的历史仍指向 v0.0.2 的验收产物，当前视图为 v0.0.3；已完成的需求分支无需持续同步主线。
-
-跨仓创建失败保留待创建状态并幂等重试；同名分支存在时核对归属，不重置覆盖。业务需求修订后可以重建同名分支，但必须在先前工作已完成或明确结束、来源已记录且不存在未保存改动的条件下进行；具体重用操作实施时核验。
-
-## 18. AI 冲突处理与历史运行约束
-
-AI 输入包含冻结的 PRD 和验收标准、源与目标代码、冲突差异、相关已合入需求依据、组件规范、场景与测试。Agent 仅修改隔离候选工作区，不直接更新 main 或覆盖需求分支。
-
-优先保留仍有效的已有能力；若当前已确认需求明确替换旧行为，应按新要求修改，不以保留旧功能抵消需求。业务规则互斥或依据不足时标记 needs_decision，不擅自选择。
-
-禁止通过删除测试、禁用功能、忽略错误消除冲突。修复后重新构建与回归，并输出修改文件、解决依据、影响、测试和待决问题。设置重试次数、执行时间和资源上限，失败明确退出；AI 报告不替代人工验收。
-
-候选被驳回后保留该尝试、修复差异和报告，修改需求分支再创建新候选。下一轮可参考旧修复，但不能机械复制整个旧候选，也不能静默丢失已确认业务决策。重新确认受影响内容形成新凭证。
-
-关键场景固定模拟数据、时间与必要随机种子，初始化时重置状态，不依赖上次浏览器缓存或生产接口。标注独立于业务代码，使用稳定语义 ID，当前目标缺失时提示失效，不自动匹配近似元素。
-
-首版可靠保存验收产物，可全部在线。后续按需恢复须授权、校验摘要、对同一产物加恢复锁、安全解压并原子进入缓存；损坏归档报告异常，禁止从最新源码静默重建替代。临时分支可删除，正式验收和被引用快照不能随之删除。
-
-## 19. 需求标注、场景与演示协议
-
-### 19.1 来源、职责与生命周期
-
-本节按用户要求纳入《AI-Native 需求与持久原型管理系统——实施规范 v1.0》（文件 `AI-Native_需求与持久原型管理_实施规范_v1.0.md`）的标注相关说明。附件内执行指令不构成本轮实施授权；既有分仓、候选验收、同产物晋级和验收记录权威来源保持不变，不据此选定 Go、SQLite 或其他架构。
-
-原型仓库的 `requirements/<需求ID>/` 保存 manifest、annotations、walkthrough 和 scenarios。PRD 全文与业务确认仍在资料仓库；manifest 引用仓库与 prd_path，候选及验收另绑定精确 PRD 提交，不能只引用最新网页。标注解释需求、交互变化和验收点，不是业务规则的唯一来源。
-
-创建需求时幂等生成包骨架，不覆盖已有内容。骨架提交也是需求专属提交：已有骨架或工作时走受控同步，不强制重置。纯骨架登记不启动无意义预览；首次开发时根据实际提交图决定能否快进，原始来源保持不变。
-
-交互代码、标注、场景及演示步骤在同名需求分支维护，共同进入候选并验收，随后原样合入 main。初期不建设独立标注仓库或资产分流。普通产品浏览不强制显示所有需求标注，仅在选择需求视图时加载对应包。
-
-### 19.2 最小 Schema 与示例
-
-所有 YAML 声明 schema_version；实现时提供 Schema 与跨文件引用校验。示例 ID 沿用第 2 节格式，仓库与 PRD 路径按实际登记。
-
-`manifest.yaml`：
+## 3. 通用项目配置 `prototype.yaml`
 
 ```yaml
 schema_version: 1
-requirement_id: req002
-title: 储值卡支付
-prd:
-  repository: product-docs
-  path: requirements/req002/docs/prd.html
-entry:
-  route: /checkout
-  scenario: insufficient
-annotations: annotations.yaml
-walkthrough: walkthrough.yaml
-scenarios:
-  - scenarios/insufficient.yaml
+project:
+  id: example-project
+  name: Example Product
+repository:
+  default_branch: main
+  requirement_branch_template: "{requirement_id}"
+applications:
+  - id: app-a
+    name: Application A
+    root: apps/app-a
+    kind: web-prototype                 # 可扩展的描述标签，不用作硬编码逻辑
+    build:
+      runner: node                      # 必须受执行器白名单/隔离策略约束
+      command: pnpm --filter app-a build
+      output: apps/app-a/dist
+    preview:
+      provider: static                  # static/container/external/artifact，可扩展
+      base_path: /artifacts/{artifact_id}/app-a/ # 逻辑入口解析到固定产物地址
+    capabilities:
+      interactive_preview: true
+      annotations: true
+      scenarios: true
+      automated_tests: true
+  - id: app-b
+    name: Application B
+    root: apps/app-b
+    build:
+      runner: node
+      command: pnpm --filter app-b build
+      output: apps/app-b/dist
+    preview:
+      provider: static
+      base_path: /artifacts/{artifact_id}/app-b/
+    capabilities:
+      interactive_preview: true
+      annotations: true
+      scenarios: true
+      automated_tests: true
 ```
 
-`annotations.yaml`：
+约束：
+- `app_id` 在一个项目内唯一、稳定、符合安全路径字符规则（建议小写字母、数字、连字符）；禁止 `..`、斜杠与任意路径穿越。
+- Manifest 引用的 App 必须存在于此配置。
+- `root`、构建输出路径必须限制在仓库/隔离工作区内，不能逃逸。
+- `kind` 仅为描述；构建与预览由 Provider/Capabilities 决定。
+- 不可信分支中的构建脚本只能在隔离 Runner 执行，禁止生产凭据、主机 Docker Socket 和高权限密钥。
+- `static` 预览需正确设置资产 base path；`container` 需配额和 TTL；`external` 必须声明外链可信边界；`artifact` 不承诺浏览器交互。
+- 项目配置变更应作为受保护的配置变更审查，不能让任意需求提交直接扩大执行权限。
+
+## 4. 需求原型包 Schema
+
+`requirements/{requirement-id}/manifest.yaml`：
+
+```yaml
+schema_version: 1
+requirement_id: REQ-001
+title: Example Requirement
+prd:
+  repository: example-requirements
+  path: requirements/REQ-001/prd.md
+  commit: "<exact-prd-sha>"
+applications:
+  app-a:
+    required_for_acceptance: true
+    entry: /checkout
+    annotations: app-a/annotations.yaml
+    walkthrough: app-a/walkthrough.yaml
+    scenarios:
+      - app-a/scenarios/insufficient.yaml
+  app-b:
+    required_for_acceptance: false
+    entry: /settings
+    annotations: app-b/annotations.yaml
+flows:
+  - flows/cross-app-payment.yaml
+```
+
+每个 App 独立的 `annotations.yaml` 示例：
 
 ```yaml
 schema_version: 1
 annotations:
-  - id: anno001
+  - id: ANNO-001
     type: element
     target:
       route: /checkout
       element_id: payment.stored-value
-    title: 储值卡支付
-    description: 支持余额不足时组合支付
+    title: 储值卡入口
+    description: 在此处展示储值卡支付方式
     acceptance_criteria: [AC-001]
-  - id: anno002
-    type: element
+  - id: ANNO-002
+    type: note
     target:
       route: /checkout
-      element_id: payment.remaining
-    title: 剩余应付金额
-    description: 展示其他方式需要补付的金额
+    title: 余额不足处理
+    description: 实际业务规则以 PRD 对应提交为准
     acceptance_criteria: [AC-002]
 ```
 
-`scenarios/insufficient.yaml`：
+场景数据示例：
 
 ```yaml
 schema_version: 1
 id: insufficient
-description: 储值卡余额不足
 initial_state:
   order_total: 128
   card_balance: 30
@@ -520,70 +226,435 @@ expected:
   remaining_payment: 98
 ```
 
-`walkthrough.yaml`：
+操作步骤示例：
 
 ```yaml
 schema_version: 1
 steps:
-  - id: step001
+  - id: STEP-001
     action: select_scenario
     scenario: insufficient
-  - id: step002
-    route: /checkout
+  - id: STEP-002
     action: highlight
     target: payment.stored-value
-    annotation: anno001
-  - id: step003
-    route: /checkout
-    action: highlight
-    target: payment.remaining
-    annotation: anno002
+    annotation: ANNO-001
 ```
 
-场景 ID 在需求包内唯一，以产品、需求和场景组合定位。先完成场景初始化，再导航和定位；等待异步页面就绪，步骤失败显示 step ID、原因及重试入口。动作按版本化 Schema 解释，不将 YAML 当任意脚本执行。
+**标注规则**：
 
-标注类型包括 element、note、walkthrough、change，分别用于元素说明、旁栏说明、演示关联和变更说明。按类型定义必填字段，无元素目标的 note 不强制 element_id。新增类型须声明 Schema 与 SDK 兼容性。验收条件 ID 必须能在绑定 PRD 修订中找到。
+1. 业务上属于 Requirement，文件在其需求目录；开发上与需求分支一起版本化；验收后固定为不可变修订。
+2. 页面组件通过稳定 `data-prototype-id` 或 SDK 注册语义 ID，避免仅靠屏幕像素坐标、源码行号定位。
+3. 不允许同一渲染范围出现歧义的重复语义 ID；CI/运行时检测缺失、重复、不可见目标。
+4. 标注不得作为业务规则唯一来源；标注内容须引用 PRD 验收条件。
+5. 历史标注不可因新版本组件改名而原地覆盖；当前版本视图的迁移结果是新修订，并显示失效/人工确认状态。
+6. `flows/` 保存跨 App 业务步骤，不复制散落在不同 App 的同一业务规则。每个 flow 固定 ID、required_for_acceptance、PRD 验收点及有序步骤；每步明确 app_id、场景/步骤引用与预期状态。Schema 校验 App 和引用存在，运行时记录逐步结果；跨 App Mock 契约与数据版本一并冻结。
+7. 没有涉及的 App 不必建立目录；`required_for_acceptance` 明确是否必须参与整体验收。声明为非必需不代表可跳过受依赖影响的回归，也不能借此排除 PRD 明确要求的能力。0 App 的需求可只更新文档，记录原型不适用，不伪造空产物或原型验收。
 
-### 19.3 语义定位与 CI 校验
+## 5. 分支、基线与版本策略
 
-原型元素使用稳定属性，例如 `<button data-prototype-id="payment.stored-value">`。不依赖源码行号或固定屏幕坐标作为唯一依据；指定场景和路由内目标应唯一，重复、缺失或展示状态不满足时报告，不能随机选第一个匹配项。
+- `main`：已验收并集成的持久原型；受保护，不允许一般人员或 Agent 直接推送。
+- `{requirement-id}`：平台创建的需求分支，例如 `REQ-001`；创建时记录 `origin_commit`；不自动开长期预览。
+- `integration/{requirement-id}/{attempt-id}`：一次集成候选；候选从确定的 `target_main_sha` 创建后整合需求提交，隔离 AI 冲突修复。
+- `tag`：按产品设计基线发布节奏产生，不要求每次 MR 合并都加 Tag。
 
-相对位置或坐标仅作明确标记可靠性的辅助，不能将失效的语义定位判为通过。诊断记录需求、标注 ID、元素 ID、路由、场景、目标 build_id、状态和原因。
+需求记录必须保留：
 
-CI 校验四类 Schema、路径、场景/标注/步骤引用及 PRD 验收点，再运行相关浏览器场景与演示步骤检查定位。本次候选验收要求展示的标注缺失或歧义时应修复并重新生成候选；历史标注在当前版本失效则显示告警，不能因此篡改历史或阻止明确要求删除旧交互的新需求。
+```yaml
+requirement_id: REQ-001
+prototype_change_id: CHG-001
+origin_baseline:
+  commit: <immutable-created-from-sha>
+working_baseline:
+  commit: <most-recent-main-sha-actually-integrated-into-feature>
+source_branch: REQ-001
+source_head: <current-feature-sha>
+latest_attempt_id: INT-001-003
+accepted_snapshot_id: null
+introduced_baseline: null
+```
 
-### 19.4 需求视图与版本投影
+`origin_baseline` 永不覆盖。`working_baseline` 只有在代码真正整合该 SHA 时才更新。需求已合并后不因最新 `main` 变化而更改其历史来源/引入版本；新版本的回归保障来自测试。
 
-| 模式 | 构建与标注来源 |
-| --- | --- |
-| working | 活动开发预览或固定集成候选，页面明确区分；只有候选可最终验收 |
-| accepted | 固定历史验收 build、当时场景、标注及演示步骤，默认修订按第 9 节选择 |
-| current | 最新成功发布的持久原型，按需投影所选历史修订标注，显示来源及定位状态 |
-| diff | 实际 target 与 candidate 的语义变更清单，截图辅助，不把 Git 文本差异当业务差异 |
+空闲分支允许长期存在；首次开发前无独立提交时可以快进到最新 `main`。如已有独立提交，必须使用合并/重建候选，不能强制 reset 丢失改动。
 
-在第 8 节稳定需求入口用 view 查询参数解析上述模式，不创建四套独立原型。main 尚未发布时 current 不冒充其在线版本。历史与当前视图分别演示，目标删除或更名时提示“失效/待迁移”，保留可追踪的元素 ID 和构建信息。
+## 6. 自动化工作流
 
-历史标注只读；修改创建 AnnotationRevision，记录需求、schema_version、digest、关联快照及状态。当前定位结果属于对指定构建的诊断，不覆盖原修订。自动迁移建议及人工确认后置，不静默贴到相似元素。
+### 6.1 创建需求
 
-### 19.5 SDK 与 iframe 协作
+1. Plane 创建 Requirement，获得全局/项目内稳定 ID。
+2. 平台接收事件并去重（事件 ID、project ID、requirement ID）。
+3. 确保对应 PRD 路径存在或安排生成；**从原型仓库最新 main SHA 创建 `{requirement-id}` 分支**。
+4. 写入 `origin_commit`、分支引用、同步状态。创建 `requirements/{requirement-id}/manifest.yaml` 的初始模板（可在分支首次开发提交），不强制创建任何 App 子目录。
+5. 若重复事件到达，不重复创建；若存在同名非平台管理分支，进入人工异常队列。
+6. 创建分支本身不触发完整构建、容器或永久部署。
 
-原型内置版本化 prototype-sdk，支持场景初始化、语义定位、标注协作及演示步骤。外层以 iframe 显示固定构建，postMessage 命令包含消息类型、requestId、schemaVersion；响应关联请求并返回成功或错误。
+### 6.2 开发预览
 
-验证来源窗口、来源 Origin、目标 Origin、消息格式和用户权限；配置适当 CSP、frame-ancestors 与 iframe 权限。实际域名与网关规则在环境核验时确定，不能仅依靠前端按钮隐藏完成访问控制。
+- AI/Codex 只在需求分支工作，修改 `apps/`、相关 `requirements/{id}/`、测试及必要共享包。
+- 推送后 CI 运行 Schema 校验、类型/单测和受影响 App 构建；可按需生成可变开发预览 URL。
+- 在进入最终验收前，PRD 版本、需要验收的 App 清单、场景和标注应确定。
 
-先确认 SDK 版本与能力，再发送支持的命令。旧 SDK 不支持新功能时，降级显示原始快照加旁栏标注，并说明不可用能力；不修改历史构建，不注入不兼容代码，也不宣称不支持的步骤已执行成功。
+### 6.3 集成候选（必须幂等、有记录）
 
-### 19.6 验收、归档与回放
+1. 固定 `source_head_sha`、`target_main_sha`、`prd_commit`。
+2. 基于 `target_main_sha` 新建唯一候选分支 `integration/{id}/{attempt-id}`。
+3. 尝试把需求变更合入候选；**不直接更新 main，不在需求分支中覆盖原始实现**。
+4. 无 Git 冲突：生成 candidate commit，进入 CI。
+5. 有 Git 冲突：在隔离工作区调用 AI，提供 PRD、两个版本的场景、冲突列表、组件契约；AI 可修改候选并产出结构化冲突报告。
+6. 发生互斥业务规则、无法推断的操作语义、跨 App 契约冲突时，AI 只能 `blocked_business_conflict`，要求人工决策，不能擅自选一方。
+7. 对候选执行全量适用 CI：Schema、lint/typecheck、单测、依赖受影响 App 构建、关键 Playwright 场景、标注目标检查、必要跨 App E2E。
+8. 测试通过，发布基于固定 `candidate_commit` 的**集成验收预览**；只有该候选版本可申请正式人工验收。
+9. AI 对冲突所做的修改必须可审查，并不得触碰不属于此次变更的安全配置、部署密钥或生产数据。
 
-第 9 节验收记录进一步固定 prd_path、需求包 schema_version、manifest_digest、annotation_digest、scenario_digest、walkthrough_digest 和 SDK 版本。相关文件随不可变产物归档；独立修改标注或演示步骤也改变验收依据，遵守第 7 节重新确认规则。多个需求引用同一构建时分别保存需求包与验收关联，不混淆来源。
+`IntegrationAttempt` 最少字段：
 
-回放剧本：
+```yaml
+attempt_id: INT-REQ-001-003
+requirement_id: REQ-001
+change_id: CHG-001
+source_head_sha: <sha>
+target_main_sha: <sha>
+prd_commit: <sha>
+candidate_branch: integration/REQ-001/INT-REQ-001-003
+candidate_commit: <sha>
+status: preview_ready
+conflict_report_artifact: <optional-path>
+ci_pipeline_id: <pipeline-id>
+```
 
-1. req002 候选加载余额不足场景，演示储值支付与剩余金额标注及对应 AC。
-2. 人工确认后合并并发布同一产物，保存场景、标注和演示摘要。
-3. 满足第 10 节清理条件后删除需求分支和临时预览，accepted 仍还原原始内容。
-4. 新需求在 main 删除或更名元素，current 显示失效/待迁移，accepted 不变。
-5. 清理在线缓存后恢复相同产物与需求包，界面提供恢复状态、失败原因及重试入口。
-6. 验证旧 SDK 旁栏降级、非法消息拒绝、重复语义 ID、缺失引用和演示步骤失败的诊断。
+状态建议：`pending → merging → resolving? → testing → preview_ready → awaiting_acceptance → approved → merged → publishing → published`，并提供 `blocked_business_conflict`、`failed`、`stale`、`rejected`，保留每次失败的独立记录和失败阶段；发布失败保留 merged 事实，重试仅补发缺口。
 
-首个带标注的验收闭环即固定需求包与摘要；完整 SDK、定位校验和视图能力按第 13 节实施，不能在未具备时宣称标注验收通过。资产分流、批量迁移及自动修复不作为本轮新增实施内容。
+### 6.4 验收与合并门禁
+
+- 需求级和 App 级验收要分别记录；所有 `required_for_acceptance=true` 的 App 均需通过。跨 App flow 如声明 required，也需测试与确认。
+- 验收人查看 **候选预览**（而不只是需求原始分支），可切换 App、场景、步骤、标注、代码变更和冲突处理说明。
+- 正式验收记录固定：人、时间、`prd_commit`、`candidate_commit`、`target_main_sha`、各 App 构建产物 SHA、标注/场景修订和结论。
+- 准备合并时重新读取 `main`。若 `main SHA` 与验收时不同，则候选过期；平台重新集成并运行 CI，受影响交互必须重新验收。不能将旧批准直接套用到新 Commit。
+- 通过 GitLab 受保护分支与受限合并身份实现最终合并。若当前 GitLab 版本/许可无法原生强制审批，使用**独立受保护验收服务 + 受保护 CI 合并门禁**；不能靠开发分支可编辑的 YAML 中 `approved: true`。
+- 验收前可靠保存候选的各 App 不可变产物与需求包；人工确认后先持久化受信任验收记录，成功后才开放合并门禁。需求资料仓库的验收记录仍是权威来源，服务中的索引和状态不形成另一套可任意编辑的审批真相。
+- 最终 MR 的源是已验收的候选分支，不是原需求分支。采用 fast-forward 合并，禁用 squash 和验收后 rebase，合并后核实 main 指向 candidate_commit。正式发布晋级各 App 已验收的同一产物，不重新构建替代。
+- 同一项目的最终检查与合并串行，所有常规 main 更新经过同一受控入口；实际合并必须拒绝过期候选，不能先检查后无条件合并。平台合并身份与开发 Agent 分离。
+- 第一版源 HEAD、目标 main、批准 PRD、候选、App 验收范围、标注、场景或 flow 依据变化时，旧凭证不授权新结果；新尝试重新测试并确认受影响内容。验收记录自身的元数据提交不算 PRD 内容变更。
+- 合并成功后记录 merged_commit，晋级固定 App 产物集合并验证访问，再登记发布映射；分别记录验收、合并、发布状态。发布失败保留旧入口、验收与合并事实并允许幂等重试，不标记完整交付。
+- 仅在发布及历史引用验证通过、需求分支无新增未交付提交后清理临时分支和入口；不得删除历史索引或唯一可恢复产物。
+
+### 6.5 AI 冲突处理边界
+
+- 仅限隔离临时工作区，设置执行超时、最大尝试次数和文件变更范围。
+- 保留原始冲突文本、AI 修复差异、测试输出、Agent 版本/执行 ID。
+- AI 可处理语法、结构、导入、组件映射等技术冲突；**业务含义有歧义必须升级到人工判断**。
+- 无 Git 冲突也必须跑回归测试，不能以 `git merge` 成功当作业务验收通过。
+
+## 7. 需求预览入口与 App 选择
+
+统一稳定入口：`/projects/{project-id}/requirements/{requirement-id}`。
+
+1. **开发与待验收视图**：开发分支最新 Preview 可变，不是验收依据；待验收入口明确指向固定集成候选，不能混用。
+2. **历史验收视图**：默认展示，读取 Acceptance Snapshot 内的固定 App Artifact、场景、标注和步骤；不依赖已删除的需求分支。
+3. **当前产品视图**：最新已发布 `main` 的 App Artifact，叠加目前仍能映射的需求标注；对失效目标明确提示，不静默猜测位置。
+4. **需求差异视图**（P4）：验收前后原型的业务语义变化与截图比较，不能只用 Git Diff 替代业务解释。
+
+每个需求入口可以选择 App；App ID 从 manifest/registry 动态生成，不写死端名。Preview Provider 由 App 配置指定。历史预览网址示例（仅设计）：
+
+```text
+/design/projects/example/requirements/REQ-001?view=accepted&app=app-a
+/design/projects/example/requirements/REQ-001?view=current&app=app-b
+/preview/{candidate-id}/{app-id}/
+/archive/{snapshot-id}/{app-id}/
+```
+
+### 标注渲染
+
+浏览器类 App 可先采用“外层需求视图 + iframe 内 App + 同版本 SDK + postMessage 协议”。消息必须校验 origin、request ID、schema 版本与数据权限；部署设置 CSP/frame-ancestors。不能保证所有非浏览器 App 使用 iframe，需 Preview Provider 适配。
+
+浏览器 Provider 先协商 SDK 能力；旧 SDK 不支持新功能时展示原始快照加旁栏，明确不支持的操作，不修改历史产物。定位诊断包含 project_id、requirement_id、app_id、元素 ID、场景、路由和目标产物摘要。
+
+历史快照应冻结可运行构建与其 SDK/场景数据，不仅是截图。对依赖服务的 App 需归档可复现的模拟数据/Mock 契约版本。
+
+## 8. 历史归档、版本数量与回收
+
+正式验收快照至少包含：
+
+```yaml
+snapshot_id: SNAP-REQ-001-001
+project_id: example
+requirement_id: REQ-001
+prd_commit: <sha>
+source_head_sha: <sha>
+target_main_sha: <sha>
+candidate_commit: <sha>
+merged_commit: <sha>
+acceptance_record_id: <id>
+prototype_config_digest: <sha256>
+requirement_manifest_digest: <sha256>
+flow_digest: <sha256-or-not-applicable>
+apps:
+  app-a:
+    artifact_sha256: <sha256>
+    annotation_revision: <sha-or-revision>
+    scenario_revision: <sha-or-revision>
+    walkthrough_digest: <sha256>
+    sdk_version: <version>
+  app-b:
+    artifact_sha256: <sha256>
+    annotation_revision: <sha-or-revision>
+    scenario_revision: <sha-or-revision>
+    walkthrough_digest: <sha256>
+    sdk_version: <version>
+```
+
+### 三类存储对象
+
+- **元数据索引**：永久保存引用关系及权威审核记录的可核验索引（SQLite 初期可用，后续迁移 PostgreSQL 时保留迁移路径）。
+- **不可变归档**：保留验收所需静态构建、标注、场景、Manifest、校验和、必要构建依赖信息；初期本地文件系统，后续可替换 MinIO/S3。归档应定期备份与哈希校验。
+- **在线缓存**：Nginx 直接服务近期版本；旧版本从归档按需恢复、校验、缓存并按 TTL/LRU 清理。
+
+多个需求可引用同一正式基线/同一 Artifact SHA，不复制数据。正式版本 Tag 不需要一需求一份。初期以完整构建压缩包归档即可；后期再按实际规模考虑 CAS 文件级去重。
+
+**GC 不变量**：任何被验收快照引用的最后一份归档不可自动删除；可以删除在线缓存、过期 MR 预览、临时集成分支。恢复失败必须明确提示，不要退回加载最新版本假装是历史版本。
+
+## 9. 治理服务：模块和初始接口
+
+优先采用模块化单体，可内嵌现有平台；Go 是 v2.0 推荐方案，具体语言和数据库在 P0 根据已有实现确定，避免过早微服务化。模块：
+
+- `ProjectConfig` / `AppRegistry`：解析 schema，加载 App 和 Provider。
+- `RequirementSync`：消费 Plane Webhook、与 PRD 关联、创建分支。
+- `GitIntegration`：安全创建候选、自动合并、冲突识别。
+- `AgentConflictResolver`：沙箱执行 AI 与冲突报告。
+- `BuildPreview`：执行 CI/部署、获取 Artifact/Preview URL。
+- `AnnotationService`：读取、校验、加载指定版本的需求标注。
+- `AcceptanceService`：受控审批、候选 SHA 锁定、最终门禁。
+- `SnapshotArchive`：不可变归档、校验、按需恢复、缓存清理。
+
+建议 HTTP API（初期按需求实现，不要求一次性全部实现）：
+
+```text
+POST   /api/projects/{projectId}/requirements/sync
+GET    /api/projects/{projectId}/apps
+GET    /api/projects/{projectId}/requirements/{requirementId}
+POST   /api/projects/{projectId}/requirements/{requirementId}/integrations
+GET    /api/integrations/{attemptId}
+GET    /api/integrations/{attemptId}/previews
+POST   /api/integrations/{attemptId}/acceptance
+POST   /api/integrations/{attemptId}/merge
+GET    /api/projects/{projectId}/requirements/{requirementId}/views
+GET    /api/snapshots/{snapshotId}
+POST   /api/snapshots/{snapshotId}/restore
+```
+
+API 行为要求：所有 POST 幂等或支持 Idempotency-Key；需要鉴权、授权、审计；验收人由真实会话识别，授权用户可提交批准或驳回；禁止调用者伪造他人身份或由 Agent 自签人工结果；所有合并执行在安全检查后由受限服务身份实施。
+
+基础数据表（实体级建议，具体数据库迁移由实施阶段定义）：`projects`、`prototype_apps`、`requirements`、`prototype_changes`、`integration_attempts`、`app_build_artifacts`、`acceptance_records`、`acceptance_app_results`、`snapshots`、`snapshot_app_assets`、`archives`、`audit_events`、`webhook_events`。
+
+`project_id + requirement_id`、`attempt_id`、`snapshot_id` 等应具备唯一约束；分支创建与事件消费需要事务/幂等防重。
+
+## 10. CI/CD 与部署门禁
+
+阶段性 Pipeline：
+
+```text
+validate-config
+  → validate-requirement-package
+  → lint / typecheck / unit
+  → affected-app-build
+  → scenario-e2e / annotation-target-check / cross-app-regression
+  → publish-candidate-preview
+  → acceptance-gate (受控外部验收记录)
+  → merge-main (有权限的合并操作)
+  → promote-accepted-app-artifacts / register-published-mapping
+```
+
+- 候选预览前已可靠保存产物；验收记录持久化成功后再运行 acceptance-gate。合并后晋级同一 App 产物集合，不能在 main 重新打包并沿用旧批准。
+- CI 构建应记录原始 `commit SHA` 与构建产物哈希；测试覆盖需求指定 App 及共享包依赖影响范围。
+- 首版可所有 App 全构建，后续引入按影响范围的构建优化；优化不能漏掉共享 SDK/契约改动影响。
+- 候选预览地址应绑定 `attempt_id`，验收构建在审查过程中不可被无提示替换。
+- 禁止开发分支未经批准直接推送/合并 `main`；保护签名/授权凭据与 Runner Secrets。
+- GitLab 社区版特性以当前实际部署版本为准，P0 核查 MR、Branch API、Webhook、CI、Runner、Protected Branch 的真实支持；不依赖可能需要付费版本的强制审批或 Merged Results Pipelines。
+
+## 11. Codex / Agent 的工作要求
+
+在 `AGENTS.md` 中落实：
+
+1. 首先读取本仓库 `prototype.yaml`、对应需求 Manifest、固定 PRD Commit、目标 App 规范。
+2. 修改功能只能在需求分支，不能直接写入 `main`。
+3. 只为涉及的 App 添加/更新目录；不能把 `pos`、`web-admin` 等当前项目名称当平台常量。
+4. 尽可能复用组件及 SDK；保留稳定语义 ID；新增场景和测试。
+5. 不允许执行真实支付、退款或设备操作，必须使用 Mock。
+6. 需求标注、场景、跨 App 流程跟需求包走；变更标注要维护验收条件引用。
+7. 不允许自行批准需求、修改受保护审批记录或在没有授权时合并 `main`。
+8. 遇到业务冲突必须报告选项与影响，停止自动决策。
+9. 每次变更输出：代码影响 App 列表、关联 PRD、测试、预览、风险、未实现事项。
+10. 不因“通用化”引入无需求的复杂抽象；优先交付经过测试的最小闭环。
+
+## 12. 分阶段实施计划与验收标准
+
+### P0：环境核验与技术基线
+
+交付：
+- 核实 GitLab 实例版本/许可证、Runner、Branch/MR API、Webhook、Protected Branch；Plane 版本、可用 API、需求 ID 规则、鉴权；Nginx、域名/内网、静态发布路径、存储与备份。
+- 调查现有仓库和已有原型，不覆盖已存在的代码。
+- 提交 ADR（架构决策记录）和差异清单，明确第一阶段 App 的示例配置与执行环境。
+
+验收：可以用受限测试账户创建/查询 Git 分支、触发最小 CI、接收模拟 Plane 事件；没有生产修改。
+
+### P1：通用 Monorepo + 配置校验 + 自动分支
+
+交付：
+- `prototype.yaml`、Schema 校验、通用 `AppRegistry`；至少两个不同 App ID 的示例应用（可以使用当前项目实际 App，但平台逻辑不可硬编码）。
+- `requirements/{id}/manifest.yaml` Schema；需求同步、幂等创建同名分支、保存 `origin_commit`。
+- 原型普通开发预览、App 独立构建与静态部署。
+
+验收：新加一个未预设 ID 的 App，只改配置与该 App 文件即可构建/预览；重复同步事件不产生额外分支；100 个闲置分支不启动 100 份预览资源。
+
+### P2：标注、场景、需求视图
+
+交付：
+- 按需求/App 组织标注、步骤、场景和可选 flows。
+- 语义元素 SDK、标注渲染、场景初始化；统一需求页面按 App 动态切换。
+- 标注缺失/重复/不可见检测和初始 E2E 测试。
+
+验收：一个需求可跨两个 App 标注；两个 App 的标注互不污染；只关联一个 App 的需求不需生成其他 App 目录。
+
+### P3：自动集成、AI 冲突解决、人工验收
+
+交付：
+- 需求分支自动合并到独立 `integration/{id}/{attempt-id}`。
+- 冲突检测、AI 在隔离候选中处理、结构化报告、业务冲突人工阻塞。
+- CI 验证、固定候选预览、App 级与需求级验收、可靠保存产物与验收凭证、受控门禁、并发 main SHA 检查、候选正式合并和同产物发布。
+- P3 内先跑通无冲突的完整闭环，再加入 AI 冲突解决；不以 AI 调度前置阻塞基本验收验证。
+
+验收：
+- 无冲突自动生成候选，不修改 main；验收后才由有权身份合入 main。
+- 人为制造同文件文本冲突，AI 修复只影响候选，原始需求分支不被破坏。
+- 人为制造互斥业务规则，系统进入阻塞，不自行选方案。
+- 人为在验收后先合并另一需求，原候选被标记过期，不能用旧批准直接合入。
+
+### P4：历史访问、归档恢复与回收完善
+
+交付：
+- 在 P3 已固定的多 App Artifact、标注、场景、flow、PRD/Commit 基础上完善历史入口及恢复能力。
+- 默认历史验收视图、当前产品视图、按需恢复旧构建。
+- 热缓存 TTL、受保护不可变归档、归档完整性校验和定期备份。
+- 可选语义差异对比、历史标注迁移建议（不自动改历史）。
+
+验收：
+- 测试 `main v0.0.1 → REQ-002 → v0.0.2 → REQ-001 → v0.0.3`。
+- REQ-002 历史视图仍指向当时验收快照；当前视图加载最新原型；删除旧版本在线缓存后可从归档恢复。
+- 已合并需求分支删除后仍可访问历史标注与可运行原型。
+- 被正式验收引用的最后一份归档不会被 GC 删除。
+
+### P5（可选）：持续治理与多 Agent 编排
+
+仅在 P0–P4 稳定后：Plane 任务自动回写、跨 App 影响分析、需求变更追踪、变更差异可视化、Agent 自动编排和历史资产去重；不作为 MVP 前置依赖。
+
+## 13. 第一轮端到端验收用例
+
+使用独立测试项目与两个配置 App（A、B）：
+
+1. `main` 初始化为 `v0.0.1`。平台创建 REQ-001 与 REQ-002，均记录原始 SHA，分支创建后不部署。
+2. REQ-002 改 App A 与 App B，各有不同标注、场景、步骤；构建、预览、验收、合并后 `main` 达到下一基线（示例 v0.0.2）。
+3. REQ-001 的历史原始 SHA 保留；从旧基线开发并申请集成，候选从最新 main 构建。
+4. 测试无冲突自动集成，新增跨 App 回归；人工验收后合入，`main` 达到示例 v0.0.3。
+5. 打开 REQ-002：历史验收视图复现 v0.0.2 的两个 App 与对应标注；当前产品视图显示 v0.0.3；如标注无法定位，明确告警。
+6. 删除 REQ-002 活动分支和历史在线缓存，从归档恢复原型，验收快照仍可访问。
+7. 模拟 main 竞态、AI 修复失败、PRD SHA 失效、缺失 App ID、重复语义 ID、归档损坏，确认系统安全失败并输出诊断。
+
+## 14. 完成定义（Definition of Done）
+
+功能只有同时满足以下条件才算完成：
+
+- 变更内容通过 Schema 校验、单测与对应 App 的端到端测试。
+- 有可重现的操作记录、版本 SHA 与构建产物 ID。
+- 所有配置不依赖固定业务终端名称。
+- 有明确的成功路径和失败/恢复路径。
+- 安全边界有效：未审批无法合并主线，AI 无法伪造人工批准。
+- 对应 README/ADR/API 契约已更新，无重复或相互矛盾的规范文件。
+- CI 在干净环境可运行；验收步骤可以由另一名工程师复现。
+
+## 15. 后续实施入口与本轮边界
+
+后续获得实施任务后，先执行 P0 环境核验，输出已有实现、差异、风险和 P1 依赖；不能从本次文档更新推断已授权立即执行 P0/P1。附件中的首条 Agent 指令已转为待实施流程，本轮不调用业务服务、不创建业务仓库、不修改权限、不推送或部署。
+
+当前已有目标服务器信息为私网 `10.94.164.176`，仅是待核验实例配置，不是平台常量。内网 Runner、Nginx、域名、认证和备份均需核实。第一版优先 static Provider 与已有能力，其他 Provider 按声明能力实现或明确不支持，不能默认为可交互。
+
+## 16. 与已有方案的衔接及实施细则
+
+### 16.1 ID、文件与迁移
+
+需求 ID 继续沿用已有创建规则：手动输入英文字母和数字且两者均有，去首尾空白并转小写；空值生成 req＋日期＋随机字母数字。产品内唯一，归档不释放；手动重复提示重输，自动重复重新生成。Plane UUID 或展示编号另行映射，示例 REQ-001 不构成现有 ID 批量迁移授权。原型分支名称等于实际规范化需求 ID；候选统一采用 integration/{requirement_id}/{attempt_id}。
+
+项目使用 project_id；旧 product_id 仅作兼容映射，不维护两份可变身份。app_id 在项目内唯一，任意是指符合配置 Schema 的可注册 ID，而非允许路径穿越或平台内置固定终端集合。
+
+需求资料继续使用 requirements，取消低保真。新原型结构采用 apps/{app_id}/src，标注按 requirements/{requirement_id}/{app_id} 组织；需求根 manifest 与可选 flows 属于跨 App 范围。示例 Markdown/VitePress 不要求立即重写已有 HTML 需求文档，prd_path 必须指向实际版本文件。
+
+旧 prototype/、requirements 下直接放置的标注包、outputs/product-requirements 或历史地址不得自动删除搬迁。先盘点并确认各旧原型对应 App，保留原始记录与固定快照，制定路径和链接兼容后再授权迁移。共享包只抽取有实际价值的 SDK、契约或组件，不强制所有 App 共用 UI。
+
+### 16.2 App 构建、测试与发布集合
+
+按需求发布独立文档包，按 App 构建完整运行产物，不按需求切碎某 App。首版可全量构建所有注册 App；优化后通过配置、共享包依赖和需求影响范围计算构建与回归集合，不仅依赖 manifest 手填清单。共享 SDK、模拟契约、配置变动不能漏测依赖 App；无法确定影响时扩大到相关集合验证。
+
+候选记录每个 App 的产物来源。未变化 App 可以复用验证有效的固定产物，仍记录来源提交、执行和摘要。只有配置所声明能力能满足该 App 验收条件时才可参与对应验收；artifact 类型只提供下载时不得宣称通过交互验收。
+
+原型内容、标注、场景、演示步骤、flow、运行依赖发生变化均须更新相应摘要与验证依据。只改文档或保存验收记录不重新构建未变 App。内容指纹采用排序相对路径及文件摘要，排除时间、流水线编号等执行元数据；执行来源另外保存。
+
+正式发布使用不可变的项目发布清单，映射 app_id 到各 App 产物摘要和固定入口。先准备并验证整个待发布集合，再原子切换项目 current 清单，避免跨 App flow 混用未经验证的版本组合。某 App 晋级失败时保留原 current 集合，单独报告失败并重试；不可把部分成功冒充需求完整交付。同项目发布串行，旧任务不得覆盖新版本。
+
+同产物晋级依赖固定产物地址：候选、历史和 current 入口解析到对应 App 的同一产物。prototype.yaml 中的 artifact_id 为发布系统分配的稳定定位键，不要求在构建前知道内容摘要；最终记录其 SHA-256。不得因部署路径变化重建后仍沿用旧验收，需验证深层刷新、懒加载及场景初始化。
+
+### 16.3 验收、快照与正式基线
+
+必须冻结参与验收的 App 清单及 required_for_acceptance、必要 flow 和逐 App 结果。所有必需 App、必需 flow 通过后才形成需求级批准；可选项失败仍需说明，不能用可选标记掩盖 PRD 要求。0 App 需求走文档流程，不要求凭空生成原型候选。
+
+人工记录至少保存 prd_repo、prd_path、prd_commit、源/目标/候选 SHA、配置摘要、需求清单摘要、各 App 产物及标注/场景/步骤摘要、SDK 版本、flow 与 Mock 契约版本、确认者及逐项结果。批准 PRD 由受控流程确认，不靠修改 front matter 的 approved 字段替代。
+
+权威验收记录写入需求资料仓库后才允许合并；运行服务可缓存索引和逐 App 结果，但必须可核验到同一受控记录。验收元数据提交不循环改写所引用 PRD。源、目标、候选或批准依据变化的失效规则按第 6.4 节执行，旧历史不覆盖。
+
+snapshot_id 独立于正式 Tag，验收快照在可靠保存后即可存在；未发布时明确显示待合并/待发布。merged_commit 记录首次实际进入主线，introduced_baseline 只有进入某正式 Tag 时才填写。项目 current 可随成功部署更新，不要求每次合并生成 SemVer Tag。
+
+历史默认展示最近一次成功发布的已验收修订，尚待发布的候选另列；新驳回不改写旧通过记录。当前视图展示最新成功发布集合，App 选择由所选快照及 manifest 动态产生，不能用当前注册表把历史已删除 App 隐藏掉。归档恢复失败不得回退最新内容冒充历史。
+
+### 16.4 标注与演示的兼容细节
+
+场景、标注和演示步骤在需求/App 范围内唯一；语义元素在 App 的实际渲染范围内唯一，不要求不同 App 的同名元素全局互斥。定位报告包含 App 及具体构建，两个 App 的标注不能相互污染。可见性、歧义和缺失必须明确报告。
+
+支持 element、note、walkthrough、change 等版本化类型，按类型定义必填字段，note 无元素目标时不强制 element_id。验收条件引用必须存在于固定 PRD。演示先初始化状态再导航定位，等待页面就绪；失败报告步骤及原因。坐标只能是明确标记可靠性的辅助，不能掩盖语义定位失败。
+
+浏览器 SDK 协议校验消息类型、requestId、schemaVersion、来源窗口、双向 Origin 和权限，并配置 CSP/frame-ancestors。非浏览器 Provider 使用适配协议，不假定 iframe 通用。旧 SDK 不支持时降级为原始产物与旁栏说明，不伪造执行成功。
+
+历史 AnnotationRevision 不可变。当前视图的定位状态属于对目标 App 构建的诊断；迁移产生新修订并保留人工确认状态，不自动覆盖历史或随机匹配元素。构建归档包含所需 SDK、场景、演示步骤与 Mock 契约，使删除分支后仍可回放。
+
+### 16.5 AI、清理与回滚
+
+AI 优先保留仍有效的旧能力，但当前已确认需求明确替换旧行为时应按新要求修改，不能以保留旧功能抵消需求。禁止删除测试、禁用功能或忽略错误消除冲突。候选被驳回后保留冲突差异、处理报告和已确认业务决策；下一轮参考但不能机械复制整个旧候选。
+
+清理临时入口、分支前确认发布及历史引用正常，且没有新增未交付提交。归档按 App 内容摘要去重，快照引用同一产物不复制；清理缓存不删除最后可恢复副本。元数据与归档均需备份、校验及恢复演练，永久删除须满足保留与授权规则。
+
+回滚 current 清单只影响展示，不改 Git 历史和验收记录。源码回退需新提交；单 App 回滚仍须验证项目集合和跨 App 契约，不能承诺仅撤销一个需求且不影响其他需求。目录或登记删除仅报告待下线，不自动清空线上内容。
+
+### 16.6 补充验收检查
+
+- 新增未预设 App ID，只修改注册配置和 App 文件即可接入受支持 Provider，无平台核心分支改动。
+- 一个需求涉及两个 App，分别保存产物、标注、场景、步骤和结果；只有全部必需 App/flow 通过才能整体验收。
+- 一个需求只涉及一个 App，不生成其他 App 的需求包；0 App 需求可单独完成文档流程。
+- 缺失 App、非法路径、越权执行器、缺少预览能力和歧义语义 ID 明确失败；配置不能扩大分支执行权限。
+- 共享契约变化触发相关 App 与跨 App 回归；可选标记不绕过业务验收要求。
+- 验收记录保存失败、源/目标/PRD 变化、两个合并并发、某 App 发布失败均不导致未经确认的组合进入 current。
+- 正式集合各 App 摘要与候选验收一致；不重新构建后冒用旧批准，不强制每个需求创建正式 Tag。
+- 删除历史 App 的当前注册、需求分支和在线缓存后，历史仍能恢复原 App 产物与标注；当前失效明确提示。
+- 旧 SDK 降级和非法消息拒绝可验证；跨 App flow 回放显示每步所用 App、场景与结果。
+
+分别报告实现完成、自动验证通过和最终业务验收完成，并区分验收、合并、发布状态。文档保存与本地 Git 提交仅表示本轮方案更新完成。
+
+## 17. 技术参考
+
+- [GitLab 合并方式](https://docs.gitlab.com/user/project/merge_requests/methods/)
+- [GitLab MR API](https://docs.gitlab.com/api/merge_requests/)
+- [GitLab MR approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
+- [GitLab merged results pipelines](https://docs.gitlab.com/ci/pipelines/merged_results_pipelines/)
+- [GitLab CI/CD 配置](https://docs.gitlab.com/ci/yaml/)
+- [GitLab 部署资源组](https://docs.gitlab.com/ci/resource_groups/)
+- [GitLab 部署安全](https://docs.gitlab.com/ci/environments/deployment_safety/)
+- [Vite public base path](https://vite.dev/guide/build.html#public-base-path)
+- [Nginx 静态服务](https://nginx.org/en/docs/beginners_guide.html)
+
+以上为已有评审参考，具体配置须按实际实例版本核验；本轮未进行运行环境验证。
