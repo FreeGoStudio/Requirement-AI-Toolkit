@@ -19,13 +19,14 @@ Test-NetConnection 10.94.164.176 -Port 8081
 
 两个端口的 `TcpTestSucceeded` 应为 `True`。22 用于 SSH 发布，8081 用于访问网页，8080 是其他服务。
 
-## 2 安装两个技能
+## 2 安装三个技能
 
 解压管理员提供的工具包，在包含 `scripts`、`skills` 和 `README.md` 的目录打开 PowerShell 7，执行：
 
 ```powershell
 ./scripts/install-skill.ps1 -SkillName prd
 ./scripts/install-skill.ps1 -SkillName prd-setup
+./scripts/install-skill.ps1 -SkillName prototype-publish
 ```
 
 默认安装到 `%USERPROFILE%/.codex/skills`；设置了 `CODEX_HOME` 时安装到其 `skills` 子目录。旧版会自动备份。安装后在 Codex 新开聊天。
@@ -48,8 +49,8 @@ Test-NetConnection 10.94.164.176 -Port 8081
 
 ```powershell
 $skillHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $env:USERPROFILE '.codex' }
-$publisher = Join-Path $skillHome 'skills/prd/scripts/Invoke-PrototypePublish.ps1'
-if (-not (Test-Path -LiteralPath $publisher)) { throw '请先安装管理员提供的新版 prd 技能。' }
+$publisher = Join-Path $skillHome 'skills/prototype-publish/scripts/Invoke-PrototypePublish.ps1'
+if (-not (Test-Path -LiteralPath $publisher)) { throw '请先安装管理员提供的prototype-publish 技能。' }
 
 & $publisher -Action Configure `
   -ServerAddress '10.94.164.176' `
@@ -105,6 +106,21 @@ $prd-setup 检查本机技能和发布连接，使用本机配置的 prd-publish
 
 ## 5 手动发布已有产物
 
+历史原型不必进入 PRD 流程，直接在 Codex 中使用：
+
+```text
+$prototype-publish 发布 D:\历史原型\订单，入口是 index.html。
+使用本机已配置的 prd-publisher 账号和 /_tmp/prototypes 临时路径，不初始化服务器。
+```
+
+或在 PowerShell 7 中调用：
+
+```powershell
+& $publisher -Action Publish -Mode Html -OutputDirectory 'D:\历史原型\订单' -EntryPath 'index.html'
+```
+
+历史模式无需清单，只发布入口可达的页面和资源，不修改源文件。先核对入口是否链接了不应分享的其他文档。
+
 通常由 `$prd` 自动执行。需要手动操作时，在已定义 `$publisher` 的 PowerShell 7 窗口运行：
 
 ```powershell
@@ -112,7 +128,7 @@ $outputDirectory = Read-Host '请输入本机交付目录的绝对路径'
 & $publisher -Action Publish -OutputDirectory $outputDirectory
 ```
 
-交付目录必须包含 `03-html-design-manifest.json`、已登记原型及依赖文件，不是单个 HTML。先完成静态检查，发布成功后用浏览器检查中文、样式、按钮及更新内容。`published` 表示上传和 HTTP 内容检查通过，不代表交互或业务验收通过。
+上述默认 Auto 命令在有 PRD 清单时发布清单产物；没有清单时按历史 HTML 处理，优先选择 index.html，否则仅在根目录有一个 HTML 时自动选取入口。发布成功后用浏览器检查中文、样式、按钮及更新内容。`published` 表示上传和 HTTP 内容检查通过，不代表交互或业务验收通过。
 
 ## 6 常见问题
 
@@ -123,7 +139,7 @@ $outputDirectory = Read-Host '请输入本机交付目录的绝对路径'
 | 22 或 8081 不通 | 检查内网/VPN，联系管理员核对网络，不要重新初始化服务器。 |
 | 密码认证失败或无法解密配置 | 核对密码，在当前 Windows 用户下按第 3 节重新 Configure，不复制他人的配置。 |
 | 要求 sudo 或初始化 | 停止该步骤，检查是否误执行 Initialize 或使用了旧技能。 |
-| 发布脚本不存在 | 重新安装配套工具包中的两个技能。 |
+| 发布脚本不存在 | 重新安装配套工具包中的三个技能。 |
 | 依赖缺失或链接指向文档 | 让 `$prd` 修复具体引用后重试，不上传整个交付目录。 |
 | 发布锁冲突 | 其他人可能正在发布，稍后重试；持续冲突请管理员处理，不自行删锁。 |
 | 发布失败但旧链接能打开 | 可能仍是上次成功版本，不能当作本次更新成功。 |

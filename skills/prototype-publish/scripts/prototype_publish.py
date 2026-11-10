@@ -40,9 +40,34 @@ RESOURCE_EXTENSIONS = {'.css', '.js', '.mjs', '.png', '.jpg', '.jpeg', '.gif', '
 
 
 class Package:
-    def __init__(self, root):
+    def __init__(self, root, mode='auto', entry_path=None):
         self.root = Path(root).resolve()
-        manifest = json.loads((self.root / '03-html-design-manifest.json').read_text(encoding='utf-8-sig'))
+        manifest_path = self.root / '03-html-design-manifest.json'
+        if mode not in ('auto', 'prd', 'html'):
+            raise PublishError('发布模式必须为 auto、prd 或 html。')
+        if not self.root.is_dir():
+            raise PublishError('原型资源根目录不存在。')
+        self.html_mode = mode == 'html' or (mode == 'auto' and (entry_path or not manifest_path.exists()))
+        self.files = {}
+        self.js_contexts = set()
+        if self.html_mode:
+            if not entry_path:
+                if (self.root / 'index.html').is_file():
+                    entry_path = 'index.html'
+                else:
+                    candidates = [p for p in self.root.iterdir() if p.is_file() and p.suffix.lower() in ('.html', '.htm')]
+                    if len(candidates) != 1:
+                        raise PublishError('入口不唯一或未找到 HTML，请指定 EntryPath。')
+                    entry_path = candidates[0].name
+            entry = (self.root / entry_path).resolve()
+            if not entry.is_relative_to(self.root) or not entry.is_file() or entry.suffix.lower() not in ('.html', '.htm'):
+                raise PublishError('HTML 入口必须是资源根目录内存在的 .html/.htm 文件。')
+            path = entry.relative_to(self.root).as_posix()
+            self.entries = {path: entry.stem}
+            return
+        if entry_path:
+            raise PublishError('PRD 模式不接受 EntryPath；指定历史入口请使用 Html 模式。')
+        manifest = json.loads(manifest_path.read_text(encoding='utf-8-sig'))
         self.entries = {}
         for flow in manifest['flows']:
             for fidelity, path in flow['entries'].items():
@@ -53,8 +78,6 @@ class Package:
                     self.entries[path] = f"{flow['flowName']} · {fidelity}"
         if not self.entries:
             raise PublishError('没有已登记的原型入口。')
-        self.files = {}
-        self.js_contexts = set()
 
     def reference(self, source, value, navigation=False, document=None):
         value = html.unescape(value).strip()
@@ -73,7 +96,7 @@ class Package:
         target = posixpath.normpath(posixpath.join(posixpath.dirname(source), decoded))
         if target == '..' or target.startswith('../'):
             raise PublishError(f'依赖越出输出目录：{source}: {value}')
-        if navigation and target == 'index.html':
+        if not self.html_mode and navigation and target == 'index.html':
             return  # remote index replaces the local delivery index at the same relative path
         self.add(target, document or source)
 
@@ -102,24 +125,28 @@ class Package:
                 self.javascript(path, self.files[path].decode('utf-8-sig'), document)
             return
         suffix = PurePosixPath(path).suffix.lower()
-        prototype_data = suffix == '.json' and PurePosixPath(path).parts[0] in ('assets', 'data', 'prototypes')
-        if path not in self.entries and suffix not in RESOURCE_EXTENSIONS and not prototype_data:
+        prototype_data = suffix == '.json' and (self.html_mode or PurePosixPath(path).parts[0] in ('assets', 'data', 'prototypes'))
+        linked_html = self.html_mode and suffix in ('.html', '.htm')
+        if any(part.startswith('.') for part in PurePosixPath(path).parts):
+            raise PublishError(f'不发布隐藏配置或发布记录：{path}')
+        if path not in self.entries and suffix not in RESOURCE_EXTENSIONS and not prototype_data and not linked_html:
             raise PublishError(f'链接指向未发布文档或不支持的资源：{path}')
-        if any(part.lower() in ('screenshots', 'references', 'knowledge') for part in PurePosixPath(path).parts):
+        if not self.html_mode and any(part.lower() in ('screenshots', 'references', 'knowledge') for part in PurePosixPath(path).parts):
             raise PublishError(f'禁止发布参考/评审截图：{path}')
         file = (self.root / path).resolve()
         if not file.is_relative_to(self.root) or not file.is_file():
             raise PublishError(f'依赖缺失或越出输出目录：{path}')
         data = file.read_bytes()
         self.files[path] = data
-        if suffix in ('.html', '.css', '.js', '.mjs', '.svg'):
+        if suffix in ('.html', '.htm', '.css', '.js', '.mjs', '.svg'):
             text = data.decode('utf-8-sig')
-            if suffix in ('.html', '.svg'):
+            if suffix in ('.html', '.htm', '.svg'):
                 parser = ResourceParser(self, path)
                 parser.feed(text)
                 parser.close()
                 # Same path, independent index: anchors from the delivery index are stripped.
-                text = re.sub(r'''(href\s*=\s*)(["'])([^"']+)\2''', lambda m: self.rewrite_home(path, m), text, flags=re.I)
+                if not self.html_mode:
+                    text = re.sub(r'''(href\s*=\s*)(["'])([^"']+)\2''', lambda m: self.rewrite_home(path, m), text, flags=re.I)
                 self.files[path] = text.encode('utf-8')
             elif suffix == '.css':
                 self.css(path, text)
@@ -137,6 +164,8 @@ class Package:
     def build(self):
         for path in self.entries:
             self.add(path)
+        if self.html_mode and 'index.html' in self.files:
+            return self.files
         links = ''.join(f'<li><a href="{quote(path)}">{html.escape(label)}</a></li>' for path, label in self.entries.items())
         self.files['index.html'] = ('<!doctype html><html lang="zh-CN"><meta charset="UTF-8">'
                                    '<meta name="viewport" content="width=device-width,initial-scale=1">'
@@ -345,7 +374,7 @@ def execute(request, remote_factory=Remote):
     remote = None
     try:
         if action == 'publish':
-            files = Package(request['outputDirectory']).build()
+            files = Package(request['outputDirectory'], request.get('mode', 'auto'), request.get('entryPath')).build()
         remote = remote_factory(request)
         if action == 'check':
             return {'status': 'connected', 'system': remote.run('cat /etc/os-release; id; command -v systemctl; command -v apt-get || command -v dnf')}

@@ -121,6 +121,50 @@ class FakeRemote:
         self.files[path] = data
 
 
+class HistoricalHtmlTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        (self.root / 'assets').mkdir()
+        (self.root / 'index.html').write_text('<html><h1>历史原型</h1><link href="assets/main.css" rel="stylesheet"><a href="detail.htm">详情</a></html>', encoding='utf-8')
+        (self.root / 'detail.htm').write_text('<a href="index.html#home">返回</a>', encoding='utf-8')
+        (self.root / 'assets/main.css').write_text('body{color:blue}', encoding='utf-8')
+        (self.root / 'private-notes.html').write_text('not linked', encoding='utf-8')
+
+    def test_no_manifest_and_preserve_original_index_and_links(self):
+        before = (self.root / 'index.html').read_bytes()
+        files = publish.Package(self.root).build()
+        self.assertEqual(set(files), {'index.html', 'detail.htm', 'assets/main.css'})
+        self.assertEqual(files['index.html'], before)
+        self.assertEqual((self.root / 'index.html').read_bytes(), before)
+        self.assertIn(b'index.html#home', files['detail.htm'])
+        self.assertFalse((self.root / '03-html-design-manifest.json').exists())
+
+    def test_explicit_entry_can_override_manifest_and_generates_navigation(self):
+        (self.root / '03-html-design-manifest.json').write_text('not a valid manifest', encoding='utf-8')
+        (self.root / 'standalone.html').write_text('<h1>Standalone</h1>', encoding='utf-8')
+        files = publish.Package(self.root, entry_path='standalone.html').build()
+        self.assertEqual(set(files), {'index.html', 'standalone.html'})
+        self.assertIn(b'standalone.html', files['index.html'])
+
+    def test_ambiguous_entry_requires_choice(self):
+        (self.root / 'index.html').unlink()
+        with self.assertRaisesRegex(publish.PublishError, 'EntryPath'):
+            publish.Package(self.root)
+
+    def test_missing_escaping_and_hidden_dependencies_fail(self):
+        for value in ('missing.css', '../outside.html', '.prototype-publication.json'):
+            with self.subTest(value=value):
+                (self.root / 'index.html').write_text(f'<a href="{value}">test</a>', encoding='utf-8')
+                with self.assertRaises(publish.PublishError):
+                    publish.Package(self.root).build()
+
+    def test_explicit_entry_must_be_within_root(self):
+        with self.assertRaises(publish.PublishError):
+            publish.Package(self.root, mode='html', entry_path='../outside.html')
+
+
 class DeploymentTests(unittest.TestCase):
     def test_temporary_prefix_preserved_in_deploy_and_http(self):
         remote = FakeRemote(previous=False)

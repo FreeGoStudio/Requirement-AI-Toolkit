@@ -4,6 +4,7 @@
 
 - `skills/prd`：问题探索、业务方案比较、范围收敛、业务模型、参考分析、低模、PRD/流程图/BDD、视觉方向、设计系统与高模评审。
 - `skills/prd-setup`：技能安装、本地 HTML 预览与 Linux 原型发布环境配置。
+- `skills/prototype-publish`：独立发布历史 HTML 或 PRD 原型到临时服务器，复用账号、发布 ID 和访问链接。
 
 ## 使用与产出
 
@@ -35,6 +36,7 @@ $prd 帮我澄清这个产品需求，并按阶段生成 HTML 需求文档和可
 ```powershell
 ./scripts/install-skill.ps1 -SkillName prd
 ./scripts/install-skill.ps1 -SkillName prd-setup
+./scripts/install-skill.ps1 -SkillName prototype-publish
 ```
 
 默认安装到 `%USERPROFILE%/.codex/skills`；设置 CODEX_HOME 时安装到其 skills 子目录。已有版本默认先备份，`-NoBackup` 可关闭备份。安装后新开聊天，运行 `$prd-setup` 检查 HTML 预览，日常使用 `$prd`。
@@ -51,7 +53,7 @@ Invoke-WebRequest -UseBasicParsing -Uri 'https://raw.githubusercontent.com/FreeG
 
 ## Linux 原型自动发布
 
-使用管理员已准备好的服务器时，按 [团队成员安装与配置说明](docs/team-prototype-publishing.md) 操作：安装两个技能、配置发布账号及本机运行时，**不执行服务器初始化**。下面的自动准备 Nginx 示例仅用于首次准备新服务器。
+使用管理员已准备好的服务器时，按 [团队成员安装与配置说明](docs/team-prototype-publishing.md) 操作：安装三个技能、配置发布账号及本机运行时，**不执行服务器初始化**。仅发布历史 HTML 时可单独安装 prototype-publish，不依赖 prd。下面的自动准备 Nginx 示例仅用于首次准备新服务器。
 
 需要让同事通过服务器访问时，在新聊天输入：
 
@@ -63,7 +65,17 @@ $prd-setup 配置 Linux 原型发布服务器，自动准备 Nginx；后续原�
 
 首次准备服务器需支持 systemd、apt/dnf，并提供 root 或 sudo 权限；团队成员发布无需这些权限。默认发布地址为 `http://服务器地址:端口/_tmp/prototypes/<发布ID>/`，每次更新沿用地址；本地仍保存完整需求交付，服务器仅公开原型及依赖资源。未配置时保持本地流程。已配置但发布失败时明确报错并保留上次成功版本；HTTP 访问与浏览器交互验收分别记录。
 
-配置命令、依赖、限制与故障处理见 [Linux 原型发布说明](skills/prd/references/remote-publishing.md)。
+配置命令、依赖、限制与故障处理见 [Linux 原型发布说明](skills/prototype-publish/references/remote-publishing.md)。
+
+### 发布历史 HTML
+
+独立发布历史原型时可直接调用：
+
+```text
+$prototype-publish 发布 D:\历史原型\订单，入口是 index.html，复用本机已配置的临时服务器，不初始化服务器。
+```
+
+历史 HTML 不要求 PRD 清单；指定入口及资源根目录后，仅上传可达页面与依赖资源。现有 PRD 流程继续在检查后调用发布技能，沿用原配置、发布 ID 和临时 URL 前缀。
 
 ## 截图知识库
 

@@ -9,7 +9,7 @@ description: "在 Windows 上安装、检查或修复 prd 技能、本地 HTML �
 
 用中文检查技能安装、输出目录写入能力和浏览器预览能力。读取 `references/setup.md`，复用已有环境；用户仅要求检查时不安装、不修改配置。
 
-默认 HTML/CSS/JavaScript 交付可直接在浏览器打开，无需服务端或额外运行时。用户需要 Linux 发布时，读取已安装 `prd/references/remote-publishing.md`，调用同一技能的 `scripts/Invoke-PrototypePublish.ps1` 完成配置、运行时安装、连接检查和 Nginx 初始化，不复制另一套部署代码。不修改其他服务配置。
+默认 HTML/CSS/JavaScript 交付可直接在浏览器打开，无需服务端或额外运行时。用户需要 Linux 发布时，读取已安装 `prototype-publish/references/remote-publishing.md`，调用同一技能的 `scripts/Invoke-PrototypePublish.ps1` 完成配置、运行时安装、连接检查和 Nginx 初始化，不复制另一套部署代码。不修改其他服务配置。
 
 配置前说明 HTTP 访问地址、网站端口和专用目录；沿用用户已确认的选择。密码通过本机安全输入框/PowerShell `Read-Host -AsSecureString` 输入，不要求用户粘贴到聊天，不把明文放进命令行。首次 SSH 指纹必须由用户核对，不能自行将探测指纹视为可信。仅检查时使用 Check，不安装或初始化。配置完成意味着后续原型更新自动发布，无需逐次确认上传。
 

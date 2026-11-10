@@ -1,0 +1,6 @@
+interface:
+  display_name: "静态原型发布"
+  short_description: "发布历史 HTML 或 PRD 原型到临时服务器，返回固定访问链接"
+  default_prompt: "使用 $prototype-publish 发布指定的 HTML 文件或原型目录，复用本机服务器配置，不初始化已就绪服务器，检查依赖后返回访问链接。"
+policy:
+  allow_implicit_invocation: true

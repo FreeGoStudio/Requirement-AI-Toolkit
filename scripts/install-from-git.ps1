@@ -4,7 +4,7 @@ param(
   [string]$CodexHome = $env:CODEX_HOME,
   [string]$InstallRoot = (Join-Path $env:TEMP "Requirement-AI-Toolkit"),
   [switch]$NoBackup,
-  [ValidateSet("prd", "prd-setup")]
+  [ValidateSet("prd", "prd-setup", "prototype-publish")]
   [string]$SkillName = "prd"
 )
 
