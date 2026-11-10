@@ -2,6 +2,10 @@
 
 服务器已由管理员准备完毕。本说明帮助你在 Windows 上安装技能并配置发布账号，随后通过 Codex 制作和发布原型。全程使用 `prd-publisher`，无需 root、sudo、安装 Nginx 或初始化服务器。
 
+当前是临时原型环境，文件目录和网址均带 `_tmp` 标识，不作为后续正式系统的部署路径。这里的“临时”表示用途隔离，不表示自动过期或自动删除。
+
+已使用旧版安装包的同事：重新安装新版技能，再按第 3 节配置新的 RemoteRoot 和 BaseUrl。账号密码不变，无需初始化服务器。旧的无前缀原型链接已停用，请改发包含 `/_tmp/prototypes/` 的新链接。
+
 ## 1 准备条件
 
 准备好 Codex、**PowerShell 7**、**Python 3.10+**、管理员提供的工具包，以及单独提供的发布密码。所有命令在 PowerShell 7（`pwsh`）中执行，不使用 Windows PowerShell 5.1。电脑需要连接内网或 VPN，安装 Python 依赖时还需要访问软件包源。
@@ -37,8 +41,8 @@ Test-NetConnection 10.94.164.176 -Port 8081
 | 用户名 | `prd-publisher` |
 | 密码 | 向管理员单独获取 |
 | 网页端口 | `8081` |
-| 发布根目录 | `/var/www/prd-prototypes` |
-| 基础地址 | `http://10.94.164.176:8081` |
+| 发布根目录 | `/var/www/_tmp/prototypes` |
+| 基础地址 | `http://10.94.164.176:8081/_tmp/prototypes` |
 
 在 PowerShell 7 依次执行；出现 `SSH 密码` 提示时输入密码，不要把密码写进命令行、文档或聊天。
 
@@ -52,8 +56,8 @@ if (-not (Test-Path -LiteralPath $publisher)) { throw '请先安装管理员提�
   -SshPort 22 `
   -Username 'prd-publisher' `
   -WebPort 8081 `
-  -RemoteRoot '/var/www/prd-prototypes' `
-  -BaseUrl 'http://10.94.164.176:8081'
+  -RemoteRoot '/var/www/_tmp/prototypes' `
+  -BaseUrl 'http://10.94.164.176:8081/_tmp/prototypes'
 
 & $publisher -Action InstallRuntime
 & $publisher -Action Check
@@ -95,7 +99,7 @@ $prd-setup 检查本机技能和发布连接，使用本机配置的 prd-publish
 服务器已由管理员准备好，只检查本机环境和 SSH，不初始化服务器，不使用 root 或 sudo，不修改 Nginx。
 ```
 
-分享返回的完整链接 `http://10.94.164.176:8081/<发布ID>/`。查看者不需要账号，但需能访问内网；基础地址不提供所有项目的目录列表。
+分享返回的完整链接 `http://10.94.164.176:8081/_tmp/prototypes/<发布ID>/`。查看者不需要账号，但需能访问内网；基础地址不提供所有项目的目录列表。
 
 服务器只发布原型及其依赖资源，需求文档、评审记录和截图保留本机。同一输出目录更新沿用同一链接；复制到另一目录或电脑会生成新发布 ID，不能用于接管原链接。
 

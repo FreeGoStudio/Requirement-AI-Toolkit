@@ -10,6 +10,7 @@ try {
   $credential = New-Object Management.Automation.PSCredential('tester', (ConvertTo-SecureString $config.encryptedPassword))
   if ($credential.GetNetworkCredential().Password -cne 'test-中文-secret-123') { throw 'Password roundtrip failed' }
   if ($config.webPort -ne 8080 -or $config.sshPort -ne 22) { throw 'Wrong defaults' }
+  if ($config.remoteRoot -ne '/var/www/_tmp/prototypes' -or $config.baseUrl -ne 'http://example.test:8080/_tmp/prototypes') { throw 'Temporary path defaults missing' }
   & $script -Action Configure -ServerAddress 'example.test' -Username 'tester' -Password $password -WebPort 8081 -ConfigDirectory $temporary
   if ((Get-Content (Join-Path $temporary 'server.json') -Raw | ConvertFrom-Json).webPort -ne 8081) { throw 'Configuration update failed' }
   Write-Output 'PASS: Windows DPAPI password roundtrip, plaintext exclusion, configuration persistence/update.'

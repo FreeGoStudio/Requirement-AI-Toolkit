@@ -18,7 +18,7 @@ $publisher = Join-Path $skillHome 'skills/prd/scripts/Invoke-PrototypePublish.ps
 & $publisher -Action Check
 ```
 
-Configure 通过安全提示输入密码，也支持已取得的 `SecureString` 类型 `-Password`；不提供明文密码参数。可选 `-SshPort 22 -WebPort 8080 -RemoteRoot '/var/www/prd-prototypes' -BaseUrl 'http://192.168.1.20:8080'`；访问地址默认由服务器地址和网站端口生成。重新 Configure 更新配置，默认参数会重新应用，需要保留非默认设置时显式传入。配置后每次原型更新自动发布。
+Configure 通过安全提示输入密码，也支持已取得的 `SecureString` 类型 `-Password`；不提供明文密码参数。可选 `-SshPort 22 -WebPort 8080 -RemoteRoot '/var/www/_tmp/prototypes' -BaseUrl 'http://192.168.1.20:8080/_tmp/prototypes'`；访问地址默认由服务器地址、网站端口及 `/_tmp/prototypes` 前缀生成。BaseUrl 可含由字母、数字、下划线和连字符组成的路径段，初始化时 Nginx 只在该前缀下提供原型，其他路径返回 404；显式配置无前缀地址仍兼容原有站点。重新 Configure 更新配置，默认参数会重新应用，需要保留非默认设置时显式传入。配置后每次原型更新自动发布。
 
 首次 Check 会显示 `SHA256:...` 指纹并停止。用户通过可信渠道核对并明确确认后：
 

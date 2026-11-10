@@ -5,7 +5,7 @@ param(
   [string]$Username,
   [Security.SecureString]$Password,
   [int]$WebPort = 8080,
-  [string]$RemoteRoot = '/var/www/prd-prototypes',
+  [string]$RemoteRoot = '/var/www/_tmp/prototypes',
   [string]$BaseUrl,
   [string]$OutputDirectory,
   [string]$TrustFingerprint,
@@ -23,10 +23,10 @@ if ($Action -eq 'Configure') {
   if ($RemoteRoot -notmatch '^/(?:[a-zA-Z0-9_-]+/)+[a-zA-Z0-9_-]+$') { throw 'RemoteRoot 需要专用绝对目录（至少两层，不含空格或 ..）。' }
   if (-not $BaseUrl) {
     $urlHost = if ($ServerAddress.Contains(':')) { "[$ServerAddress]" } else { $ServerAddress }
-    $BaseUrl = "http://${urlHost}:$WebPort"
+    $BaseUrl = "http://${urlHost}:$WebPort/_tmp/prototypes"
   }
   $uri = [Uri]$BaseUrl
-  if (-not $uri.IsAbsoluteUri -or $uri.Scheme -ne 'http' -or $uri.UserInfo -or $uri.Query -or $uri.Fragment -or $uri.AbsolutePath -ne '/') { throw 'BaseUrl 需要无路径、账号、查询参数的 HTTP 地址。' }
+  if (-not $uri.IsAbsoluteUri -or $uri.Scheme -ne 'http' -or $uri.UserInfo -or $uri.Query -or $uri.Fragment -or $BaseUrl -cnotmatch '^http://[^/?#]+(?:/[A-Za-z0-9_-]+)*/?$') { throw 'BaseUrl 需要 HTTP 地址，可含仅由字母、数字、下划线或连字符组成的路径段，不含账号、查询参数或片段。' }
   if (-not $Password) { $Password = Read-Host 'SSH 密码' -AsSecureString }
   if ($Password.Length -eq 0) { throw '密码不能为空。' }
   New-Item -ItemType Directory -Force -Path $ConfigDirectory | Out-Null

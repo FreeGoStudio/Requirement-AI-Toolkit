@@ -122,6 +122,25 @@ class FakeRemote:
 
 
 class DeploymentTests(unittest.TestCase):
+    def test_temporary_prefix_preserved_in_deploy_and_http(self):
+        remote = FakeRemote(previous=False)
+        remote.config['remoteRoot'] = '/var/www/_tmp/prototypes'
+        remote.config['baseUrl'] = 'http://example.test:8080/_tmp/prototypes'
+        publish.validate_config(remote.config)
+        observed = []
+        result = publish.deploy(remote, {'index.html': b'new'}, 'a'*32, 'c'*32,
+                                verify=lambda url, files, version: observed.append(url))
+        self.assertEqual(observed, ['http://example.test:8080/_tmp/prototypes/' + 'a'*32])
+        self.assertEqual(result['url'], observed[0] + '/')
+        self.assertTrue(remote.current.startswith('/var/www/_tmp/prototypes/releases/'))
+
+    def test_invalid_url_prefixes_rejected(self):
+        for suffix in ('/../private', '/x//y', '/%2e%2e', '/x?key=1', '/x#fragment', '/x;bad'):
+            candidate = config()
+            candidate['baseUrl'] += suffix
+            with self.subTest(suffix=suffix), self.assertRaises(publish.PublishError):
+                publish.validate_config(candidate)
+
     def test_upload_failure_does_not_switch(self):
         remote = FakeRemote(fail_upload=True)
         with self.assertRaises(OSError):

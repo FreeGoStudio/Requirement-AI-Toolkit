@@ -57,4 +57,7 @@ cmp "$site" "$sandbox/saved.conf"
 unset PRD_FAIL_RELOAD
 sh "$sandbox/initialize.sh" "$sandbox/site" 8080 tester
 cmp "$site" "$sandbox/saved.conf"
+sh "$sandbox/initialize.sh" "$sandbox/site" 8080 tester /_tmp/prototypes
+grep -q 'location /_tmp/prototypes/ { alias ' "$site"
+grep -q 'location / { return 404; }' "$site"
 echo 'PASS: unrelated config protection, occupied port, failed config/reload restoration, idempotent initialization.'

@@ -59,9 +59,9 @@ Invoke-WebRequest -UseBasicParsing -Uri 'https://raw.githubusercontent.com/FreeG
 $prd-setup 配置 Linux 原型发布服务器，自动准备 Nginx；后续原型更新自动发布，只发布原型及其资源。
 ```
 
-提供服务器地址和用户名，密码通过本机 PowerShell 安全提示输入，不需粘贴到聊天。默认 SSH 端口 22、网站端口 8080、远程目录 `/var/www/prd-prototypes`，支持自定义。密码按当前 Windows 用户加密保存在本机配置目录，技能升级不覆盖；首次连接需核对主机指纹。
+提供服务器地址和用户名，密码通过本机 PowerShell 安全提示输入，不需粘贴到聊天。默认 SSH 端口 22、网站端口 8080、远程目录 `/var/www/_tmp/prototypes`，支持自定义。密码按当前 Windows 用户加密保存在本机配置目录，技能升级不覆盖；首次连接需核对主机指纹。
 
-服务器需支持 systemd、apt/dnf，并提供 root 或 sudo 权限。发布成功返回 `http://服务器地址:端口/<发布ID>/`，每次更新沿用地址；本地仍保存完整需求交付，服务器仅公开原型及依赖资源。未配置时保持本地流程。已配置但发布失败时明确报错并保留上次成功版本；HTTP 访问与浏览器交互验收分别记录。
+首次准备服务器需支持 systemd、apt/dnf，并提供 root 或 sudo 权限；团队成员发布无需这些权限。默认发布地址为 `http://服务器地址:端口/_tmp/prototypes/<发布ID>/`，每次更新沿用地址；本地仍保存完整需求交付，服务器仅公开原型及依赖资源。未配置时保持本地流程。已配置但发布失败时明确报错并保留上次成功版本；HTTP 访问与浏览器交互验收分别记录。
 
 配置命令、依赖、限制与故障处理见 [Linux 原型发布说明](skills/prd/references/remote-publishing.md)。
 

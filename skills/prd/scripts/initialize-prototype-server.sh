@@ -4,6 +4,8 @@ set -eu
 root=$1
 port=$2
 owner=$3
+prefix=${4:-}
+printf '%s\n' "$prefix" | grep -Eq '^(/[A-Za-z0-9_-]+)*$' || { echo '访问路径前缀格式不正确'; exit 1; }
 site=/etc/nginx/conf.d/prd-prototypes.conf
 marker='# Managed by Requirement-AI-Toolkit'
 command -v systemctl >/dev/null || { echo '需要 systemd'; exit 1; }
@@ -55,6 +57,10 @@ touch "$root/.prd-managed"
 chown "$owner" "$root" "$root/releases" "$root/published"
 chmod 755 "$root" "$root/releases" "$root/published"
 mkdir -p /etc/nginx/conf.d
+fallback=''
+if test -n "$prefix"; then
+  fallback="location / { return 404; }"
+fi
 cat > "$site" <<EOF
 $marker
 server {
@@ -64,7 +70,8 @@ server {
     index index.html;
     autoindex off;
     charset utf-8;
-    location / { try_files \$uri \$uri/ =404; }
+    location $prefix/ { alias $root/published/; }
+    $fallback
     location ~ /\. { deny all; }
 }
 EOF

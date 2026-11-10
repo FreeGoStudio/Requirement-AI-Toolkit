@@ -196,8 +196,9 @@ def validate_config(config):
     if not re.fullmatch(r'/(?:[a-zA-Z0-9_-]+/)+[a-zA-Z0-9_-]+', config['remoteRoot']):
         raise PublishError('远程根目录必须为专用绝对目录。')
     url = urlsplit(config['baseUrl'])
-    if url.scheme != 'http' or not url.hostname or url.username or url.password or url.path not in ('', '/') or url.query or url.fragment:
-        raise PublishError('访问地址必须是无路径的 HTTP 地址。')
+    if (url.scheme != 'http' or not url.hostname or url.username or url.password
+            or not re.fullmatch(r'(?:/[A-Za-z0-9_-]+)*/?', url.path) or url.query or url.fragment):
+        raise PublishError('访问地址必须是 HTTP 地址，可含规范路径前缀，不含账号、查询参数或片段。')
 
 
 class Remote:
@@ -256,7 +257,8 @@ def initialize(remote):
     temporary = remote.run('mktemp /tmp/prd-init.XXXXXXXX')
     try:
         remote.put(temporary, script.encode('utf-8'))
-        arguments = ' '.join(shlex.quote(str(v)) for v in (temporary, config['remoteRoot'], config['webPort'], config['username']))
+        prefix = urlsplit(config['baseUrl']).path.rstrip('/')
+        arguments = ' '.join(shlex.quote(str(v)) for v in (temporary, config['remoteRoot'], config['webPort'], config['username'], prefix))
         command = 'sh ' + arguments
         if remote.run('id -u') != '0':
             command = "sudo -S -p '' -- " + command
