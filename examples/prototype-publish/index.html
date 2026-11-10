@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>原型发布测试</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 32px 20px; min-height: 100vh; display: grid; place-items: center; font-family: system-ui, "Microsoft YaHei", sans-serif; color: #203148; background: #f1f5f9; }
+    main { width: min(100%, 560px); padding: 36px; border: 1px solid #dce4ed; border-radius: 20px; background: white; box-shadow: 0 12px 40px #2031480d; }
+    .badge { display: inline-block; padding: 6px 12px; border-radius: 30px; color: #185b46; background: #e8f6ef; font-size: 14px; }
+    h1 { font-size: clamp(24px, 5vw, 32px); margin: 20px 0 12px; }
+    p { line-height: 1.7; }
+    .hint { color: #59677a; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+    button { padding: 12px 20px; border: 1px solid #cbd5e1; border-radius: 10px; font: inherit; cursor: pointer; background: white; color: #203148; }
+    #test { border-color: #2563eb; background: #2563eb; color: white; }
+    button:focus-visible { outline: 3px solid #93c5fd; outline-offset: 3px; }
+    #result { min-height: 56px; margin-bottom: 0; padding: 14px; border-radius: 10px; background: #f1f5f9; }
+    footer { margin-top: 24px; font-size: 13px; color: #59677a; }
+  </style>
+</head>
+<body>
+  <main>
+    <span class="badge">临时原型 · 测试页面</span>
+    <h1>你好，原型已打开</h1>
+    <p class="hint">这是一个独立 HTML 文件，用来测试 prototype-publish。请检查中文和页面样式，再点击下面的按钮验证交互。</p>
+    <div class="actions">
+      <button id="test" type="button">测试交互</button>
+      <button id="reset" type="button">重置</button>
+    </div>
+    <p id="result" role="status" aria-live="polite">等待点击，当前计数：0</p>
+    <footer>测试版本 v1.0 · 无外部依赖 · 不连接业务接口</footer>
+  </main>
+  <script>
+    let count = 0;
+    const result = document.getElementById('result');
+    document.getElementById('test').addEventListener('click', () => {
+      count += 1;
+      result.textContent = `交互正常！已点击 ${count} 次。`;
+    });
+    document.getElementById('reset').addEventListener('click', () => {
+      count = 0;
+      result.textContent = '已重置，当前计数：0';
+    });
+  </script>
+</body>
+</html>
