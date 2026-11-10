@@ -1,0 +1,2 @@
+# Linux initialization and shell tests must remain executable after Windows checkout.
+*.sh text eol=lf
