@@ -51,6 +51,8 @@ Invoke-WebRequest -UseBasicParsing -Uri 'https://raw.githubusercontent.com/FreeG
 
 ## Linux 原型自动发布
 
+使用管理员已准备好的服务器时，按 [团队成员安装与配置说明](docs/team-prototype-publishing.md) 操作：安装两个技能、配置发布账号及本机运行时，**不执行服务器初始化**。下面的自动准备 Nginx 示例仅用于首次准备新服务器。
+
 需要让同事通过服务器访问时，在新聊天输入：
 
 ```text

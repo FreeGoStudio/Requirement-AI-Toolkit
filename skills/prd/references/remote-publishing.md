@@ -4,6 +4,8 @@
 
 ## 配置一次
 
+在 Windows 上使用 PowerShell 7 执行以下命令。若服务器已经由管理员准备好，只运行 Configure、InstallRuntime 和 Check，直接使用发布账号，跳过下方 Initialize。日常 Publish 不需要 root 或 sudo，不因发布失败自动初始化服务器。
+
 Windows 上需要 Python 3.10+。配置和独立虚拟环境默认位于 `%LOCALAPPDATA%/Requirement-AI-Toolkit/`，不位于仓库、技能目录或输出包。`server.json` 保存地址、用户名、端口、目录、访问地址及当前 Windows 用户 DPAPI 加密密码；`known_hosts` 保存已确认主机公钥。换电脑/Windows 账号需重新输入密码。不要展示或提交配置文件内容。
 
 以下命令中的 `$publisher` 为已安装 prd 技能内脚本的绝对路径（若设置 CODEX_HOME，使用其 skills 目录）：
@@ -22,6 +24,11 @@ Configure 通过安全提示输入密码，也支持已取得的 `SecureString` 
 
 ```powershell
 & $publisher -Action Check -TrustFingerprint 'SHA256:用户已核对的指纹'
+```
+
+仅管理员在首次准备新服务器且已获授权时执行；使用已有服务器的团队成员跳过：
+
+```powershell
 & $publisher -Action Initialize
 ```
 

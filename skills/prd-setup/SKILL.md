@@ -5,6 +5,8 @@ description: "在 Windows 上安装、检查或修复 prd 技能、本地 HTML �
 
 # PRD 环境准备
 
+服务器已由管理员准备好、用户仅需配置发布账号时，只做本机 Configure、InstallRuntime 和 Check，跳过 Initialize。使用提供的发布账号，不索取 root，不申请 sudo，不修改 Nginx；连接或发布失败不自动转为服务器初始化。
+
 用中文检查技能安装、输出目录写入能力和浏览器预览能力。读取 `references/setup.md`，复用已有环境；用户仅要求检查时不安装、不修改配置。
 
 默认 HTML/CSS/JavaScript 交付可直接在浏览器打开，无需服务端或额外运行时。用户需要 Linux 发布时，读取已安装 `prd/references/remote-publishing.md`，调用同一技能的 `scripts/Invoke-PrototypePublish.ps1` 完成配置、运行时安装、连接检查和 Nginx 初始化，不复制另一套部署代码。不修改其他服务配置。

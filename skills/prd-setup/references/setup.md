@@ -11,4 +11,6 @@
 
 用户请求服务器发布时，定位上述安装目录中的 `prd/references/remote-publishing.md` 并读取，复用 `prd/scripts/Invoke-PrototypePublish.ps1`。prd 缺失时先安装它，不能只安装 prd-setup 后假定发布脚本可用。
 
-按 Configure → InstallRuntime → Check → Initialize 准备环境。初次 Check 返回主机指纹时请用户核对，确认后以 `-TrustFingerprint` 重试；已有指纹发生变化时停止并说明，不自动覆盖 known_hosts。服务器密码仅通过安全输入获得。初始化后用独立的测试原型输出目录运行 Publish，访问返回的远程 URL，检查中文、样式、按钮及更新后同一链接的内容；测试目录与正式项目隔离。服务器或浏览器不可用时分别列出待验收项。
+服务器已由管理员准备好时，按 Configure → InstallRuntime → Check 配置本机，直接使用发布账号，跳过 Initialize，不要求 root/sudo。只有用户授权准备新服务器时才接续 Initialize；连接失败不自动触发初始化。
+
+初次 Check 返回主机指纹时请用户核对，确认后以 `-TrustFingerprint` 重试；已有指纹发生变化时停止并说明，不自动覆盖 known_hosts。服务器密码仅通过安全输入获得。需要发布验收时用独立的测试原型输出目录运行 Publish，访问远程 URL，检查中文、样式、按钮和固定链接更新；测试目录与正式项目隔离。服务器或浏览器不可用时分别列出待验收项。
