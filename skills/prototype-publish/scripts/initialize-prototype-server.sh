@@ -59,7 +59,8 @@ chmod 755 "$root" "$root/releases" "$root/published"
 mkdir -p /etc/nginx/conf.d
 fallback=''
 if test -n "$prefix"; then
-  fallback="location / { return 404; }"
+  fallback="location = $prefix { return 301 $prefix/; }
+    location / { return 404; }"
 fi
 cat > "$site" <<EOF
 $marker

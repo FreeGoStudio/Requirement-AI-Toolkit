@@ -168,6 +168,19 @@ class HistoricalHtmlTests(unittest.TestCase):
 
 
 class DeploymentTests(unittest.TestCase):
+    def setUp(self):
+        catalog = patch.object(publish, 'refresh_catalog', return_value={'catalogUrl': 'http://example.test/catalog/'})
+        self.catalog = catalog.start()
+        self.addCleanup(catalog.stop)
+
+    def test_catalog_failure_does_not_rollback_successful_prototype(self):
+        remote = FakeRemote()
+        self.catalog.side_effect = RuntimeError('catalog failed')
+        result = publish.deploy(remote, {'index.html': b'new'}, 'a'*32, 'c'*32, verify=lambda *args: None)
+        self.assertEqual(result['status'], 'published')
+        self.assertIn('catalog failed', result['catalogWarning'])
+        self.assertTrue(remote.current.endswith('c'*32))
+
     def test_temporary_prefix_preserved_in_deploy_and_http(self):
         remote = FakeRemote(previous=False)
         remote.config['remoteRoot'] = '/var/www/_tmp/prototypes'

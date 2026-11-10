@@ -60,4 +60,5 @@ cmp "$site" "$sandbox/saved.conf"
 sh "$sandbox/initialize.sh" "$sandbox/site" 8080 tester /_tmp/prototypes
 grep -q 'location /_tmp/prototypes/ { alias ' "$site"
 grep -q 'location / { return 404; }' "$site"
+grep -q 'location = /_tmp/prototypes { return 301 /_tmp/prototypes/; }' "$site"
 echo 'PASS: unrelated config protection, occupied port, failed config/reload restoration, idempotent initialization.'

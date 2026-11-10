@@ -18,6 +18,7 @@ from urllib.parse import unquote, urlsplit, quote
 from urllib.request import urlopen, Request
 import uuid
 from document_links import sync_document_links
+from publication_catalog import refresh_catalog
 
 
 class PublishError(Exception):
@@ -336,7 +337,12 @@ def deploy(remote, files, publication_id, version, verify=verify_http):
         remote.run(f'ln -s {q(release)} {q(temporary)} && mv -Tf {q(temporary)} {q(link)}')
         url = remote.config['baseUrl'].rstrip('/') + '/' + publication_id
         verify(url, files, version)
-        return {'status': 'published', 'url': url + '/', 'version': version, 'previousVersionPath': previous}
+        result = {'status': 'published', 'url': url + '/', 'version': version, 'previousVersionPath': previous}
+        try:
+            result.update(refresh_catalog(remote, lock_held=True))
+        except Exception as error:
+            result['catalogWarning'] = str(error)
+        return result
     except Exception as error:
         if switched:
             try:
@@ -368,7 +374,7 @@ def execute(request, remote_factory=Remote):
     validate_config(request['config'])
     state_path = state = files = None
     action = request['action']
-    if action not in ('check', 'initialize', 'publish'):
+    if action not in ('check', 'initialize', 'publish', 'refreshcatalog'):
         raise PublishError('未知发布操作。')
     if action == 'publish':
         state_path, state = publication_state(request['outputDirectory'])
@@ -386,6 +392,8 @@ def execute(request, remote_factory=Remote):
             return {'status': 'connected', 'system': remote.run('cat /etc/os-release; id; command -v systemctl; command -v apt-get || command -v dnf')}
         if action == 'initialize':
             return initialize(remote)
+        if action == 'refreshcatalog':
+            return {'status': 'catalog-updated', **refresh_catalog(remote)}
         result = deploy(remote, files, state['publicationId'], uuid.uuid4().hex)
         state.update(lastSuccess=result, lastAttempt={'status': 'published', 'time': datetime.now(timezone.utc).isoformat()})
         save_json(state_path, state)
