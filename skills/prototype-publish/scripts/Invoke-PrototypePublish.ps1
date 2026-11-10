@@ -49,9 +49,17 @@ if ($Action -eq 'InstallRuntime') {
   if ($LASTEXITCODE -ne 0) { throw '安装 SSH 发布依赖失败。' }
   return
 }
-if (-not (Test-Path -LiteralPath $configPath)) {
-  throw '尚未配置服务器，请先运行 Configure。'
+function Require-ServerConfiguration([string]$Reason) {
+  throw "服务器配置未就绪（$Reason），本次未发布。请先运行 -Action Configure，填写 ServerAddress（服务器地址）、Username（发布账号），并确认 SshPort、WebPort、RemoteRoot 和 BaseUrl；密码在安全提示中输入。随后按需运行 -Action InstallRuntime，再运行 -Action Check，连接检查通过后重试原发布命令。已就绪服务器无需 Initialize。"
 }
+if (-not (Test-Path -LiteralPath $configPath -PathType Leaf)) {
+  Require-ServerConfiguration '尚未配置服务器'
+}
+try { $config = Get-Content -LiteralPath $configPath -Raw -Encoding UTF8 | ConvertFrom-Json }
+catch { Require-ServerConfiguration '配置文件无法读取或不是有效 JSON' }
+$requiredFields = @('host','sshPort','username','encryptedPassword','webPort','remoteRoot','baseUrl')
+$missing = @($requiredFields | Where-Object { [string]::IsNullOrWhiteSpace([string]$config.$_) })
+if ($missing.Count -gt 0) { Require-ServerConfiguration ("缺少配置项：" + ($missing -join ', ')) }
 if (-not (Test-Path -LiteralPath $python)) { throw '尚未安装发布运行时，请先运行 InstallRuntime。' }
 if ($Action -eq 'Publish') {
   if (-not $OutputDirectory) { throw 'Publish 需要 OutputDirectory。' }
@@ -61,7 +69,6 @@ if ($Action -eq 'Publish') {
     $OutputDirectory = Split-Path -Parent ([IO.Path]::GetFullPath($OutputDirectory))
   }
 }
-$config = Get-Content -LiteralPath $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
 $secure = ConvertTo-SecureString $config.encryptedPassword
 $pointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
 try {

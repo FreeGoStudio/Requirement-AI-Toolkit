@@ -4,6 +4,8 @@
 
 ## 配置一次
 
+未配置或配置不完整时，技能先提示“尚未配置服务器，本次未发布”，询问缺失信息并引导 Configure → InstallRuntime（按需）→ Check，成功后继续原来的发布。脚本在启动运行时、打包和连接之前检查配置文件及必需字段，并返回具体缺项和操作提示；不自动选择示例服务器。密码只在本机安全提示中输入。已配置的用户不重复配置。
+
 在 Windows 上使用 PowerShell 7 执行以下命令。若服务器已经由管理员准备好，只运行 Configure、InstallRuntime 和 Check，直接使用发布账号，跳过下方 Initialize。日常 Publish 不需要 root 或 sudo，不因发布失败自动初始化服务器。
 
 Windows 上需要 Python 3.10+。配置和独立虚拟环境默认位于 `%LOCALAPPDATA%/Requirement-AI-Toolkit/`，不位于仓库、技能目录或输出包。`server.json` 保存地址、用户名、端口、目录、访问地址及当前 Windows 用户 DPAPI 加密密码；`known_hosts` 保存已确认主机公钥。换电脑/Windows 账号需重新输入密码。不要展示或提交配置文件内容。
