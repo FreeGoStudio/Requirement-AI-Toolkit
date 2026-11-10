@@ -1,4 +1,4 @@
 interface:
   display_name: "PRD 环境准备"
-  short_description: "检查并配置 prd 技能与本地 HTML 预览环境，验证页面和交互"
-  default_prompt: "使用 $prd-setup 检查我的环境，补齐 prd 技能并验证本地 HTML 预览。"
+  short_description: "配置 prd、本地预览或 Linux 服务器发布，验证访问与交互"
+  default_prompt: "使用 $prd-setup 检查我的 prd 环境，按需要配置本地预览或 Linux 原型发布，并验证页面访问与交互。"

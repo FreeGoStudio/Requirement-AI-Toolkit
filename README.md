@@ -3,7 +3,7 @@
 面向 Codex 的中文产品需求工作流技能，直接生成可在浏览器打开的 HTML 需求文档与低/高保真交互原型。
 
 - `skills/prd`：问题探索、业务方案比较、范围收敛、业务模型、参考分析、低模、PRD/流程图/BDD、视觉方向、设计系统与高模评审。
-- `skills/prd-setup`：技能安装与本地 HTML 预览环境检查。
+- `skills/prd-setup`：技能安装、本地 HTML 预览与 Linux 原型发布环境配置。
 
 ## 使用与产出
 
@@ -48,6 +48,20 @@ Invoke-WebRequest -UseBasicParsing -Uri 'https://raw.githubusercontent.com/FreeG
 ```
 
 安装 prd-setup 时将 SkillName 改为 prd-setup。远程安装器默认 Branch 仍为 main，安装其他分支时必须显式传参。也支持 RepoUrl、CodexHome、InstallRoot 与 NoBackup 参数。
+
+## Linux 原型自动发布
+
+需要让同事通过服务器访问时，在新聊天输入：
+
+```text
+$prd-setup 配置 Linux 原型发布服务器，自动准备 Nginx；后续原型更新自动发布，只发布原型及其资源。
+```
+
+提供服务器地址和用户名，密码通过本机 PowerShell 安全提示输入，不需粘贴到聊天。默认 SSH 端口 22、网站端口 8080、远程目录 `/var/www/prd-prototypes`，支持自定义。密码按当前 Windows 用户加密保存在本机配置目录，技能升级不覆盖；首次连接需核对主机指纹。
+
+服务器需支持 systemd、apt/dnf，并提供 root 或 sudo 权限。发布成功返回 `http://服务器地址:端口/<发布ID>/`，每次更新沿用地址；本地仍保存完整需求交付，服务器仅公开原型及依赖资源。未配置时保持本地流程。已配置但发布失败时明确报错并保留上次成功版本；HTTP 访问与浏览器交互验收分别记录。
+
+配置命令、依赖、限制与故障处理见 [Linux 原型发布说明](skills/prd/references/remote-publishing.md)。
 
 ## 截图知识库
 
