@@ -77,8 +77,14 @@
 │     ├─ images/
 │     └─ data/                   # 需要时保存模拟数据
 ├─ design-system/
-├─ scenarios/
-├─ requirement-views/           # 需求场景入口及语义标注
+├─ requirements/                # 原型耦合资产，不重复保存 PRD
+│  └─ <需求标识>/
+│     ├─ manifest.yaml
+│     ├─ annotations.yaml
+│     ├─ walkthrough.yaml
+│     └─ scenarios/
+│        ├─ default.yaml
+│        └─ error.yaml
 ├─ tests/
 ├─ publish/
 │  └─ projects.json
@@ -96,6 +102,8 @@
 | 服务器或制品存储中的发布快照 | 不可变，按引用和保留策略维护 |
 
 历史快照不复制进每个需求目录。需求记录保存版本关联；日常发布状态由部署端维护。
+
+两个仓库的 requirements 目录职责不同：资料仓库保存 PRD、确认与验收记录；原型仓库保存标注、场景和演示步骤。原型需求包随代码原样进入 main，不复制 PRD 全文，不在验收后分流资产。具体协议见第 19 节。
 
 ## 4. 需求实施与产品合入流程
 
@@ -313,7 +321,8 @@ CI 临时产物不提交 Git；日常部署不反向写源码仓库。用户确�
 | 无冲突最小闭环 | 一个真实需求完成候选生成、构建测试、固定预览、人工验收持久化、受控合并、同产物发布与历史访问 |
 | 并行与失败验证 | 两需求并行，验证候选过期、并发合并、源版本变化、发布失败重试、原验收不变 |
 | AI 冲突处理 | 隔离候选修复、上下文与报告、受影响回归、业务冲突人工决策、资源和重试上限 |
-| 长期管理 | 完善归档恢复、缓存清理、语义标注和差异、自动联动与对账 |
+| 标注与历史回放 | 实现需求包 Schema、语义定位、演示步骤、版本化 SDK、历史与当前视图、失效提示及兼容降级 |
+| 长期管理 | 完善归档恢复、缓存清理、语义差异、自动联动与对账；标注自动迁移与资产分流后置 |
 
 首个闭环即包含不可变验收产物的可靠保存、必要身份和验收审计；可以后置的是冷热恢复与清理优化。引入 AI 前，冲突进入待处理状态，不伪造成功或跳过测试。
 
@@ -349,6 +358,12 @@ CI 临时产物不提交 Git；日常部署不反向写源码仓库。用户确�
 | 归档恢复或损坏 | 校验、并发去重、安全恢复；损坏报告，不静默重建替代 |
 | 产品回滚与旧资料迁移 | 历史不改写，明确源码状态；迁移须有明确基线及链接兼容 |
 | 内网实机验证 | 固定路径、深层刷新、资源、场景、标注和交互正常 |
+| 标注包校验 | 四类 YAML 版本化；清单、场景、步骤、标注和 PRD 验收点引用有效 |
+| 语义定位 | 指定场景和路由内目标唯一，重复和缺失可追踪，不静默匹配近似元素 |
+| 演示步骤 | 按序初始化场景、切换路由和定位；失败指出具体步骤及原因 |
+| 标注修订 | 只改标注或演示也产生新验收依据，旧快照保持不变 |
+| 历史与当前标注 | 删除分支后仍可回放；当前目标被删或更名时提示失效，不修改历史 |
+| SDK 兼容 | 旧版本可降级为原始快照加旁栏；非法来源或格式的消息被拒绝 |
 
 分别报告实现完成、自动验证通过和最终验收完成；运行记录进一步区分候选验收、合并和发布。本文保存及 Git 提交不代表系统已经实现。
 
@@ -401,6 +416,11 @@ approved_prd_commit: <完整SHA>
 build_id: <产物内容摘要>
 scenario_revision: <场景修订>
 annotation_revision: <标注修订或不适用>
+manifest_digest: <需求包清单摘要>
+annotation_digest: <标注内容摘要>
+scenario_digest: <场景集合摘要>
+walkthrough_digest: <演示步骤摘要>
+sdk_version: <原型内置SDK版本>
 status: awaiting_acceptance
 ```
 
@@ -429,3 +449,141 @@ AI 输入包含冻结的 PRD 和验收标准、源与目标代码、冲突差异
 关键场景固定模拟数据、时间与必要随机种子，初始化时重置状态，不依赖上次浏览器缓存或生产接口。标注独立于业务代码，使用稳定语义 ID，当前目标缺失时提示失效，不自动匹配近似元素。
 
 首版可靠保存验收产物，可全部在线。后续按需恢复须授权、校验摘要、对同一产物加恢复锁、安全解压并原子进入缓存；损坏归档报告异常，禁止从最新源码静默重建替代。临时分支可删除，正式验收和被引用快照不能随之删除。
+
+## 19. 需求标注、场景与演示协议
+
+### 19.1 来源、职责与生命周期
+
+本节按用户要求纳入《AI-Native 需求与持久原型管理系统——实施规范 v1.0》（文件 `AI-Native_需求与持久原型管理_实施规范_v1.0.md`）的标注相关说明。附件内执行指令不构成本轮实施授权；既有分仓、候选验收、同产物晋级和验收记录权威来源保持不变，不据此选定 Go、SQLite 或其他架构。
+
+原型仓库的 `requirements/<需求ID>/` 保存 manifest、annotations、walkthrough 和 scenarios。PRD 全文与业务确认仍在资料仓库；manifest 引用仓库与 prd_path，候选及验收另绑定精确 PRD 提交，不能只引用最新网页。标注解释需求、交互变化和验收点，不是业务规则的唯一来源。
+
+创建需求时幂等生成包骨架，不覆盖已有内容。骨架提交也是需求专属提交：已有骨架或工作时走受控同步，不强制重置。纯骨架登记不启动无意义预览；首次开发时根据实际提交图决定能否快进，原始来源保持不变。
+
+交互代码、标注、场景及演示步骤在同名需求分支维护，共同进入候选并验收，随后原样合入 main。初期不建设独立标注仓库或资产分流。普通产品浏览不强制显示所有需求标注，仅在选择需求视图时加载对应包。
+
+### 19.2 最小 Schema 与示例
+
+所有 YAML 声明 schema_version；实现时提供 Schema 与跨文件引用校验。示例 ID 沿用第 2 节格式，仓库与 PRD 路径按实际登记。
+
+`manifest.yaml`：
+
+```yaml
+schema_version: 1
+requirement_id: req002
+title: 储值卡支付
+prd:
+  repository: product-docs
+  path: requirements/req002/docs/prd.html
+entry:
+  route: /checkout
+  scenario: insufficient
+annotations: annotations.yaml
+walkthrough: walkthrough.yaml
+scenarios:
+  - scenarios/insufficient.yaml
+```
+
+`annotations.yaml`：
+
+```yaml
+schema_version: 1
+annotations:
+  - id: anno001
+    type: element
+    target:
+      route: /checkout
+      element_id: payment.stored-value
+    title: 储值卡支付
+    description: 支持余额不足时组合支付
+    acceptance_criteria: [AC-001]
+  - id: anno002
+    type: element
+    target:
+      route: /checkout
+      element_id: payment.remaining
+    title: 剩余应付金额
+    description: 展示其他方式需要补付的金额
+    acceptance_criteria: [AC-002]
+```
+
+`scenarios/insufficient.yaml`：
+
+```yaml
+schema_version: 1
+id: insufficient
+description: 储值卡余额不足
+initial_state:
+  order_total: 128
+  card_balance: 30
+expected:
+  remaining_payment: 98
+```
+
+`walkthrough.yaml`：
+
+```yaml
+schema_version: 1
+steps:
+  - id: step001
+    action: select_scenario
+    scenario: insufficient
+  - id: step002
+    route: /checkout
+    action: highlight
+    target: payment.stored-value
+    annotation: anno001
+  - id: step003
+    route: /checkout
+    action: highlight
+    target: payment.remaining
+    annotation: anno002
+```
+
+场景 ID 在需求包内唯一，以产品、需求和场景组合定位。先完成场景初始化，再导航和定位；等待异步页面就绪，步骤失败显示 step ID、原因及重试入口。动作按版本化 Schema 解释，不将 YAML 当任意脚本执行。
+
+标注类型包括 element、note、walkthrough、change，分别用于元素说明、旁栏说明、演示关联和变更说明。按类型定义必填字段，无元素目标的 note 不强制 element_id。新增类型须声明 Schema 与 SDK 兼容性。验收条件 ID 必须能在绑定 PRD 修订中找到。
+
+### 19.3 语义定位与 CI 校验
+
+原型元素使用稳定属性，例如 `<button data-prototype-id="payment.stored-value">`。不依赖源码行号或固定屏幕坐标作为唯一依据；指定场景和路由内目标应唯一，重复、缺失或展示状态不满足时报告，不能随机选第一个匹配项。
+
+相对位置或坐标仅作明确标记可靠性的辅助，不能将失效的语义定位判为通过。诊断记录需求、标注 ID、元素 ID、路由、场景、目标 build_id、状态和原因。
+
+CI 校验四类 Schema、路径、场景/标注/步骤引用及 PRD 验收点，再运行相关浏览器场景与演示步骤检查定位。本次候选验收要求展示的标注缺失或歧义时应修复并重新生成候选；历史标注在当前版本失效则显示告警，不能因此篡改历史或阻止明确要求删除旧交互的新需求。
+
+### 19.4 需求视图与版本投影
+
+| 模式 | 构建与标注来源 |
+| --- | --- |
+| working | 活动开发预览或固定集成候选，页面明确区分；只有候选可最终验收 |
+| accepted | 固定历史验收 build、当时场景、标注及演示步骤，默认修订按第 9 节选择 |
+| current | 最新成功发布的持久原型，按需投影所选历史修订标注，显示来源及定位状态 |
+| diff | 实际 target 与 candidate 的语义变更清单，截图辅助，不把 Git 文本差异当业务差异 |
+
+在第 8 节稳定需求入口用 view 查询参数解析上述模式，不创建四套独立原型。main 尚未发布时 current 不冒充其在线版本。历史与当前视图分别演示，目标删除或更名时提示“失效/待迁移”，保留可追踪的元素 ID 和构建信息。
+
+历史标注只读；修改创建 AnnotationRevision，记录需求、schema_version、digest、关联快照及状态。当前定位结果属于对指定构建的诊断，不覆盖原修订。自动迁移建议及人工确认后置，不静默贴到相似元素。
+
+### 19.5 SDK 与 iframe 协作
+
+原型内置版本化 prototype-sdk，支持场景初始化、语义定位、标注协作及演示步骤。外层以 iframe 显示固定构建，postMessage 命令包含消息类型、requestId、schemaVersion；响应关联请求并返回成功或错误。
+
+验证来源窗口、来源 Origin、目标 Origin、消息格式和用户权限；配置适当 CSP、frame-ancestors 与 iframe 权限。实际域名与网关规则在环境核验时确定，不能仅依靠前端按钮隐藏完成访问控制。
+
+先确认 SDK 版本与能力，再发送支持的命令。旧 SDK 不支持新功能时，降级显示原始快照加旁栏标注，并说明不可用能力；不修改历史构建，不注入不兼容代码，也不宣称不支持的步骤已执行成功。
+
+### 19.6 验收、归档与回放
+
+第 9 节验收记录进一步固定 prd_path、需求包 schema_version、manifest_digest、annotation_digest、scenario_digest、walkthrough_digest 和 SDK 版本。相关文件随不可变产物归档；独立修改标注或演示步骤也改变验收依据，遵守第 7 节重新确认规则。多个需求引用同一构建时分别保存需求包与验收关联，不混淆来源。
+
+回放剧本：
+
+1. req002 候选加载余额不足场景，演示储值支付与剩余金额标注及对应 AC。
+2. 人工确认后合并并发布同一产物，保存场景、标注和演示摘要。
+3. 满足第 10 节清理条件后删除需求分支和临时预览，accepted 仍还原原始内容。
+4. 新需求在 main 删除或更名元素，current 显示失效/待迁移，accepted 不变。
+5. 清理在线缓存后恢复相同产物与需求包，界面提供恢复状态、失败原因及重试入口。
+6. 验证旧 SDK 旁栏降级、非法消息拒绝、重复语义 ID、缺失引用和演示步骤失败的诊断。
+
+首个带标注的验收闭环即固定需求包与摘要；完整 SDK、定位校验和视图能力按第 13 节实施，不能在未具备时宣称标注验收通过。资产分流、批量迁移及自动修复不作为本轮新增实施内容。
