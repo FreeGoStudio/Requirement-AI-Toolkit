@@ -1,5 +1,7 @@
 # BDD 模板
 
+HTML 场景文档中的原型链接使用 html-output.md 的 data-prototype-path 与共享 prototype-links.js，保留 screen/state 锚点。成功发布使用服务器地址，未发布或失败显示本地链接和待发布标记；.feature 源文件不嵌入 JavaScript。
+
 使用中文编写 BDD。优先按功能分组，场景应直接对应已确认的业务规则和流程。
 
 低模前可在澄清或业务模型 HTML 中整理标记为“待确认草案”的场景，不提前生成正式 BDD HTML 或源文件。

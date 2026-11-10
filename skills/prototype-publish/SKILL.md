@@ -27,6 +27,10 @@ description: "发布静态 HTML 原型到已配置的 Linux 临时服务器，�
 
 调用 `scripts/Invoke-PrototypePublish.ps1 -Action Publish`。服务器配置、运行时和凭据沿用 `%LOCALAPPDATA%/Requirement-AI-Toolkit/`，技能拆分或升级不重新初始化服务器。
 
+Prd 模式同步交付根目录文档的原型链接：共享 prototype-links.js 保存基础 URL，页面只保存 data-prototype-path（含查询参数和锚点）。开始发布先置为 pending，成功且 HTTP 校验通过后置为 published；失败或未配置时保留本地 href 并显示待发布。最近成功 URL 留在历史记录，不作为失败后的主链接。Html 模式不改写历史源 HTML。
+
+仅新增或更新文档时可用 `-Action SyncLinks -OutputDirectory '<交付目录>'` 复用最近发布结果，不上传；原型内容变更时先加 `-LinksPending` 标记待发布。SyncLinks 仅需本机 Python，无需服务器配置。如果上传成功但本地文档同步出现 documentLinkWarning，单独报告该问题，不把成功上传误报为回退。
+
 上传成功且 HTTP 内容核对通过才返回新 URL。同一目录复用发布 ID；失败保留错误和上一成功记录，回退失败单独报告。发布锁冲突先等待其他发布结束，不自行删锁。无配置时明确说明需要配置，不把未发布当作完成。
 
 回复发布目录、访问链接、版本结果和未验证项。HTTP 校验不能替代浏览器中文、样式和交互检查；没有浏览器能力时明确待验收。仅发布原型，不修改业务内容，不接真实后端，不部署正式应用。

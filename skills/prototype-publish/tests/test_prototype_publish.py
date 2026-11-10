@@ -4,8 +4,10 @@ from pathlib import Path
 import shlex
 import tempfile
 import unittest
+import sys
 from unittest.mock import patch
 
+sys.path.insert(0, str(Path(__file__).parents[1] / 'scripts'))
 spec = importlib.util.spec_from_file_location('publish', Path(__file__).parents[1] / 'scripts/prototype_publish.py')
 publish = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(publish)

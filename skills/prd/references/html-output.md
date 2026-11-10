@@ -25,4 +25,21 @@
 
 ## 已配置 Linux 发布时
 
+### 文档原型链接
+
+所有交付根目录的 HTML 文档（含 index、PRD、流程图和 BDD）共用 `prototype-links.js`。基础地址只保存在 `window.PRD_PROTOTYPE_BASE_URL`，内容是服务器地址、临时前缀与发布 ID，例如 `http://服务器:端口/_tmp/prototypes/<发布ID>`；页面不能各自写死服务器地址。状态由 `window.PRD_PROTOTYPE_PUBLISH_STATUS` 表示 published 或 pending。
+
+文档仅保存相对原型路径及原有页面/状态锚点，初始 href 始终为本地回退：
+
+```html
+<a href="prototypes/low/login.html#login-error"
+   data-prototype-path="prototypes/low/login.html#login-error">登录失败状态</a>
+<script src="prototype-links.js" data-prototype-link-runtime defer></script>
+<p data-prototype-publication-status>原型待发布，当前链接使用本地文件。</p>
+```
+
+同级 prototype-publish 的 `Invoke-PrototypePublish.ps1 -Action SyncLinks -OutputDirectory '<交付目录>'` 会根据发布记录生成共享脚本，绑定根目录文档中指向清单原型的现有链接。查询参数与锚点保留，其他文档间链接不变。新增 PRD/BDD 等文档后再次 SyncLinks 即可复用已有发布结果，无需重新上传原型。修改原型前用 `-LinksPending` 将状态置为待发布；未配置服务器也可仅用本机 Python 执行 SyncLinks，不连接服务器。
+
+只有本次发布成功且 HTTP 校验通过时才使用服务器 URL；开始发布、未配置、上传失败或回退后均清空当前基础地址，页面链接回到本地并显示“待发布”。历史成功 URL 仅作为发布记录保留，不能冒充本次内容已发布。无 JavaScript 时静态 href 仍可打开本地文件。共享脚本与文档一起交付，不用 fetch JSON，兼容 file://。
+
 本地文件仍是生成与评审依据。每次原型更新通过静态检查后按 `remote-publishing.md` 发布；远程访问检查与浏览器交互检查分别记录。原型引用包内资源使用相对路径，运行时资源使用可静态识别的字面量路径；不要依赖本机绝对路径。原型返回本地 `index.html` 的链接会在发布副本中指向仅原型导航，其他未发布文档链接必须明确处理，不能把文档一并上传来消除断链。

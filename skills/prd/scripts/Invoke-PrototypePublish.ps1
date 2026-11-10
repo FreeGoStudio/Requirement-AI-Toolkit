@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('Configure','InstallRuntime','Check','Initialize','Publish')][string]$Action = 'Check',
+  [ValidateSet('Configure','InstallRuntime','Check','Initialize','Publish','SyncLinks')][string]$Action = 'Check',
   [string]$ServerAddress,
   [int]$SshPort = 22,
   [string]$Username,
@@ -10,6 +10,7 @@ param(
   [string]$OutputDirectory,
   [ValidateSet('Auto','Prd','Html')][string]$Mode = 'Auto',
   [string]$EntryPath,
+  [switch]$LinksPending,
   [string]$TrustFingerprint,
   [string]$ConfigDirectory = (Join-Path $env:LOCALAPPDATA 'Requirement-AI-Toolkit')
 )

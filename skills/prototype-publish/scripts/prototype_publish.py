@@ -17,6 +17,7 @@ from datetime import datetime, timezone
 from urllib.parse import unquote, urlsplit, quote
 from urllib.request import urlopen, Request
 import uuid
+from document_links import sync_document_links
 
 
 class PublishError(Exception):
@@ -371,9 +372,14 @@ def execute(request, remote_factory=Remote):
         raise PublishError('未知发布操作。')
     if action == 'publish':
         state_path, state = publication_state(request['outputDirectory'])
+    prd_documents = (action == 'publish' and request.get('mode', 'auto') != 'html'
+                     and not request.get('entryPath')
+                     and (Path(request['outputDirectory']) / '03-html-design-manifest.json').is_file())
     remote = None
     try:
         if action == 'publish':
+            if prd_documents:
+                sync_document_links(request['outputDirectory'], state, pending=True)
             files = Package(request['outputDirectory'], request.get('mode', 'auto'), request.get('entryPath')).build()
         remote = remote_factory(request)
         if action == 'check':
@@ -383,6 +389,12 @@ def execute(request, remote_factory=Remote):
         result = deploy(remote, files, state['publicationId'], uuid.uuid4().hex)
         state.update(lastSuccess=result, lastAttempt={'status': 'published', 'time': datetime.now(timezone.utc).isoformat()})
         save_json(state_path, state)
+        if prd_documents:
+            try:
+                sync_document_links(request['outputDirectory'], state)
+            except Exception as error:
+                # The deployment has succeeded; report a local document issue separately.
+                result['documentLinkWarning'] = str(error)
         return result
     except Exception as error:
         if state is not None:

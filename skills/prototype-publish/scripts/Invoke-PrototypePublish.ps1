@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('Configure','InstallRuntime','Check','Initialize','Publish')][string]$Action = 'Check',
+  [ValidateSet('Configure','InstallRuntime','Check','Initialize','Publish','SyncLinks')][string]$Action = 'Check',
   [string]$ServerAddress,
   [int]$SshPort = 22,
   [string]$Username,
@@ -10,6 +10,7 @@ param(
   [string]$OutputDirectory,
   [ValidateSet('Auto','Prd','Html')][string]$Mode = 'Auto',
   [string]$EntryPath,
+  [switch]$LinksPending,
   [string]$TrustFingerprint,
   [string]$ConfigDirectory = (Join-Path $env:LOCALAPPDATA 'Requirement-AI-Toolkit')
 )
@@ -18,6 +19,22 @@ if ($env:OS -ne 'Windows_NT') { throw '配置凭据需要 Windows 当前用户�
 $configPath = Join-Path $ConfigDirectory 'server.json'
 $python = Join-Path $ConfigDirectory 'runtime/Scripts/python.exe'
 $worker = Join-Path $PSScriptRoot 'prototype_publish.py'
+function Sync-DocumentLinks([bool]$Pending) {
+  if (-not $OutputDirectory -or $Mode -eq 'Html' -or $EntryPath -or (Test-Path -LiteralPath $OutputDirectory -PathType Leaf)) { return }
+  if (-not (Test-Path -LiteralPath (Join-Path $OutputDirectory '03-html-design-manifest.json') -PathType Leaf)) { return }
+  $linkPython = if (Test-Path -LiteralPath $python) { $python } else { (Get-Command python -ErrorAction Stop).Source }
+  $linkArgs = @('-X', 'utf8', (Join-Path $PSScriptRoot 'document_links.py'), '--root', $OutputDirectory)
+  if ($Pending) { $linkArgs += '--pending' }
+  & $linkPython @linkArgs
+  if ($LASTEXITCODE -ne 0) { throw '文档原型链接同步失败，请检查本地交付目录。' }
+}
+if ($Action -eq 'SyncLinks') {
+  if (-not $OutputDirectory) { throw 'SyncLinks 需要 OutputDirectory。' }
+  Sync-DocumentLinks $LinksPending.IsPresent
+  return
+}
+# Reset PRD document links before configuration/runtime/connection failures can occur.
+if ($Action -eq 'Publish') { Sync-DocumentLinks $true }
 if ($Action -eq 'Configure') {
   if (-not $ServerAddress -or -not $Username) { throw '需要 ServerAddress 和 Username。' }
   if ($SshPort -lt 1 -or $SshPort -gt 65535 -or $WebPort -lt 1024 -or $WebPort -gt 65535) { throw 'SSH 端口需为 1–65535，网站端口需为 1024–65535。' }

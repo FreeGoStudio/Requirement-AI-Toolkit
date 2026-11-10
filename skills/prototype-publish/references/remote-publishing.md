@@ -65,12 +65,26 @@ PRD 流程先由 prd 完成 postwrite 和静态检查，再调用：
 
 脚本返回 JSON 状态和 URL，并在输出目录记录 `.prototype-publication.json`。回复给出链接、当前发布结果、浏览器验证和用户验收状态。PRD 流程由 prd 同步本地交付入口；历史模式不改写源 HTML。上传成功但 HTTP 不通不算发布成功，提示检查访问地址、端口、防火墙与云安全组。回退失败时单独报告远程状态需人工核对，不声称旧版可用。
 
+## PRD 文档中的原型链接
+
+Prd 发布会自动绑定交付根目录 HTML 中指向清单原型的链接，保留页面路径、查询参数和锚点。基础 URL 集中写入 `prototype-links.js` 中的 `window.PRD_PROTOTYPE_BASE_URL`，各文档不重复保存服务器地址。发布成功后运行时拼接远程链接；发布开始、失败或未配置时清空基础 URL，保留本地 href 并显示待发布。历史 Html 发布不执行该同步。
+
+新增文档后同步链接（不需要连接服务器）；修改原型前先显式标记待发布：
+
+```powershell
+& $publisher -Action SyncLinks -OutputDirectory '<绝对交付目录>'
+& $publisher -Action SyncLinks -OutputDirectory '<绝对交付目录>' -LinksPending
+```
+
+这两个命令使用已安装的发布运行时，或本机已有的 Python。生成文档在根目录，引用 `<script src="prototype-links.js" data-prototype-link-runtime defer></script>`；链接使用 `data-prototype-path="prototypes/low/login.html#login-error"`，静态 href 同时保留本地路径。默认同步读取发布记录，显式 LinksPending 会更新记录为待发布，避免后续新增文档误用旧的成功状态。
+
 ## 验收
 
 自动测试命令：
 
 ```powershell
-python -m unittest discover -s skills/prototype-publish/tests -p test_prototype_publish.py -v
+python -m unittest discover -s skills/prototype-publish/tests -p 'test_*.py' -v
+node skills/prototype-publish/tests/test-document-link-runtime.cjs
 ./skills/prototype-publish/tests/Test-PublishCredentials.ps1
 # 有 Git Bash / Linux shell 时，执行隔离的服务初始化故障测试：
 bash skills/prototype-publish/tests/Test-ServerInitialization.sh skills/prototype-publish/scripts/initialize-prototype-server.sh
