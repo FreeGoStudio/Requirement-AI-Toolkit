@@ -36,10 +36,11 @@ $prd 帮我澄清这个产品需求，并按阶段生成 HTML 需求文档和可
 ```powershell
 ./scripts/install-skill.ps1 -SkillName prd
 ./scripts/install-skill.ps1 -SkillName prd-setup
-./scripts/install-skill.ps1 -SkillName prototype-publish
 ```
 
 默认安装到 `%USERPROFILE%/.codex/skills`；设置 CODEX_HOME 时安装到其 skills 子目录。已有版本默认先备份，`-NoBackup` 可关闭备份。安装后新开聊天，运行 `$prd-setup` 检查 HTML 预览，日常使用 `$prd`。
+
+安装或更新 `prd` 会先自动安装或更新同版本的 `prototype-publish`，沿用相同的 `CodexHome` 和 `NoBackup` 参数；依赖安装失败时停止，不替换 prd。不会重新配置服务器、安装发布运行时或执行服务器初始化。仅发布历史 HTML 时仍可单独运行 `./scripts/install-skill.ps1 -SkillName prototype-publish`。单独安装 prd-setup 不触发此依赖安装。
 
 从远程安装需要 Git。HTML 分支推送后，可明确指定该分支：
 

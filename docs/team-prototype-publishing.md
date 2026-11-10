@@ -26,10 +26,11 @@ Test-NetConnection 10.94.164.176 -Port 8081
 ```powershell
 ./scripts/install-skill.ps1 -SkillName prd
 ./scripts/install-skill.ps1 -SkillName prd-setup
-./scripts/install-skill.ps1 -SkillName prototype-publish
 ```
 
 默认安装到 `%USERPROFILE%/.codex/skills`；设置了 `CODEX_HOME` 时安装到其 `skills` 子目录。旧版会自动备份。安装后在 Codex 新开聊天。
+
+第一条命令安装或更新 prd 时会自动安装或更新 prototype-publish，因此两条命令即可装好三个技能。依赖沿用相同安装目录和备份设置；原有服务器配置与密码不变，不会自动初始化服务器。只发布历史 HTML 的用户可单独安装：`./scripts/install-skill.ps1 -SkillName prototype-publish`。
 
 解压包安装无需 Git。请使用管理员提供的包含 Linux 发布功能的版本，不用旧仓库版本替代；远程安装须等待管理员确认对应分支已更新。
 

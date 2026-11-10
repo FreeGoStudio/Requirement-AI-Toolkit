@@ -35,6 +35,13 @@ function Assert-DirectoryExists {
 Assert-DirectoryExists $source
 Assert-FileExists (Join-Path $source "SKILL.md")
 
+# Install the publishing dependency first; do not replace prd if it cannot be installed.
+if ($SkillName -eq 'prd') {
+  Assert-FileExists (Join-Path $repoRoot 'skills/prototype-publish/SKILL.md')
+  Write-Host 'Installing prd dependency: prototype-publish'
+  & $scriptPath -SkillName 'prototype-publish' -CodexHome $CodexHome -NoBackup:$NoBackup
+}
+
 New-Item -ItemType Directory -Force -Path $skillsRoot | Out-Null
 
 if (Test-Path -LiteralPath $target) {
