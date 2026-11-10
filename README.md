@@ -31,6 +31,14 @@ $prd 帮我澄清这个产品需求，并按阶段生成 HTML 需求文档和可
 
 ## 安装
 
+从 GitHub 当前开发分支 `codex/html-prototype-output` 一条命令安装或更新三个技能（需先将该分支的新脚本推送到 GitHub）：
+
+```powershell
+& { $ErrorActionPreference = 'Stop'; $f = Join-Path $env:TEMP ('update-requirement-toolkit-' + [guid]::NewGuid().ToString('N') + '.ps1'); Invoke-WebRequest -UseBasicParsing -Uri 'https://raw.githubusercontent.com/FreeGoStudio/Requirement-AI-Toolkit/codex/html-prototype-output/scripts/update-from-github.ps1' -OutFile $f; & (Get-Process -Id $PID).Path -NoProfile -ExecutionPolicy Bypass -File $f -Branch 'codex/html-prototype-output' }
+```
+
+该命令使用当前 PowerShell 进程对应的解释器，从指定分支下载 ZIP，无需 Git；安装 prd（自动安装 prototype-publish）及 prd-setup，默认备份旧技能，不修改服务器配置或初始化服务器。更新后新开 Codex 聊天。GitHub 无法访问时明确失败，原安装保留。发布原型仍需要 PowerShell 7 和 Python 3.10+。
+
 已有本地仓库时安装当前检出版本（本分支修改尚未推送时优先此方式）：
 
 ```powershell

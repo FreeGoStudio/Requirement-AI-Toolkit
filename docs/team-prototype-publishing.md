@@ -21,6 +21,14 @@ Test-NetConnection 10.94.164.176 -Port 8081
 
 ## 2 安装三个技能
 
+管理员将最新版本推送到 GitHub 的 `codex/html-prototype-output` 分支后，可在 PowerShell 中执行一条命令安装或更新，无需 Git：
+
+```powershell
+& { $ErrorActionPreference = 'Stop'; $f = Join-Path $env:TEMP ('update-requirement-toolkit-' + [guid]::NewGuid().ToString('N') + '.ps1'); Invoke-WebRequest -UseBasicParsing -Uri 'https://raw.githubusercontent.com/FreeGoStudio/Requirement-AI-Toolkit/codex/html-prototype-output/scripts/update-from-github.ps1' -OutFile $f; & (Get-Process -Id $PID).Path -NoProfile -ExecutionPolicy Bypass -File $f -Branch 'codex/html-prototype-output' }
+```
+
+会更新 prd、prd-setup 和 prototype-publish，保留本机服务器配置。更新后新开 Codex 聊天。若提示 404，联系管理员确认分支是否已推送；无需因此初始化服务器。也可使用下面的离线工具包安装方式。
+
 解压管理员提供的工具包，在包含 `scripts`、`skills` 和 `README.md` 的目录打开 PowerShell 7，执行：
 
 ```powershell
