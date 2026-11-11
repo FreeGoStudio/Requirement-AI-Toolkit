@@ -1,0 +1,1 @@
+{"name":"pos","private":true,"type":"module","scripts":{"build-storybook":"storybook build --disable-telemetry"}}

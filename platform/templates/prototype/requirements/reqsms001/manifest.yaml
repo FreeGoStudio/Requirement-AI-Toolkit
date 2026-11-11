@@ -1,0 +1,30 @@
+schema_version: 1
+requirement_id: reqsms001
+title: 启用短信验证码登录
+prd:
+  repository: prototype-lab-requirements
+  path: requirements/reqsms001/prd.md
+  commit: SET_BY_PROJECT_INITIALIZER
+affected_apps: [admin, pos]
+acceptance_criteria: [AC-001, AC-002]
+annotations: annotations.yaml
+scenarios: scenarios.yaml
+walkthrough: walkthrough.yaml
+review_scope:
+  - id: admin-sms-settings
+    app: admin
+    route: /settings
+    role: focus
+    regions: [login.sms.settings]
+    acceptance_criteria: [AC-001]
+  - id: pos-sms-login
+    app: pos
+    route: /login
+    role: focus
+    regions: [login.sms.panel]
+    acceptance_criteria: [AC-002]
+  - id: pos-home
+    app: pos
+    route: /home
+    role: context
+    whole_page: true
