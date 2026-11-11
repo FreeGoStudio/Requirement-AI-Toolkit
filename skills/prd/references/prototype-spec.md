@@ -8,9 +8,9 @@
   "productDomain": "demo",
   "flowIdentity": {"flowId": "login", "flowName": "登录", "objective": "完成登录", "fidelity": "low", "changeType": "new-flow"},
   "htmlStrategy": {"action": "create", "entryPath": "prototypes/low/login.html"},
-  "prototypeReferenceGate": {"userDecision": "continue-without-reference", "evidence": "02-reference-decision.html"},
+  "prototypeReferenceGate": {"userDecision": "continue-without-reference", "evidence": "02-reference-decision.md"},
   "designSystemDependency": {"status": "not-applicable", "assetIds": []},
-  "sourceArtifacts": ["02-business-model.html"],
+  "sourceArtifacts": ["02-business-model.md"],
   "interfaceBaseline": {"artifactPath": "03-interface-baseline.json"},
   "screens": [{"screenId": "login-form", "states": ["idle", "error", "success"]}],
   "interactions": [{"id": "submit", "trigger": "提交", "from": "idle", "to": "success", "ruleId": "RULE-01"}],
@@ -29,4 +29,4 @@
 
 ## 视觉方向规格
 
-`09-visual-direction-spec.json` 记录 candidates（默认三项），每项含 directionId、name、rationale、colors、typography、spacing、radii、shadows、coreComponents、representativeView、entryPath；selection 含 status=pending/selected、directionIds、combinationNotes。候选输出到 visual-directions/，实际截图后请求选择，再建立并确认设计系统。低模不作为唯一视觉来源。
+`09-visual-direction-spec.json` 记录 candidates（默认三项），每项含 directionId、name、rationale、colors、typography、spacing、radii、shadows、coreComponents、representativeView、entryPath；selection 含 status=pending/selected、directionIds、combinationNotes。候选 HTML 原型输出到 prototypes/visual-directions/，说明与链接写入 visual-directions/index.md，实际截图后请求选择，再建立并确认设计系统。低模不作为唯一视觉来源。

@@ -14,7 +14,7 @@
   },
   "prototypeReferenceGate": {
     "userDecision": "continue-without-reference",
-    "evidence": "02-reference-decision.html"
+    "evidence": "02-reference-decision.md"
   },
   "designSystemDependency": {
     "status": "approved",

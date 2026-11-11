@@ -1,6 +1,6 @@
 # Requirement AI Toolkit
 
-面向 Codex 的中文产品需求工作流技能，生成 Markdown 正式 PRD、HTML 过程文档与低/高保真交互原型，支持 GitLab 文档交付。
+面向 Codex 的中文产品需求工作流技能，生成 Markdown 需求与过程文档与低/高保真交互原型，支持 GitLab 文档交付。
 
 - `skills/prd`：问题探索、业务方案比较、范围收敛、业务模型、参考分析、低模、PRD/流程图/BDD、视觉方向、设计系统与高模评审。
 - `skills/prd-setup`：技能安装、本地 HTML 预览与 Linux 原型发布环境配置。
@@ -14,24 +14,24 @@
 $prd 帮我澄清这个产品需求，并按阶段生成 Markdown 正式 PRD 和可交互的 HTML 原型。
 ```
 
-默认写入 `outputs/product-requirements/<yyyyMMdd-HHmm>-<slug>/`，以 `index.html` 作为交付入口。正式 PRD 为 `06-prd.md`，其余过程评审文档为 HTML；规格与清单保留 JSON，流程图与 BDD 同时保留 `.mmd`、`.feature` 源文件。目录整体复制后可本地打开，默认不需要构建、账号、远程服务或 CDN。
+默认写入 `outputs/product-requirements/<yyyyMMdd-HHmm>-<slug>/`，以 `index.md` 作为交付入口。所有非原型文档均为 Markdown；流程图与 BDD 分别内嵌 Mermaid、Gherkin 围栏。JSON 规格与清单仅供工具使用，HTML/CSS/JavaScript 用于原型。原型目录及依赖整体复制后可本地打开，默认不需要构建、账号、远程服务或 CDN。
 
 | 阶段 | 交付 | 下一步条件 |
 | --- | --- | --- |
-| 探索、比较与收敛 | 原始需求、含探索与必要比较的澄清 HTML、业务模型 HTML | 必要问题已回答，方案与范围随业务模型确认 |
+| 探索、比较与收敛 | 原始需求、含探索与必要比较的澄清 Markdown、业务模型 Markdown | 必要问题已回答，方案与范围随业务模型确认 |
 | 参考与低模 | 参考决策、界面基线、规格、prototypes/low/ | 参考决策明确，实际截图已分析 |
-| 低模反查 | 浏览器交互、截图与结构评审 HTML | 关键检查通过，用户确认 |
-| 需求文档 | 06-prd.md、07-flowchart.html、08-bdd.html 与源文件 | PRD/BDD 已批准 |
-| 视觉方向与设计系统 | 必要的视觉候选、design-system/ 与评审 HTML | 方向及设计系统已确认 |
-| 高模 | prototypes/high/、高模规格与评审 HTML | 代码依赖、浏览器交互和视觉检查通过，用户验收 |
+| 低模反查 | 浏览器交互、截图与结构评审 Markdown | 关键检查通过，用户确认 |
+| 需求文档 | 06-prd.md、07-flowchart.md、08-bdd.md  | PRD/BDD 已批准 |
+| 视觉方向与设计系统 | 必要的视觉候选、design-system/ 与评审 Markdown | 方向及设计系统已确认 |
+| 高模 | prototypes/high/、高模规格与评审 Markdown | 代码依赖、浏览器交互和视觉检查通过，用户验收 |
 
-探索深度按需求成熟度调整：模糊需求先辨认真实目标与遗漏场景，有实质取舍才比较 2–3 个业务方案；已确认的简单修改直接核对缺口。区分事实、假设、建议与已确认决策，不把候选方案当作新增范围。等待决策只阻止依赖它的正式生成，可以继续独立分析和待确认草案。探索记录复用澄清与业务模型 HTML，正式需求文档仍在低模确认后生成；旧任务不补做历史比较。
+探索深度按需求成熟度调整：模糊需求先辨认真实目标与遗漏场景，有实质取舍才比较 2–3 个业务方案；已确认的简单修改直接核对缺口。区分事实、假设、建议与已确认决策，不把候选方案当作新增范围。等待决策只阻止依赖它的正式生成，可以继续独立分析和待确认草案。探索记录复用澄清与业务模型 Markdown，正式需求文档仍在低模确认后生成；旧任务不补做历史比较。
 
 低高模共享稳定 flowId 与 screenId，每个流程/保真度保留一个正式入口，修复更新原文件。高模复用已批准的 CSS token、组件、组合与模板。浏览器能力缺失时可保存文件及静态检查结果，实际渲染/交互标记待验证，不虚报完成。
 
 ## 安装
 
-正式 PRD 使用原生 Markdown；GitLab 交付遵循 [文档交付规范](skills/prd/references/gitlab-delivery.md)，先检查目标仓库实际目录与构建约定，只同步文档及必要附件。项目资料保存在本机 `$CODEX_HOME/private/prd-projects.json`（默认 `%USERPROFILE%/.codex/private/prd-projects.json`），不随技能分发。HTML 原型仍独立发布；Markdown 使用经验证的原型 URL，不依赖 HTML 链接脚本。
+所有非原型文档使用原生 Markdown；GitLab 交付遵循 [文档交付规范](skills/prd/references/gitlab-delivery.md)，先检查目标仓库实际目录与构建约定，只同步文档及必要附件。项目资料保存在本机 `$CODEX_HOME/private/prd-projects.json`（默认 `%USERPROFILE%/.codex/private/prd-projects.json`），不随技能分发。HTML 原型仍独立发布；Markdown 使用经验证的原型 URL，不依赖 HTML 链接脚本。
 
 从 GitHub 当前开发分支 `codex/html-prototype-output` 一条命令安装或更新三个技能（需先将该分支的新脚本推送到 GitHub）：
 

@@ -87,7 +87,7 @@
 
 ## 6. 结构一致性 Gate
 
-低模生成后必须使用 浏览器截图能力捕获完整页面，与 `InterfaceBaseline` 对照并保存 `05-low-fidelity-structure-review.html`。逐项检查：
+低模生成后必须使用 浏览器截图能力捕获完整页面，与 `InterfaceBaseline` 对照并保存 `05-low-fidelity-structure-review.md`。逐项检查：
 
 - 画布尺寸和比例。
 - 全局壳层与固定导航。
@@ -103,4 +103,4 @@
 
 ## 7. 高保真设计治理反查
 
-结合 HTML/CSS/JavaScript 源文件、浏览器 DOM 和 `03-html-design-manifest.json` 检查低高模 flowId/screenId 映射、已批准资产的实际引用、语义 token 和交互状态。执行 design-governance.md 的代码与截图审计，保存 `13-high-fidelity-review.html`；失败时修复、重新操作与截图，通过前不标记完成。
+结合 HTML/CSS/JavaScript 源文件、浏览器 DOM 和 `03-html-design-manifest.json` 检查低高模 flowId/screenId 映射、已批准资产的实际引用、语义 token 和交互状态。执行 design-governance.md 的代码与截图审计，保存 `13-high-fidelity-review.md`；失败时修复、重新操作与截图，通过前不标记完成。

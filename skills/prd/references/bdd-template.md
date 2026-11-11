@@ -1,10 +1,10 @@
 # BDD 模板
 
-HTML 场景文档中的原型链接使用 html-output.md 的 data-prototype-path 与共享 prototype-links.js，保留 screen/state 锚点。成功发布使用服务器地址，未发布或失败显示本地链接和待发布标记；.feature 源文件不嵌入 JavaScript。
+场景文档使用普通 Markdown 原型链接，按 gitlab-delivery.md 维护 URL 与 screen/state 锚点，未发布或失败明确标注待发布。
 
 使用中文编写 BDD。优先按功能分组，场景应直接对应已确认的业务规则和流程。
 
-低模前可在澄清或业务模型 HTML 中整理标记为“待确认草案”的场景，不提前生成正式 BDD HTML 或源文件。
+低模前可在澄清或业务模型 Markdown 中整理标记为“待确认草案”的场景，不提前生成正式 BDD 文档。
 
 ## 格式
 
@@ -45,8 +45,8 @@ HTML 场景文档中的原型链接使用 html-output.md 的 data-prototype-path
 ## 写作规则
 
 - 使用可观察行为，不写实现细节。
-- 正式场景只使用 PRD 中已确认的规则、字段与角色，不将待验证假设写成验收要求。未决假设在 HTML 的开放问题区域单列，不写入正式 `.feature` 场景。
+- 正式场景只使用 PRD 中已确认的规则、字段与角色，不将待验证假设写成验收要求。未决假设在 Markdown 的开放问题区域单列，不写入正式场景。
 - 每个场景只聚焦一个业务规则或流程分支。
 - 使用已确认业务对象模型中的稳定术语。
 
-同时输出 08-bdd.html 与 08-bdd.feature；HTML 按场景展示正文、规则 ID 和对应原型状态链接，源文件包含中文语言声明。
+输出 `08-bdd.md`，按场景展示正文、规则 ID 和对应原型状态链接；Gherkin 代码围栏包含中文语言声明。不默认另生成 `.feature` 文件。

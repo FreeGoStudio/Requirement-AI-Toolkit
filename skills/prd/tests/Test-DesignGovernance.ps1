@@ -56,7 +56,7 @@ $m.designSystem.assets[1].status = 'candidate'
 Save-Json $m $bad
 Expect-Failure 'unapproved component' { & $validator -ManifestPath $bad -PrototypeSpecPath $hPath } 'Unapproved asset'
 Expect-Failure 'postwrite requires real files' { & $validator -ManifestPath $mPath -PrototypeSpecPath $lPath -Phase postwrite } 'Missing output file'
-foreach ($path in @('design-system/tokens.css', 'design-system/components.css', 'prototypes/low/login.html', 'prototypes/high/login.html', '02-reference-decision.html')) {
+foreach ($path in @('design-system/tokens.css', 'design-system/components.css', 'prototypes/low/login.html', 'prototypes/high/login.html', '02-reference-decision.md')) {
   $full = Join-Path $tempRoot $path
   New-Item -ItemType Directory -Force -Path (Split-Path $full -Parent) | Out-Null
   Set-Content -LiteralPath $full -Value '<!doctype html><html lang="zh-CN"><title>Fixture</title><body>Fixture</body></html>' -Encoding UTF8
