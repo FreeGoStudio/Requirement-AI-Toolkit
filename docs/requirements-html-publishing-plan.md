@@ -2,14 +2,14 @@
 
 - 更新日期：2026-11-11
 - 状态：待实施、待环境核验，不代表已经实现、验证或部署。
-- 需求依据：用户关于 Workspace/Project、项目双仓库、统一需求包、静态模拟原型、独立候选冲突处理及整体发布的最新确认。
-- 本轮范围：统一更新方案正文，不实施代码、不创建业务仓库、不修改服务器或远程分支。此前附件作为参考，其执行指令不构成本轮授权。
+- 需求依据：用户关于 Workspace/Project、项目双仓库、统一需求包、静态模拟原型、独立候选冲突处理及整体发布的确认，以及“评估原型由 HTML 改为 Storybook，范围可接受则更新本方案”的最新要求。
+- 本轮范围：评估并将方案调整为 Storybook 原型开发与展示，不实施代码、不迁移已有 HTML 产物、不创建业务仓库、不修改服务器或远程分支。此前附件作为参考，其执行指令不构成本轮授权。
 
 ## 1. 定位与核心决策
 
 平台管理一套持续演进的完整产品原型。人提出需求、决定业务取舍并确认展示效果，平台负责分支、集成、测试、预览、发布和历史追溯，AI 辅助实现及解决简单冲突。
 
-所有原型统一采用静态网页展示与模拟交互。POS、网页管理端、小程序管理端是同一产品的不同展示入口，不运行真实 POS 或小程序环境，不调用真实支付、短信、扫码认证、设备和生产数据。模拟二维码或验证码只用于展示状态和演示业务流程。
+所有原型统一使用 Storybook 组织、开发和展示页面及流程，通过静态构建发布并提供模拟交互。源码交付改为组件、页面及 Stories，构建结果仍是 HTML/CSS/JavaScript，不以手写独立 HTML 页面作为新项目的原型组织方式。POS、网页管理端、小程序管理端是同一产品的不同展示入口，不运行真实 POS 或小程序环境，不调用真实支付、短信、扫码认证、设备和生产数据。模拟二维码或验证码只用于展示状态和演示业务流程。
 
 核心规则：
 
@@ -30,6 +30,26 @@
 流程以方便修改、快速预览、保留确认依据为主。同一需求内的小修正继续在原需求分支迭代，开发预览可持续更新；需要更新已确认展示时生成新的固定候选，按修正涉及的内容确认后热更新。热更新指切换到新的完整静态包，不覆盖历史文件。不要求先回滚，也不引入复杂的撤销批准流程。
 
 本文明确区分两种发布：**需求原型发布**是将需求分支的原型部署到服务器上的独立需求入口，开发过程中即可反复发布、查看、讨论和修改，不要求需求开发完成、人工最终验收或先合入 main；**持续原型更新**是在需求开发、确认及集成冲突处理完成后，将已确认变更合入 main，再更新项目当前产品入口。后文“合并后发布”的门禁只适用于持续原型更新，不能限制需求原型发布。需求入口的已发布效果不会因集成候选发布到持续原型入口而被替换。
+
+### 1.1 Storybook 改动范围评估与选择
+
+结论：对当前待实施的新平台方案，属于**中等且可接受的技术调整**，采用 Storybook；无需重做需求、Git 集成和发布业务模型。依据是本仓库当前保存方案、技能及示例 HTML，未发现已实现的平台应用工程或 Storybook 配置；这不代表外部项目已经完成迁移。若未来要求批量转换历史 HTML，需要按页面数量和脚本耦合另行评估，不能套用本结论。
+
+Storybook 支持页面级组合及静态发布，因此可继续使用现有完整包和 Nginx 托管设计；但跨应用业务会话、需求标注、越界提示和人工批准仍由本方案的 SDK、演示控制器及平台实现，不能视为 Storybook 自带能力。[静态发布](https://storybook.js.org/docs/sharing/publish-storybook)、[页面级 Stories](https://storybook.js.org/docs/writing-stories/build-pages-with-storybook)。
+
+| 范围 | 改动程度 | 本次方案调整及原验收依据 |
+| --- | --- | --- |
+| 原型源码与项目模板 | 中 | 增加 Storybook 配置、页面/流程 Stories、依赖锁定；仍须展示可连续操作的完整产品，不能只交付组件样例 |
+| 页面入口与标注定位 | 中 | 保留 app + route 业务标识，增加固定 Story ID 映射，否则原评审范围、标注及历史链接无法可靠定位 |
+| 场景、导航及跨应用状态 | 中，主要风险 | SDK 适配 Story 渲染和 iframe 重建；模拟状态由外层会话持有，否则后台设置后切换 POS 会丢失结果 |
+| 构建、CI 与浏览器检查 | 中 | 应用构建改为 Storybook 静态构建，增加 Story 引用与嵌入检查；仍验证完整流程及既有能力 |
+| Nginx、整体包、归档与恢复 | 小 | 包含 Storybook 运行资源和映射，核验子路径访问；继续按同一 build_id 整体发布和恢复 |
+| Workspace、双仓库、分支、验收及合并 | 无业务模型变化 | 保留原确认及门禁，Story 或单个 App 不成为新的发布、验收单元 |
+| PRD 技能与既有 HTML 产物 | 后续实施影响 | 新项目接入时需调整模板、生成指令、校验和发布打包约定；本轮只改方案，已有技能仍不能宣称支持 Storybook |
+
+实施采用**每个 App 一个 Storybook 静态输出，项目统一打包，原有演示控制器嵌入 Story 画布**。这样延续 applications 配置与完整发布边界，也不要求不同 App 共用一个渲染框架。组件 Stories 用于开发复用，页面或流程 Stories 用于业务评审；框架按项目已有技术栈选定，Storybook、适配器和构建工具版本在 P0 锁定，不预设必须重写为 React。
+
+不把 Storybook Manager 侧栏当作需求评审控制器，也不新增自定义 Manager 插件、付费托管或远程 Storybook Composition 作为首版依赖。P1/P2 优先验证“后台设置 → POS 登录 → 返回设置”的状态保持、需求范围提示和固定子路径部署；这些是原验收点在新技术下的验证，不是额外业务能力。若试验暴露必须重写业务架构或迁移旧项目的依赖，另行说明扩大范围，不以删减跨端联动来通过验收。本次没有运行该试验，不给出未经验证的工期承诺。
 
 ## 2. Workspace、Project 与数据权威来源
 
@@ -100,10 +120,16 @@ VitePress 发布文档，GitLab 管理两仓库与 MR/CI，Nginx 服务静态原
 
 {project}-prototype/
 ├─ prototype.yaml
+├─ package.json                    # 工作区构建与验证命令
+├─ pnpm-workspace.yaml
+├─ pnpm-lock.yaml                  # 固定依赖版本
 ├─ apps/
-│  ├─ pos/src/
-│  ├─ admin/src/
-│  └─ mobile/src/
+│  ├─ pos/
+│  │  ├─ .storybook/               # 框架、Stories、全局样式和 SDK decorator
+│  │  ├─ package.json
+│  │  └─ src/                      # 组件、页面、应用壳与 *.stories.*
+│  ├─ admin/                       # 同样包含 Storybook 配置和源码
+│  └─ mobile/                      # 同样包含 Storybook 配置和源码
 ├─ packages/
 │  ├─ prototype-sdk/                  # 场景、导航、语义定位与消息协议
 │  ├─ prototype-player/               # 配套演示控制器、评审旁栏与 walkthrough
@@ -139,18 +165,30 @@ applications:
   - id: pos
     name: POS 展示原型
     root: apps/pos
-    build_command: pnpm --filter pos build
-    output: apps/pos/dist
+    build_command: pnpm --filter pos build-storybook
+    output: apps/pos/storybook-static
     entry: /login
+    screens:
+      - route: /login
+        story_id: pos-application--interactive
+      - route: /home
+        story_id: pos-application--interactive
   - id: admin
     name: 管理后台展示原型
     root: apps/admin
-    build_command: pnpm --filter admin build
-    output: apps/admin/dist
+    build_command: pnpm --filter admin build-storybook
+    output: apps/admin/storybook-static
     entry: /settings
+    screens:
+      - route: /settings
+        story_id: admin-application--interactive
 ```
 
-配置只声明应用名称、源码位置、静态构建命令、输出目录和入口。每个应用输出均为静态 HTML/CSS/JavaScript 和所需资源，由项目打包器统一收集；不设置预览类型选择或能力矩阵。
+配置声明应用名称、源码位置、Storybook 构建命令、输出目录、业务入口和 screens 映射。各应用 package.json 的 build-storybook 脚本执行 `storybook build`，输出目录与配置一致。每个应用输出均为 Storybook 静态 HTML/CSS/JavaScript 和所需资源，由项目打包器统一收集；不设置预览类型选择或能力矩阵。
+
+screens 将业务 route 映射到稳定 story_id；同一应用壳 Story 可以承载多个内部路由，由 SDK 在渲染就绪后传递目标 route，不能把业务路由当作 Storybook 的服务器路径。上例两个 Story 都应实际定义，保留稳定 CSF 标识及导出名；修改展示标题不得意外改变已登记入口。页面和流程也可定义独立 Story，切换时沿用外层会话。功能视图 states 继续按 SDK 上报，不强制为每个输入值或弹窗新建 Story。
+
+构建时校验 route 唯一、entry 已登记、story_id 存在且可渲染；将解析后的映射随包冻结。需求 YAML 继续使用 app + route，不重复维护 Story ID。Storybook ID 与嵌入 URL 按锁定版本核验，不能通过字符串猜测生成。[Story URL 与标识](https://storybook.js.org/docs/configure/user-interface/sidebar-and-urls)。
 
 workspace_id、project_id 必须与平台注册关系一致。app_id 使用安全的小写字母、数字和连字符，不允许路径分隔符或路径穿越；root/output 解析后必须位于本项目隔离工作区。构建脚本运行在受限 Runner，不允许项目配置扩大部署权限或取得生产凭据。
 
@@ -321,6 +359,10 @@ steps:
 
 模拟状态默认仅在当前页面会话内有效，刷新后重置；同一演示页面内的跨应用操作共享该会话状态，不跨标签页或构建共享可变状态。新窗口即使继承固定版本与评审范围，也初始化独立模拟状态，不恢复上个页面的持久化业务数据。
 
+Storybook 接入时，mock-runtime 的会话状态由外层 prototype-player 持有，Story 内 provider/decorator 通过 SDK 读取和更新；切换 Story、组件重新挂载或内层 iframe 重载只恢复当前会话状态，不触发场景重置。外层整页刷新、新窗口和显式重置仍按上述规则初始化。接入必须处理就绪握手、状态恢复完成后定位及旧 iframe 消息失效，不能仅把状态放在 Story 组件局部变量里。
+
+用于人工连续演示的 Story 不在每次渲染时通过 args、loader 或自动 play 动作覆盖会话。组件隔离测试可使用自己的初始数据；自动交互测试与人工演示入口分开配置，不能打开验收页面就自动点击或清空刚才的操作。
+
 ## 6. 功能开发与独立集成候选
 
 ### 6.1 正常需求开发
@@ -366,14 +408,14 @@ main@v0.0.1：账号密码登录
 
 ## 7. 整体构建、预览与演示验证
 
-每次需要构建的候选统一构建项目全部已注册应用，收集为一个完整静态包。应用构建命令只是内部步骤，不产生独立发布或验收单元。首版不实现逐 App 产物复用、独立晋级或单端发布。
+每次需要构建的候选统一执行项目全部已注册应用的 Storybook 静态构建，并构建配套演示控制器，收集为一个完整静态包。应用构建命令只是内部步骤，不产生独立发布或验收单元。首版不实现逐 App 产物复用、独立晋级或单端发布。CI 使用锁文件安装依赖，保存 Node、包管理器、Storybook、框架适配器和构建工具版本；服务器仅服务静态包，不运行 Storybook 开发服务。
 
 ```text
 项目构建包/
 ├─ index.html                     # 项目/需求展示入口
 ├─ apps/
-│  ├─ pos/
-│  └─ admin/
+│  ├─ pos/                        # 完整 storybook-static：index、iframe、索引和所有资源
+│  └─ admin/                      # 完整 storybook-static，禁止仅复制页面截图或单个 HTML
 ├─ requirements/                  # 运行标注、场景和演示所需资产
 ├─ runtime/                       # 本版本 SDK、演示控制器、旁栏与模拟代码
 └─ build-manifest.json            # 固定应用入口、源码和资源摘要
@@ -387,6 +429,7 @@ build_id 指向完整包，记录精确源码提交、项目配置、依赖与�
 
 - 配置、本次需求包、PRD 验收点和应用引用有效；不以其他需求的标注定位结果阻断本需求。
 - 全部注册应用构建成功，入口及必要资源可访问。
+- Story 映射存在且可渲染；固定子路径下画布、字体、图片、懒加载和直接刷新可用；任何必需 Story 缺失均不能发布。
 - 本需求场景和关键既有场景能够初始化并完成模拟交互。
 - 同一需求的跨应用演示、语义标注、步骤顺序和必要视觉状态正确。
 - 本需求评审页面、区域和功能视图引用有效；页面控件正常使用，不设置遮罩或逐控件点击限制，越界导航提示是否继续，明确退出评审后可完整浏览。
@@ -408,6 +451,8 @@ build_id 指向完整包，记录精确源码提交、项目配置、依赖与�
 | 需求差异 | 使用 Git/MR 提供的候选与目标 main 差异；业务变化由本需求说明表达 |
 
 应用切换菜单来自所选包内的项目配置，需求入口可突出受影响应用，不按端拆成多个需求页面。同步主线和合入 main 使用正常 Git merge，有冲突就处理；不增加自动业务差异归因功能。A 未合入 main 时 B 不包含也不负责保留 A；A 已合入时 B 按选择的主线版本吸收其结果。完整构建只是构建本候选已有的整套代码，不表示自动组合其他未合并需求。
+
+业务评审由包内 prototype-player 嵌入各应用的 Storybook 画布，例如 `apps/pos/iframe.html?id=pos-application--interactive&viewMode=story`，具体格式按所选版本验证。页面内应用壳仍支持连续导航、返回和正常控件操作；不要求评审者手工寻找 Story。开发者可使用同包 Storybook Manager 检查组件和页面，但该入口不能冒充已执行需求范围检查的评审入口。[嵌入 Stories](https://storybook.js.org/docs/sharing/embed)。
 
 ### 8.1 需求评审模式与范围约束
 
@@ -439,6 +484,8 @@ build_id 指向完整包，记录精确源码提交、项目配置、依赖与�
 当前包无法定位旧标注时显示失效或目标已删除；历史包保持原样。历史定位按其包内配置，不能因当前应用列表改变而丢失旧入口。历史验收入口始终指向所选修订当时确认的候选包，默认显示最近一次已交付修订的原始确认包；尚未交付的已确认候选另列，实际交付版本另外展示，不用后续交付包替换原验收入口。未验收需求显示待验收，纯文档需求显示原型不适用。
 
 原型使用版本化浏览器 SDK，支持场景初始化、应用切换、语义定位和演示步骤。外层与 iframe 之间采用含消息类型、requestId、schemaVersion 的协议，检查来源窗口、Origin、目标 Origin、格式和权限，配置 CSP/frame-ancestors。应用的模拟业务状态由受控场景接口处理。
+
+Storybook 适配层在 preview/decorator 中接入上述 SDK，向外层报告渲染就绪、业务 route、功能视图与语义元素。外层通过包内映射选择 Story，再经 SDK 导航和恢复状态；原生 Manager 切换或 Storybook 内部事件不直接充当业务协议。跨 Story、跨 App 的导航都经过原有评审检查，不用 iframe 外部点击拦截替代应用内导航接入。
 
 历史回放使用原包内配套的 SDK 与完整演示代码，不加载最新版替代，也不要求新版平台演示控制器解释旧协议。包内代码或资源缺失时报告恢复失败，不用静态页面可见冒充完整交互恢复；这用于新平台自身历史回放，不引入旧项目结构兼容。
 
@@ -564,7 +611,7 @@ A 的原始验收入口仍指向 A 候选包，原发布尝试保留失败及原
 
 保存三类对象：受控验收和执行索引、不可变完整项目包、在线访问副本。历史引用关联完整 build_id，不按 App 分拆归档。相同完整内容摘要可去重，首版不做文件块级去重或复杂冷热存储平台，不自动清理已发布及已验收包的归档和在线副本。
 
-历史包包含所有应用静态资源、项目配置、需求标注、场景、演示步骤、SDK、配套演示代码和模拟数据。只保存 Git 源码或截图不算满足可交互历史回放。
+历史包包含所有应用的完整 Storybook 静态输出、Story 入口映射、项目配置、需求标注、场景、演示步骤、SDK、配套演示代码和模拟数据。只保存 Git 源码、Stories 文件或截图不算满足可交互历史回放；历史包不依赖在线 Storybook 服务或当前版本的 Manager/preview 资源。
 
 在线缓存缺失时，授权查询、按 build_id 加恢复锁、校验摘要、安全解压、原子进入只读缓存，返回同一固定入口。页面展示恢复进度、失败和重试；损坏时不能回退到最新版冒充历史，也不从当前源码静默重建。
 
@@ -607,9 +654,9 @@ Plane 事件验证来源、去重和重试，必要时轮询与对账；不能�
 
 | 阶段 | 工作与完成定义 |
 | --- | --- |
-| P0 环境核验 | 确定 Workspace/Project 映射、新项目双仓库、GitLab/Plane 能力、Runner、身份、Nginx 和归档；产出现状与差异，不执行旧项目迁移 |
-| P1 新结构与自动分支 | 建立至少两个静态展示应用、配置及统一需求包；幂等创建同名分支，空分支不构建；需求开发过程中即可独立发布到服务器查看，无须先合并或最终验收；支持主动指定主线版本同步 |
-| P2 场景与演示 | 本需求标注隔离、正常页面操作和越界提示，不实现遮罩及按钮白名单；跨应用 walkthrough 保留会话数据，仅规定的初始化动作重置 |
+| P0 环境核验 | 确定 Workspace/Project 映射、新项目双仓库、GitLab/Plane 能力、Runner、身份、Nginx 和归档；核验并锁定 Storybook、应用框架与 Node 工具链兼容版本；产出现状与差异，不执行旧项目迁移 |
+| P1 新结构与自动分支 | 建立至少两个 Storybook 展示应用、固定 Story 映射、完整静态包及统一需求包，同步新项目生成模板和校验约定；验证子路径和画布嵌入；幂等创建同名分支，空分支不构建；需求开发过程中即可独立发布到服务器查看，无须先合并或最终验收；支持主动指定主线版本同步 |
+| P2 场景与演示 | 接入 Storybook preview/decorator 与会话 SDK；本需求标注隔离、正常页面操作和越界提示，不实现遮罩及按钮白名单；跨 Story/应用 walkthrough 保留会话数据，仅规定的初始化动作重置 |
 | P3 候选与验收发布 | 跑通固定候选、确认、fast-forward 合并和完整包发布，三项完成才结束 Change；支持小修正沿用未受影响项确认依据，再接入 AI 冲突修复及人工接管 |
 | P4 历史与恢复 | 查看需求效果直接使用其分支或发布入口；看过去某次效果再选择历史提交或 Tag，保留原始验收包并完善恢复；不改变主线或当前展示 |
 | 后续可选 | 业务差异可视化、影响分析、自动编排等，按实际需求另行确定 |
@@ -643,7 +690,17 @@ P3 首个正式验收闭环就必须可靠保存完整产物和验收记录，�
 8. 选择继续则明确离开本次评审，原型内仍浏览同一固定包并标明完整产品浏览；返回评审恢复本需求标注与越界提示。首次进入、主动切换场景、重置和刷新才初始化模拟数据。
 9. 本需求缺少必需辅助页面时报告范围配置缺口，不自动扩大范围；查看 A 不加载 B 标注，修改 A 不改 B 标注，B 的验收不受 A 标注定位结果阻断。历史查看使用对应提交中本需求的标注及范围。
 
-### 15.3 失败与历史保护
+### 15.3 Storybook 技术替换的验收补充
+
+以下检查直接对应原有完整原型、跨端联动、范围定位和历史恢复要求，不增加新的业务流程：
+
+1. 至少后台和 POS 两个应用通过 Storybook 构建；业务评审入口可连续操作页面和完整流程，组件目录可供开发查看，但不能替代业务原型。
+2. 后台修改设置后，切换 Story 或 POS，再返回后台，数据仍保留；模拟登录后进入首页正常。内层重新挂载不重置，主动切换场景、重置和外层刷新才初始化；新窗口状态独立。
+3. app + route 能映射并导航到指定 Story 内页面；标注在渲染及状态恢复后正确定位；缺失或歧义给出诊断。越界提示和“留在评审”均保留当前模拟数据。
+4. 同一个完整包在需求预览、固定候选、持续原型和历史子路径可加载全部 Storybook 资源，无需为不同入口重建已确认产物；直接访问和刷新不出现资源丢失。
+5. 切换 current 或升级平台/Storybook 后，已打开会话及历史包仍使用各自固定资源和映射；按原始包恢复可重现交互，不依赖当前环境的最新 Stories。
+
+### 15.4 失败与历史保护
 
 | 条件 | 预期结果 |
 | --- | --- |
@@ -692,6 +749,10 @@ P3 首个正式验收闭环就必须可靠保存完整产物和验收记录，�
 
 ## 16. 技术参考
 
+- [Storybook 静态构建与发布](https://storybook.js.org/docs/sharing/publish-storybook)
+- [Storybook 页面与场景组织](https://storybook.js.org/docs/writing-stories/build-pages-with-storybook)
+- [Storybook 嵌入画布](https://storybook.js.org/docs/sharing/embed)
+- [Storybook Story 标识与 URL](https://storybook.js.org/docs/configure/user-interface/sidebar-and-urls)
 - [GitLab 合并方式](https://docs.gitlab.com/user/project/merge_requests/methods/)
 - [GitLab MR API](https://docs.gitlab.com/api/merge_requests/)
 - [GitLab MR approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
