@@ -7,6 +7,7 @@ import tempfile
 import unittest
 import sys
 from unittest.mock import patch
+from repo_fixture import create_project
 
 sys.path.insert(0, str(Path(__file__).parents[1] / 'scripts'))
 spec = importlib.util.spec_from_file_location('publish', Path(__file__).parents[1] / 'scripts/prototype_publish.py')
@@ -18,8 +19,8 @@ class PackageTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name)
-        self.write('03-html-design-manifest.json', json.dumps({'flows': [{'flowId': 'login', 'flowName': '登录', 'entries': {'high': 'prototypes/high/login.html'}}]}))
+        self.repo, self.root = create_project(self.temp.name)
+        self.write('03-html-design-manifest.json', json.dumps({'schemaVersion': 2, 'flows': [{'flowId': 'login', 'flowName': '登录', 'entries': {'high': 'working/demo/prototypes/high/login.html'}}]}))
         self.write('prototypes/high/login.html', '<html><a href="../../index.html#reviews">返回</a><link href="../../design-system/main.css" rel="stylesheet"><script src="../../assets/app.js"></script><button onclick="document.body.dataset.clicked=1">登录</button></html>')
         self.write('design-system/main.css', '@import "colors.css"; body{background:url(../assets/bg.svg)}')
         self.write('design-system/colors.css', 'body{color:red}')
@@ -38,7 +39,7 @@ class PackageTests(unittest.TestCase):
     def test_legacy_low_entry_requires_migration_even_with_high_entry(self):
         for legacy_path in ('', 'prototypes/low/login.html'):
             with self.subTest(legacy_path=legacy_path):
-                self.write('03-html-design-manifest.json', json.dumps({'flows': [{'flowId': 'login', 'flowName': '登录', 'entries': {'high': 'prototypes/high/login.html', 'low': legacy_path}}]}))
+                self.write('03-html-design-manifest.json', json.dumps({'schemaVersion': 2, 'flows': [{'flowId': 'login', 'flowName': '登录', 'entries': {'high': 'working/demo/prototypes/high/login.html', 'low': legacy_path}}]}))
                 with self.assertRaisesRegex(publish.PublishError, '迁移'):
                     publish.Package(self.root).build()
 
@@ -85,14 +86,15 @@ class PackageTests(unittest.TestCase):
         self.assertNotEqual(state['publicationId'], publish.publication_state(other)[1]['publicationId'])
 
     def test_failed_attempt_preserves_success_and_redacts_password(self):
-        path, state = publish.publication_state(self.root)
+        path, state = publish.publication_state(self.root, prd=True)
         state['lastSuccess'] = {'url': 'http://old/'}
         publish.save_json(path, state)
         request = {'config': config(), 'password': 'secret-password', 'action': 'publish', 'outputDirectory': str(self.root)}
         def fail(_):
             raise RuntimeError('connection secret-password failed')
-        with self.assertRaises(RuntimeError):
-            publish.execute(request, remote_factory=fail)
+        with patch.object(publish, 'verify_pushed_source', return_value='a'*40):
+            with self.assertRaises(RuntimeError):
+                publish.execute(request, remote_factory=fail)
         stored = json.loads(path.read_text(encoding='utf-8'))
         self.assertEqual(stored['lastSuccess']['url'], 'http://old/')
         self.assertEqual(stored['lastAttempt']['status'], 'failed')

@@ -5,7 +5,7 @@ description: "发布静态 HTML 原型到已配置的 Linux 临时服务器，�
 
 # 静态原型发布
 
-使用中文。先读取 `references/remote-publishing.md`，复用本机服务器配置和目标目录的 `.prototype-publication.json`，日常发布使用配置中的普通账号。已就绪服务器不执行 Initialize、不索取 root 或 sudo、不修改 Nginx；环境配置交给 prd-setup，或按用户授权调用本技能 Configure、InstallRuntime、Check。
+使用中文。先读取 `references/remote-publishing.md`，复用本机服务器配置；PRD 使用随 Git 保存的 requirement.json 固定身份，普通 Html 使用目标目录的 `.prototype-publication.json`，日常发布使用配置中的普通账号。已就绪服务器不执行 Initialize、不索取 root 或 sudo、不修改 Nginx；环境配置交给 prd-setup，或按用户授权调用本技能 Configure、InstallRuntime、Check。
 
 ## 发布前检查配置
 
@@ -17,7 +17,7 @@ description: "发布静态 HTML 原型到已配置的 Linux 临时服务器，�
 
 ## 选择输入
 
-Prd 模式仅接受当前高保真清单。清单含 low 字段（包括空字段）时提示“请先要求 AI 迁移项目”，不自动忽略、不转换、不发布。用户明确要求迁移后按 prd 当前规则处理；不得改用 Html 模式绕过这个检查。独立普通 HTML 发布仍可使用 Html 模式。
+Prd 模式仅接受 schemaVersion=2 的当前高保真清单和 requirement.json，元数据路径相对 Git 仓库根目录。先读取同级 prd/references/repository-contract.md。清单含 low 字段（包括空字段）时提示“请先要求 AI 迁移项目”，不自动忽略、不转换、不发布。用户明确要求迁移后按 prd 当前规则处理；不得改用 Html 模式绕过这个检查。独立普通 HTML 发布仍可使用 Html 模式。
 
 - PRD 产物：使用 `-Mode Prd -OutputDirectory '<交付目录>'`，仅发布清单登记的原型和依赖。需求与设计治理由 prd 在调用前完成，本技能不重做业务评审。
 - 历史 HTML：使用 `-Mode Html -OutputDirectory '<资源根目录>' -EntryPath '<入口相对路径>'`，无需 PRD 清单、规格或历史评审。只有单个 HTML 时也可把文件绝对路径直接传给 OutputDirectory，父目录作为资源根目录。
@@ -33,14 +33,16 @@ Prd 模式仅接受当前高保真清单。清单含 low 字段（包括空字�
 
 调用 `scripts/Invoke-PrototypePublish.ps1 -Action Publish`。服务器配置、运行时和凭据沿用 `%LOCALAPPDATA%/Requirement-AI-Toolkit/`，技能拆分或升级不重新初始化服务器。
 
-Prd 模式同步交付根目录文档的原型链接：共享 prototype-links.js 保存基础 URL，页面只保存 data-prototype-path（含查询参数和锚点）。开始发布先置为 pending，成功且 HTTP 校验通过后置为 published；失败或未配置时保留本地 href 并显示待发布。最近成功 URL 留在历史记录，不作为失败后的主链接。Html 模式不改写历史源 HTML。
+Prd 模式要求先验证、提交并推送源码到需求分支。发布器核对 origin、发布目标、远端同名分支 HEAD、需求目录与 PRD 无未提交改动、发布源码与提交一致；不满足时停止发布，不先上传再补入库。固定 publicationId 来自 requirement.json，不随本机路径或普通克隆改变。复制为新需求必须创建新身份，不能拿旧 ID 覆盖原需求。
 
-仅新增或更新文档时可用 `-Action SyncLinks -OutputDirectory '<交付目录>'` 复用最近发布结果，不上传；原型内容变更时先加 `-LinksPending` 标记待发布。SyncLinks 仅需本机 Python，无需服务器配置。如果上传成功但本地文档同步出现 documentLinkWarning，单独报告该问题，不把成功上传误报为回退。
+Prd 发布成功后自动保存 publication-record.json，并更新 requirement.json 登记的 Markdown prototype-links 标记区，保留区外业务正文。AI 检查后提交推送记录；记录提交不重复上传，包摘要相同且远端 HTTP 内容一致时返回 unchanged。新原型版本始终使用全量新包。Html 独立发布保持原行为。
 
-上传成功且 HTTP 内容核对通过才返回新 URL。同一目录复用发布 ID；失败保留错误和上一成功记录，回退失败单独报告。上传至独立随机版本目录后原子切换入口；同一发布 ID 和汇总页安装分别使用进程持有的 flock，异常断连通过心跳超时释放。锁冲突最多等待 60 秒，不自行删锁文件。升级时结束旧版发布并统一更新客户端，新旧锁协议不可混跑。无配置时明确说明需要配置，不把未发布当作完成。
+修改原型前用 `-Action SyncLinks -OutputDirectory '<需求目录>' -LinksPending` 标记本次待发布，随源码提交；新增文档先登记唯一标记区，再用 SyncLinks 回写。SyncLinks 仅需本机 Python 和 Git，不连接服务器，不生成 HTML 运行时脚本。上传成功但记录或文档回写失败时报告 documentLinkWarning，可单独重试 SyncLinks，不把成功上传误报为回退。
+
+上传成功且 HTTP 内容核对通过才返回新 URL。PRD 按需求固定标识复用发布 ID，普通 Html 按同一目录复用；失败保留错误和上一成功记录，回退失败单独报告。上传至独立随机版本目录后原子切换入口；同一发布 ID 和汇总页安装分别使用进程持有的 flock，异常断连通过心跳超时释放。锁冲突最多等待 60 秒，不自行删锁文件。升级时结束旧版发布并统一更新客户端，新旧锁协议不可混跑。无配置时明确说明需要配置，不把未发布当作完成。
 
 汇总首页打开或点击刷新时，直接读取 Nginx 的 catalog/ JSON 目录接口，再读取各原型首页标题和更新时间。Publish 不生成或上传汇总文件。新服务器 Initialize 安装动态汇总页；已有服务器需管理员一次性执行 scripts/upgrade-catalog-server.sh（专用根目录、访问前缀），再由发布账号执行 -Action RefreshCatalog 安装/升级页面。接口未就绪时保留原汇总页，不静默回退到静态列表。此迁移是单独的环境升级，不在日常发布中自动修改 Nginx。
 
 回复发布目录、访问链接、版本结果和未验证项。HTTP 校验不能替代浏览器中文、样式和交互检查；没有浏览器能力时明确待验收。仅发布原型，不修改业务内容，不接真实后端，不部署正式应用。
 
-重新发布同一需求时，复用原输出目录的发布 ID；每次完整打包到独立上传目录，禁止以已上传为由跳过。验证固定首页和全部文件内容后才报告成功，并清理该需求的旧版本。cleanupWarning 表示新展示已更新但旧版本清理未完成，必须告知用户；失败记录不能由上一成功链接替代。
+重新发布同一需求时，复用 requirement.json 的固定发布 ID；内容发生变化时完整打包到独立上传目录。只有记录回写且包摘要、固定 URL 及 HTTP 内容一致时跳过重复上传。验证固定首页和全部文件内容后才报告成功，并清理该需求的旧版本。cleanupWarning 表示新展示已更新但旧版本清理未完成，必须告知用户；失败记录不能由上一成功链接替代。

@@ -18,6 +18,7 @@ from urllib.parse import unquote, urlsplit, quote
 from urllib.request import urlopen, Request
 import uuid
 from document_links import sync_document_links
+from repository_contract import load_project, read_manifest, verify_pushed_source, ContractError
 from publication_catalog import refresh_catalog
 from remote_lock import remote_lock
 from local_url_rewriter import CSS_URL, JS_URL, LocalUrlRewriter
@@ -51,6 +52,7 @@ class Package:
             raise PublishError('原型资源根目录不存在。')
         self.html_mode = mode == 'html' or (mode == 'auto' and (entry_path or not manifest_path.exists()))
         self.files = {}
+        self.source_paths = {}
         self.js_contexts = set()
         self.script_sources = {}
         self.rewriter = LocalUrlRewriter(self.root)
@@ -71,13 +73,17 @@ class Package:
             return
         if entry_path:
             raise PublishError('PRD 模式不接受 EntryPath；指定历史入口请使用 Html 模式。')
-        manifest = json.loads(manifest_path.read_text(encoding='utf-8-sig'))
+        try:
+            repo, _, _, manifest = read_manifest(self.root)
+        except (ValueError, KeyError) as error:
+            raise PublishError(str(error)) from error
         self.entries = {}
         for flow in manifest['flows']:
             if 'low' in flow['entries']:
                 raise PublishError('旧版低保真清单不再支持，请先要求 AI 迁移项目；本次未发布。')
             for fidelity, path in flow['entries'].items():
                 if fidelity == 'high' and path:
+                    path = (repo / path).resolve().relative_to(self.root).as_posix()
                     expected = f"prototypes/{fidelity}/{flow['flowId']}.html"
                     if path != expected or not re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*', flow['flowId']):
                         raise PublishError(f'非法原型入口：{path}')
@@ -146,6 +152,7 @@ class Package:
         if not file.is_relative_to(self.root) or not file.is_file():
             raise PublishError(f'依赖缺失或越出输出目录：{path}')
         data = file.read_bytes()
+        self.source_paths[path] = digest(data)
         self.files[path] = data
         if suffix in ('.html', '.htm', '.css', '.js', '.mjs', '.svg'):
             text = data.decode('utf-8-sig')
@@ -397,12 +404,17 @@ def cleanup_releases(remote, publication_id, version):
                '-exec rm -rf -- {} +')
 
 
-def publication_state(root):
+def publication_state(root, prd=False):
     path = Path(root) / '.prototype-publication.json'
     state = json.loads(path.read_text(encoding='utf-8')) if path.exists() else {}
     # A copied output folder is a new publication, not permission to overwrite the original.
     identity = str(Path(root).resolve())
-    if state.get('sourceDirectory') != identity:
+    if prd:
+        _, _, project = load_project(root)
+        if state.get('publicationId') != project['publicationId']:
+            state = {}
+        state.update(publicationId=project['publicationId'], sourceDirectory=identity)
+    elif state.get('sourceDirectory') != identity:
         state = {'publicationId': uuid.uuid4().hex, 'sourceDirectory': identity}
     if not re.fullmatch(r'[a-f0-9]{32}', state.get('publicationId', '')):
         raise PublishError('本地发布 ID 无效。')
@@ -416,17 +428,34 @@ def execute(request, remote_factory=Remote):
     action = request['action']
     if action not in ('check', 'initialize', 'publish', 'refreshcatalog'):
         raise PublishError('未知发布操作。')
-    if action == 'publish':
-        state_path, state = publication_state(request['outputDirectory'])
-    prd_documents = (action == 'publish' and request.get('mode', 'auto') != 'html'
-                     and not request.get('entryPath')
-                     and (Path(request['outputDirectory']) / '03-html-design-manifest.json').is_file())
+    prd = (action == 'publish' and request.get('mode', 'auto') != 'html'
+           and not request.get('entryPath')
+           and (Path(request['outputDirectory']) / '03-html-design-manifest.json').is_file())
     remote = None
     try:
         if action == 'publish':
-            if prd_documents:
-                sync_document_links(request['outputDirectory'], state, pending=True)
-            files = Package(request['outputDirectory'], request.get('mode', 'auto'), request.get('entryPath')).build()
+            package = Package(request['outputDirectory'], request.get('mode', 'auto'), request.get('entryPath'))
+            files = package.build()
+            if prd:
+                commit = verify_pushed_source(package.root, package.source_paths, request['config'])
+                sync_document_links(package.root, pending=True, check=True)
+                package_digest = digest(json.dumps({p: digest(v) for p, v in sorted(files.items())}, sort_keys=True).encode())
+                record_path = package.root / 'publication-record.json'
+                record = json.loads(record_path.read_text(encoding='utf-8')) if record_path.exists() else {}
+                _, _, project = load_project(package.root)
+                expected_url = request['config']['baseUrl'].rstrip('/') + '/' + project['publicationId'] + '/'
+                if record.get('packageDigest') == package_digest and record.get('url') == expected_url and record.get('status') == 'published':
+                    verify_http(expected_url, files, record['version'])
+                    state_path, state = publication_state(package.root, prd=True)
+                    state.update(lastSuccess=record, lastAttempt={'status': 'published'})
+                    save_json(state_path, state)
+                    sync_document_links(package.root, state)
+                    return dict(record, status='unchanged')
+            state_path, state = publication_state(request['outputDirectory'], prd=prd)
+            state['lastAttempt'] = {'status': 'pending', 'time': datetime.now(timezone.utc).isoformat()}
+            save_json(state_path, state)
+            if prd:
+                sync_document_links(package.root, state, pending=True)
         remote = remote_factory(request)
         if action == 'check':
             return {'status': 'connected', 'system': remote.run('cat /etc/os-release; id; command -v systemctl; command -v apt-get || command -v dnf')}
@@ -435,20 +464,24 @@ def execute(request, remote_factory=Remote):
         if action == 'refreshcatalog':
             return {'status': 'catalog-updated', **refresh_catalog(remote)}
         result = deploy(remote, files, state['publicationId'], uuid.uuid4().hex)
+        if prd:
+            result.update(sourceCommit=commit, packageDigest=package_digest, publicationId=state['publicationId'])
         state.update(lastSuccess=result, lastAttempt={'status': 'published', 'time': datetime.now(timezone.utc).isoformat()})
         save_json(state_path, state)
-        if prd_documents:
+        if prd:
             try:
-                sync_document_links(request['outputDirectory'], state)
+                save_json(record_path, {k: result[k] for k in ('status', 'url', 'version', 'sourceCommit', 'packageDigest', 'publicationId')})
+                sync_document_links(package.root, state)
             except Exception as error:
-                # The deployment has succeeded; report a local document issue separately.
                 result['documentLinkWarning'] = str(error)
         return result
     except Exception as error:
         if state is not None:
-            message = str(error).replace(request['password'], '[REDACTED]') if request['password'] else str(error)
+            message = str(error).replace(request.get('password', ''), '[REDACTED]') if request.get('password') else str(error)
             state['lastAttempt'] = {'status': 'failed', 'time': datetime.now(timezone.utc).isoformat(), 'error': message}
             save_json(state_path, state)
+            if prd:
+                sync_document_links(request['outputDirectory'], state, pending=True)
         raise
     finally:
         if remote:

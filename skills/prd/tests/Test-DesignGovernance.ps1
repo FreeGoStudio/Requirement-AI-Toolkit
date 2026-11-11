@@ -3,6 +3,15 @@ $validator = Join-Path $PSScriptRoot '../scripts/Test-DesignGovernance.ps1'
 $fixtures = Join-Path $PSScriptRoot 'fixtures'
 $tempRoot = Join-Path ([IO.Path]::GetTempPath()) ('prd-html-tests-' + [guid]::NewGuid())
 New-Item -ItemType Directory -Path $tempRoot | Out-Null
+& git -C $tempRoot init -q
+$repoRoot = $tempRoot
+$tempRoot = Join-Path $repoRoot 'working/demo'
+New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
+foreach ($rel in @('docs/requirements/demo/index.md', 'working/demo/08-bdd.md', 'working/demo/03-interface-baseline.json')) {
+  $file = Join-Path $repoRoot $rel
+  New-Item -ItemType Directory -Force -Path (Split-Path $file -Parent) | Out-Null
+  Set-Content -LiteralPath $file -Value 'Fixture'
+}
 Copy-Item -Path "$fixtures/*.json" -Destination $tempRoot
 $mPath = Join-Path $tempRoot 'valid-manifest.json'
 $hPath = Join-Path $tempRoot 'valid-high-fidelity-spec.json'
@@ -19,8 +28,16 @@ function Expect-Failure($Name, [scriptblock]$Action, $Pattern) {
 }
 & $validator -ManifestPath $mPath -PrototypeSpecPath $hPath
 # New workflow: create and validate high fidelity without any low-fidelity entry or file.
-$directRoot = Join-Path $tempRoot 'direct-high'
-New-Item -ItemType Directory -Path $directRoot | Out-Null
+$directRepo = Join-Path $repoRoot 'direct-high'
+New-Item -ItemType Directory -Path $directRepo | Out-Null
+& git -C $directRepo init -q
+$directRoot = Join-Path $directRepo 'working/demo'
+New-Item -ItemType Directory -Path $directRoot -Force | Out-Null
+foreach ($rel in @('docs/requirements/demo/index.md', 'working/demo/08-bdd.md', 'working/demo/03-interface-baseline.json')) {
+  $file = Join-Path $directRepo $rel
+  New-Item -ItemType Directory -Force -Path (Split-Path $file -Parent) | Out-Null
+  Set-Content -LiteralPath $file -Value 'Fixture'
+}
 $directManifest = Join-Path $directRoot 'manifest.json'
 $directSpec = Join-Path $directRoot 'spec.json'
 $directM = Read-Fixture 'valid-manifest.json'
@@ -36,7 +53,7 @@ foreach ($path in @('design-system/tokens.css', 'design-system/components.css', 
   New-Item -ItemType Directory -Force -Path (Split-Path $full -Parent) | Out-Null
   Set-Content -LiteralPath $full -Value 'Fixture' -Encoding UTF8
 }
-$directM.flows[0].entries.high = 'prototypes/high/login.html'
+$directM.flows[0].entries.high = 'working/demo/prototypes/high/login.html'
 Save-Json $directM $directManifest
 & $validator -ManifestPath $directManifest -PrototypeSpecPath $directSpec -Phase postwrite
 if (Test-Path (Join-Path $directRoot 'prototypes/low')) { throw 'Direct high-fidelity test unexpectedly created low fidelity' }
@@ -68,7 +85,7 @@ $s.flowIdentity.changeType = 'new-flow'
 Save-Json $s $bad
 Expect-Failure 'duplicate entry creation' { & $validator -ManifestPath $mPath -PrototypeSpecPath $bad } 'duplicate flow/fidelity'
 $s.flowIdentity.flowId = 'reset'
-$s.htmlStrategy.entryPath = 'prototypes/high/reset.html'
+$s.htmlStrategy.entryPath = 'working/demo/prototypes/high/reset.html'
 Save-Json $s $bad
 & $validator -ManifestPath $mPath -PrototypeSpecPath $bad
 $s.prototypeReferenceGate.userDecision = 'pending'
@@ -95,7 +112,11 @@ foreach ($path in @('design-system/tokens.css', 'design-system/components.css', 
 & $validator -ManifestPath $mPath -PrototypeSpecPath $hPath -Phase postwrite
 $s = Read-Fixture 'valid-high-fidelity-spec.json'
 $s.flowIdentity.flowId = 'missing'
-$s.htmlStrategy.entryPath = 'prototypes/high/missing.html'
+$s.htmlStrategy.entryPath = 'working/demo/prototypes/high/missing.html'
 Save-Json $s $bad
 Expect-Failure 'update requires registered entry' { & $validator -ManifestPath $mPath -PrototypeSpecPath $bad } 'must match manifest'
+$s = Read-Fixture 'valid-high-fidelity-spec.json'
+$s.sourceArtifacts = @('docs/requirements/missing/index.md')
+Save-Json $s $bad
+Expect-Failure 'missing repository PRD reference' { & $validator -ManifestPath $mPath -PrototypeSpecPath $bad } 'Missing output file'
 Write-Host "All HTML governance tests passed. Temporary fixtures: $tempRoot"

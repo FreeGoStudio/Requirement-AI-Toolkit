@@ -27,8 +27,8 @@
 
 流程图在 `07-flowchart.md` 使用 Mermaid 围栏；检查目标渲染器支持，不支持时附本地 SVG/图像。BDD 在 `08-bdd.md` 使用 Gherkin 围栏，首行包含 `# language: zh-CN`。PRD、BDD、原型保持规则 ID、screenId 与状态名一致。
 
-每次原型更新通过静态检查后按 `remote-publishing.md` 发布；远程访问与浏览器交互分别检查。原型资源使用可静态识别的相对路径，不依赖本机绝对路径。远程导航只列原型；不能上传需求文档来消除断链。
+每次原型更新通过检查、提交并推送源码后按 `remote-publishing.md` 发布；远程访问与浏览器交互分别检查。原型资源使用可静态识别的相对路径，不依赖本机绝对路径。远程导航只列原型；不能上传需求文档来消除断链。
 
 所有文档用普通 Markdown 链接；本次发布成功且 HTTP 校验通过后才引用当前服务器 URL。变更开始或发布失败时将受影响文档链接标为待发布；本地文档可保留相对原型链接，提交 GitLab 的文档不得留下本机链接。按 `gitlab-delivery.md` 更新所有关联文档，不能只更新 PRD。
 
-旧版 HTML 文档的 SyncLinks 兼容能力仍可用于历史产物，但不处理 Markdown；新任务不要求生成 HTML 文档或 prototype-links.js。发布器内部辅助文件不作为文档交付。
+SyncLinks 处理 requirement.json 登记的 Markdown 标记区，不再生成 prototype-links.js 或 HTML 评审文档。发布成功后回写源码提交、版本和链接；AI 检查并提交记录，业务正文保持原样。旧格式提示用户要求 AI 迁移。

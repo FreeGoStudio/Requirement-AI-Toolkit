@@ -61,11 +61,11 @@ PRD 流程先由 prd 完成 postwrite 和静态检查，再调用：
 
 历史模式跟随包内 HTML 页面链接和资源依赖，保留 index.html 原页面；没有可达 index.html 时生成导航入口。源文件不改写，不上传未引用文件或隐藏配置。目录中有多个 HTML 且无 index.html 时必须指定 EntryPath。Auto 模式优先读取已有 PRD 清单，显式 EntryPath 则采用历史模式。历史目录中的其他文档若被入口链接到，也属于可达页面，发布前核对分享范围。
 
-- PRD 模式以清单的 low/high 入口打包，仅复制被引用的资源；模拟数据 JSON 仅允许位于 assets、data 或 prototypes 目录，禁止上传参考与评审截图目录。历史模式允许根目录内可达的 HTML、JSON 和资源，不受 PRD 目录约定限制。两种模式均不上传整个目录。
+- PRD 模式以schemaVersion=2 清单的 high 入口（仓库根目录相对路径）打包，仅复制被引用的资源；模拟数据 JSON 仅允许位于 assets、data 或 prototypes 目录，禁止上传参考与评审截图目录。历史模式允许根目录内可达的 HTML、JSON 和资源，不受 PRD 目录约定限制。两种模式均不上传整个目录。
 - HTML `src/href/poster/srcset`、内联样式、CSS `url/@import` 和 JS 字面量 `import/from/fetch/new URL`、资源属性赋值可检查；动态加载路径无法可靠推断时应改成明确资源引用后再发布。模块引用及 `new URL(..., import.meta.url)` 按 JS 路径解析，fetch 和属性赋值按调用页面解析。未经静态识别的运行时资源必须在发布前实际检查，不能因打包通过就声称交互通过。
 - PRD 模式的交付首页在发布副本中由独立原型导航替代，其他文档链接阻止发布；历史模式保留可达 HTML。两种模式均在依赖缺失或越界时报告具体位置并停止。
 - 远程使用 `releases/<发布ID>/<版本ID>` 保存版本，`published/<发布ID>` 为固定访问入口。SFTP 上传后逐文件 SHA-256 核对，再原子切换链接；从本机 HTTP 逐文件核对内容，失败回退。新版本通过固定首页及全部文件 HTTP 校验后，在同一发布锁内清理该发布 ID 下其他规范版本目录；不删除其他需求、符号链接或非版本目录。清理失败返回 cleanupWarning，当前新版本保持可用。
-- 每次全量打包并上传到 `.uploads/<发布ID>/<随机版本ID>`，不复用旧文件。逐文件校验后，持有该发布 ID 的锁移入 releases，再原子替换固定入口；上传不持锁。清理正式旧版本不会删除并行上传目录。相同发布 ID 的入口切换、HTTP 验证和失败回退使用独立的 `flock`，不同原型可并行发布。汇总页安装使用单独的 catalog 锁；发布流程不再修改汇总页。
+- 原型内容变化时全量打包并上传到 `.uploads/<发布ID>/<随机版本ID>`，不复用旧文件。逐文件校验后，持有该发布 ID 的锁移入 releases，再原子替换固定入口；上传不持锁。清理正式旧版本不会删除并行上传目录。相同发布 ID 的入口切换、HTTP 验证和失败回退使用独立的 `flock`，不同原型可并行发布。汇总页安装使用单独的 catalog 锁；发布流程不再修改汇总页。
 - 服务器需要 `bash` 和 `flock`。锁等待上限 60 秒；锁由远程进程持有，正常结束、连接 EOF 或进程退出时释放。客户端每 10 秒发送心跳，心跳响应超时 15 秒即关闭发布连接；服务器连续 60 秒未收到心跳则退出释放锁。断连后无法确认的切换或回退仍须检查远程状态，不能声称已验收。
 - `.locks/` 中的文件是内核锁的固定身份，文件存在不表示占用，不应删除这些文件。旧版 `.publish-lock` 目录不再参与新协议，因此遗留目录不阻塞新版发布，也不会被自动删除。升级前结束所有旧版发布/汇总刷新进程，并统一更新客户端；新旧协议不可混跑。
 
@@ -95,16 +95,14 @@ RefreshCatalog 现在表示安装/升级动态汇总界面，不是重建列表�
 
 ## PRD 文档中的原型链接
 
-Prd 发布会自动绑定交付根目录 HTML 中指向清单原型的链接，保留页面路径、查询参数和锚点。基础 URL 集中写入 `prototype-links.js` 中的 `window.PRD_PROTOTYPE_BASE_URL`，各文档不重复保存服务器地址。发布成功后运行时拼接远程链接；发布开始、失败或未配置时清空基础 URL，保留本地 href 并显示待发布。历史 Html 发布不执行该同步。
-
-新增文档后同步链接（不需要连接服务器）；修改原型前先显式标记待发布：
+Prd 使用需求目录下的 requirement.json：固定 publicationId、目标与仓库信息随 Git 保存；文档登记中的路径相对仓库根目录。正文中放置唯一 `<!-- prototype-links:begin -->` / `<!-- prototype-links:end -->` 标记区。发布后脚本只回写该区域，包含普通 Markdown 链接、源码提交、版本与状态，不生成 JavaScript 链接运行时。
 
 ```powershell
-& $publisher -Action SyncLinks -OutputDirectory '<绝对交付目录>'
-& $publisher -Action SyncLinks -OutputDirectory '<绝对交付目录>' -LinksPending
+& $publisher -Action SyncLinks -OutputDirectory '<worktree>/working/<slug>'
+& $publisher -Action SyncLinks -OutputDirectory '<worktree>/working/<slug>' -LinksPending
 ```
 
-这两个命令使用已安装的发布运行时，或本机已有的 Python。生成文档在根目录，引用 `<script src="prototype-links.js" data-prototype-link-runtime defer></script>`；链接使用 `data-prototype-path="prototypes/low/login.html#login-error"`，静态 href 同时保留本地路径。默认同步读取发布记录，显式 LinksPending 会更新记录为待发布，避免后续新增文档误用旧的成功状态。
+命令只需本机 Python 和 Git；开始修改原型前标为 pending 并随源码提交。Publish 要求源码已提交、推送，且发布目标与仓库配置一致。发布成功写入 publication-record.json，AI 检查并提交推送记录；源代码版本保持指向原源码提交，不改为记录提交。完整字段见同级 prd/references/repository-contract.md。
 
 ## 验收
 
@@ -112,7 +110,6 @@ Prd 发布会自动绑定交付根目录 HTML 中指向清单原型的链接，�
 
 ```powershell
 python -m unittest discover -s skills/prototype-publish/tests -p 'test_*.py' -v
-node skills/prototype-publish/tests/test-document-link-runtime.cjs
 node --test skills/prototype-publish/tests/test-catalog.cjs
 ./skills/prototype-publish/tests/Test-PublishCredentials.ps1
 # 有 Git Bash / Linux shell 时，执行隔离的服务初始化故障测试：
@@ -125,6 +122,6 @@ SSH 实现依据 [Paramiko SSHClient 文档](https://docs.paramiko.org/en/stable
 
 ## 同一需求重新发布
 
-继续使用原输出目录及其 `.prototype-publication.json`，以保持发布 ID 和固定链接不变。每次重新构建入口及可达依赖的完整包，不按“曾上传”跳过文件；未被入口引用的文件不属于发布内容。新增、修改和删除通过全新版本目录生效，不合并线上旧文件。固定首页 `/发布ID/` 和每个文件的实际 URL 均核对 HTTP 内容，失败明确记录 lastAttempt=failed 并尝试回退，不能将旧地址仍可打开作为本次成功证据。
+Prd 按 requirement.json 的固定标识复用 URL，普通 Html 仍使用本机目录身份。换机克隆后先核对仓库和目标。每次重建入口及可达依赖的完整包；记录回写提交若包摘要与 URL 未变且远端 HTTP 全部一致，则返回 unchanged，不重复上传。内容变化时全量上传；未被入口引用的文件不属于发布内容。新增、修改和删除通过全新版本目录生效，不合并线上旧文件。固定首页 `/发布ID/` 和每个文件的实际 URL 均核对 HTTP 内容，失败明确记录 lastAttempt=failed 并尝试回退，不能将旧地址仍可打开作为本次成功证据。
 
 上传失败可能留下隐藏的 .uploads 临时目录，不对外发布；不自动扫描删除这些目录，以免影响其他正在上传的进程。新版必须统一使用独立上传目录，不与旧版直接向 releases 上传的客户端混跑。

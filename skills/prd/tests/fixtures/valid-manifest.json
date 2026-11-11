@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "productDomain": "demo",
   "designSystem": {
     "status": "approved",
@@ -7,14 +7,14 @@
       {
         "id": "tokens",
         "type": "tokens",
-        "path": "design-system/tokens.css",
+        "path": "working/demo/design-system/tokens.css",
         "selector": ":root",
         "status": "approved"
       },
       {
         "id": "button",
         "type": "component",
-        "path": "design-system/components.css",
+        "path": "working/demo/design-system/components.css",
         "selector": ".button",
         "status": "approved"
       }
@@ -25,7 +25,7 @@
       "flowId": "login",
       "flowName": "登录",
       "entries": {
-        "high": "prototypes/high/login.html"
+        "high": "working/demo/prototypes/high/login.html"
       }
     }
   ]

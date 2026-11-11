@@ -2,7 +2,7 @@
 
 原型链接遵循 gitlab-delivery.md，使用普通 Markdown 链接。只引用本次已验证发布的原型 URL，并保留 screen/state 锚点；未发布时明确标记待发布。Markdown 不依赖 prototype-links.js 或 data-prototype-path。
 
-使用以下章节生成 `06-prd.md`，以原生 Markdown 标题、表格和代码围栏呈现。文档应简洁、具体，并可追溯到已确认的业务模型。
+使用以下章节直接维护 requirement.json 的 prdPath 文件（如 docs/requirements/<slug>/index.md），不另生成 06-prd.md 副本，以原生 Markdown 标题、表格和代码围栏呈现。文档应简洁、具体，并可追溯到已确认的业务模型。
 
 正式 PRD 是唯一进入 VitePress 源目录的需求文档。正文直接包含必要流程图和验收标准；独立流程图、BDD、业务模型与评审 Markdown 存放在源目录外并提交 GitLab。引用这些过程记录时使用有权限说明的 GitLab 链接，不依赖站点内不存在的页面。
 

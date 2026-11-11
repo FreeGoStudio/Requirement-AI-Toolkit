@@ -1,6 +1,6 @@
 # HTML 设计治理
 
-以当前需求输出目录作为交付边界；同一产品的已批准设计系统可复用，记录实际来源与版本。设计资产先在 design-system/ 实现并评审，再供高模使用。
+以当前需求 working 目录作为原型资源边界，元数据文件引用统一相对 Git 仓库根目录；同一产品的已批准设计系统可复用，记录实际来源与版本。设计资产先在 design-system/ 实现并评审，再供高模使用。
 
 - Foundations：tokens.css 中的语义 CSS 变量，涵盖颜色、字体、间距、圆角、阴影。
 - Components：components.css 与按需 components.js 中的可复用组件及状态。
@@ -17,17 +17,17 @@
 
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "productDomain": "demo",
   "designSystem": {
     "status": "approved",
     "assets": [
-      {"id": "tokens", "type": "tokens", "path": "design-system/tokens.css", "selector": ":root", "status": "approved"},
-      {"id": "button", "type": "component", "path": "design-system/components.css", "selector": ".button", "status": "approved"}
+      {"id": "tokens", "type": "tokens", "path": "working/demo/design-system/tokens.css", "selector": ":root", "status": "approved"},
+      {"id": "button", "type": "component", "path": "working/demo/design-system/components.css", "selector": ".button", "status": "approved"}
     ]
   },
   "flows": [
-    {"flowId": "login", "flowName": "登录", "entries": {"high": "prototypes/high/login.html"}}
+    {"flowId": "login", "flowName": "登录", "entries": {"high": "working/demo/prototypes/high/login.html"}}
   ]
 }
 ```

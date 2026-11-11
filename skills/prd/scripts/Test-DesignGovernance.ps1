@@ -13,7 +13,12 @@ function Read-Json([string]$Path) {
 }
 function Has-Text($Value) { return $Value -is [string] -and -not [string]::IsNullOrWhiteSpace($Value) }
 $manifest = Read-Json $ManifestPath
-$root = Split-Path -Parent ([IO.Path]::GetFullPath($ManifestPath))
+$requirementDirectory = Split-Path -Parent ([IO.Path]::GetFullPath($ManifestPath))
+$root = (& git -C $requirementDirectory rev-parse --show-toplevel 2>$null)
+Require ($LASTEXITCODE -eq 0 -and $root) 'A Git repository worktree is required; ask AI to migrate first'
+$root = [IO.Path]::GetFullPath($root)
+$prefix = $requirementDirectory.Substring($root.Length).TrimStart([char[]]'\/').Replace('\', '/')
+Require ($prefix -and -not $prefix.StartsWith('..')) 'Requirement directory must be inside the repository'
 function Check-Path($Path, [bool]$MustExist) {
   Require (Has-Text $Path) 'Missing relative file path'
   Require ($Path -notmatch '[:\\?#]' -and -not [IO.Path]::IsPathRooted($Path)) "Not a portable relative path: $Path"
@@ -22,7 +27,7 @@ function Check-Path($Path, [bool]$MustExist) {
   Require ($full.StartsWith($root + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) "Path outside output directory: $Path"
   if ($MustExist) { Require (Test-Path -LiteralPath $full -PathType Leaf) "Missing output file: $Path" }
 }
-Require ($manifest.schemaVersion -eq 1) 'Unsupported schemaVersion'
+Require ($manifest.schemaVersion -eq 2) 'Unsupported schemaVersion; ask AI to migrate first'
 Require (Has-Text $manifest.productDomain) 'Missing productDomain'
 Require ($manifest.designSystem.status -in @('absent', 'candidate', 'approved')) 'Invalid design system status'
 $assetMap = @{}
@@ -33,6 +38,7 @@ foreach ($asset in @($manifest.designSystem.assets)) {
   Require ($asset.status -in @('candidate', 'approved', 'deprecated')) 'Invalid asset status'
   Require (Has-Text $asset.selector) 'Missing asset selector'
   Check-Path $asset.path ($Phase -eq 'postwrite')
+  Require ($asset.path.StartsWith($prefix + '/')) 'Prototype asset must be inside the requirement directory'
   $assetMap[$asset.id] = $asset
 }
 $flowMap = @{}
@@ -47,7 +53,7 @@ foreach ($flow in @($manifest.flows)) {
     $path = $flow.entries.$fidelity
     if (Has-Text $path) {
       Check-Path $path ($Phase -eq 'postwrite')
-      Require ($path -ceq "prototypes/$fidelity/$($flow.flowId).html") "Unexpected flow entry: $path"
+      Require ($path -ceq "$prefix/prototypes/$fidelity/$($flow.flowId).html") "Unexpected flow entry: $path"
       Require (-not $paths.ContainsKey($path)) "Duplicate entry: $path"
       $paths[$path] = $true
     }
@@ -55,6 +61,9 @@ foreach ($flow in @($manifest.flows)) {
 }
 if (Has-Text $PrototypeSpecPath) {
   $spec = Read-Json $PrototypeSpecPath
+  Require (@($spec.sourceArtifacts).Count -gt 0) 'Missing sourceArtifacts'
+  foreach ($source in @($spec.sourceArtifacts)) { Check-Path $source $true }
+  Check-Path $spec.interfaceBaseline.artifactPath $true
   $id = $spec.flowIdentity.flowId
   $fidelity = $spec.flowIdentity.fidelity
   Require ($id -cmatch '^[a-z0-9]+(?:-[a-z0-9]+)*$') 'Invalid spec flowId'
@@ -67,7 +76,7 @@ if (Has-Text $PrototypeSpecPath) {
   Check-Path $spec.prototypeReferenceGate.evidence ($Phase -eq 'postwrite')
   $path = $spec.htmlStrategy.entryPath
   Check-Path $path ($Phase -eq 'postwrite')
-  Require ($path -ceq "prototypes/$fidelity/$id.html") 'Entry does not match flow/fidelity'
+  Require ($path -ceq "$prefix/prototypes/$fidelity/$id.html") 'Entry does not match flow/fidelity'
   $existing = if ($flowMap.ContainsKey($id)) { $flowMap[$id].entries.$fidelity } else { $null }
   $action = $spec.htmlStrategy.action
   Require ($action -in @('create', 'update')) 'Invalid HTML action'

@@ -37,6 +37,8 @@
 
 如果任何入选截图无法读取，将 `screenshotAnalysisGate.status` 设为 `blocked` 并停止高模生成。
 
+入库前将需要的参考按许可复制到本需求目录，元数据中的文件路径统一相对 Git 仓库根目录；本机绝对 Knowledge 定位信息仅用于本机检索，不写入提交的配置。无法复制的证据明确待验证。
+
 ## 4. 生成 InterfaceBaseline
 
 在高模规格前保存 `03-interface-baseline.json`：

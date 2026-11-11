@@ -31,15 +31,13 @@ try {
   Assert-ConfigurationBlocked 'host'
   $sourceRoot = Join-Path $temporary 'source'
   New-Item -ItemType Directory -Path $sourceRoot | Out-Null
-  '{"flows":[{"entries":{"high":"prototypes/high/login.html"}}]}' | Set-Content (Join-Path $sourceRoot '03-html-design-manifest.json') -Encoding UTF8
-  '<a href="prototypes/high/login.html#failed">原型</a>' | Set-Content (Join-Path $sourceRoot '06-prd.html') -Encoding UTF8
-  'window.PRD_PROTOTYPE_BASE_URL = "http://stale.example/id";' | Set-Content (Join-Path $sourceRoot 'prototype-links.js') -Encoding UTF8
+  '原型待发布。' | Set-Content (Join-Path $sourceRoot 'index.md') -Encoding UTF8
+  $before = Get-Content (Join-Path $sourceRoot 'index.md') -Raw -Encoding UTF8
   $blocked = $false
   try { & $script -Action Publish -Mode Prd -OutputDirectory $sourceRoot -ConfigDirectory $temporary }
   catch { $blocked = $_.Exception.Message.Contains('本次未发布') }
   if (-not $blocked) { throw 'Incomplete config did not block PRD publish' }
-  $linkConfig = Get-Content (Join-Path $sourceRoot 'prototype-links.js') -Raw -Encoding UTF8
-  if (-not $linkConfig.Contains('window.PRD_PROTOTYPE_BASE_URL = ""') -or -not $linkConfig.Contains('"pending"')) { throw 'Preflight failure left stale server document links' }
+  if ((Get-Content (Join-Path $sourceRoot 'index.md') -Raw -Encoding UTF8) -cne $before) { throw 'Configuration failure modified Markdown before Git verification' }
   & $script -Action Configure -ServerAddress 'example.test' -Username 'tester' -Password $password -WebPort 8081 -ConfigDirectory $temporary
   if ((Get-Content (Join-Path $temporary 'server.json') -Raw | ConvertFrom-Json).webPort -ne 8081) { throw 'Configuration update failed' }
   Write-Output 'PASS: missing/empty/corrupt configuration blocks publish with setup guidance; DPAPI roundtrip, plaintext exclusion, persistence/update.'

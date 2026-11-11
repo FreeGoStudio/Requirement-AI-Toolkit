@@ -33,8 +33,8 @@ if ($Action -eq 'SyncLinks') {
   Sync-DocumentLinks $LinksPending.IsPresent
   return
 }
-# Reset PRD document links before configuration/runtime/connection failures can occur.
-if ($Action -eq 'Publish') { Sync-DocumentLinks $true }
+# Publish validates the pushed source before modifying Markdown blocks.
+# Use SyncLinks -LinksPending explicitly when beginning a prototype change.
 if ($Action -eq 'Configure') {
   if (-not $ServerAddress -or -not $Username) { throw '需要 ServerAddress 和 Username。' }
   if ($SshPort -lt 1 -or $SshPort -gt 65535 -or $WebPort -lt 1024 -or $WebPort -gt 65535) { throw 'SSH 端口需为 1–65535，网站端口需为 1024–65535。' }

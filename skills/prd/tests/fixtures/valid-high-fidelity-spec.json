@@ -10,11 +10,11 @@
   },
   "htmlStrategy": {
     "action": "update",
-    "entryPath": "prototypes/high/login.html"
+    "entryPath": "working/demo/prototypes/high/login.html"
   },
   "prototypeReferenceGate": {
     "userDecision": "continue-without-reference",
-    "evidence": "02-reference-decision.md"
+    "evidence": "working/demo/02-reference-decision.md"
   },
   "designSystemDependency": {
     "status": "approved",
@@ -33,5 +33,12 @@
       ]
     }
   ],
-  "interactions": []
+  "interactions": [],
+  "sourceArtifacts": [
+    "docs/requirements/demo/index.md",
+    "working/demo/08-bdd.md"
+  ],
+  "interfaceBaseline": {
+    "artifactPath": "working/demo/03-interface-baseline.json"
+  }
 }

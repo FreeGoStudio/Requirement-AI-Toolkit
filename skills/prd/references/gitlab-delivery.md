@@ -1,63 +1,83 @@
-# 需求文档、原型与 GitLab 交付
+# 仓库维护、并行需求与发布
 
-正式 PRD 的唯一编辑源为 `06-prd.md`，不另维护内容重复的 HTML PRD。本地交付入口链接到该文件。所有需求 Markdown 都提交到 GitLab，但 VitePress 只发布正式 PRD；其他 Markdown 仅在 GitLab 中阅读。原始需求、澄清、业务模型、流程图、BDD、评审、设计系统说明与交付入口也全部使用 Markdown；只有原型使用 HTML。
+## 唯一工作来源
 
-## 项目配置与仓库检查
+直接在目标 GitLab 仓库的本地 worktree 中维护，不再使用 outputs/ 与仓库双向复制。所有需求 Markdown、原型 HTML、实际资源和必要治理元数据均提交 GitLab。只有正式 PRD 位于 VitePress 源目录；过程文档与原型位于源目录外的 `working/<slug>/`。原型由 prototype-publish 独立发布。
 
-优先使用用户指定配置；否则检查 `$CODEX_HOME/private/prd-projects.json`（未设置 CODEX_HOME 时为 `%USERPROFILE%/.codex/private/prd-projects.json`）。按当前项目或用户明确指定的项目匹配，不把其中某个仓库当成所有需求的默认目的地。配置缺失时可继续本地产出；只询问实际交付缺失的信息。
+任务开始读取用户指定项目配置；否则检查 `$CODEX_HOME/private/prd-projects.json`（未设置时为 `%USERPROFILE%/.codex/private/prd-projects.json`），按项目匹配。复用本机认证，不输出凭据文件，不把密码、令牌或私钥放进命令参数、日志、配置或提交。不改全局 Git 身份，不关闭 TLS 校验，不覆盖 SSH 信任记录。
 
-配置记录项目名、负责人、GitLab 地址、项目 ID、仓库路径、克隆地址、默认分支、凭据文件路径、文档站与版本地址。凭据内容不得写入技能、文档、命令参数、日志或 Git；仅由认证进程按需读取，禁止输出凭据文件。优先使用已配置的 Git 凭据管理器或 SSH agent；需要读取凭据时使用进程内认证或临时 askpass，不把令牌嵌入 remote URL。不得擅自修改全局 Git 身份、关闭 TLS 校验或覆盖 SSH 信任记录。
+先检查仓库 README、AGENTS.md、分支、未提交修改、构建命令和 VitePress 的实际 srcDir。源目录不能覆盖 working；不能只隐藏侧边栏。需要收窄已有源目录时准备必要配置差异并验证，不改造发布服务。仓库无法读取时记录阻塞，可继续讨论；不另建长期副本冒充已入库。
 
-交付前检查目标仓库的实际 README、AGENTS.md、目录、导航、构建配置和当前分支/改动。根据 VitePress 构建命令、配置及 srcDir 确认实际源目录，不能仅凭目录叫 docs 就认定隔离生效。无法读取时记录 GitLab 集成待验证，不创建猜测性的构建配置或改造发布服务。若现有源目录覆盖整个仓库，应先准备将源目录收窄的最小配置变更；不以仅隐藏侧边栏代替目录隔离。
+## 每个需求独立工作目录
 
-## 存储与链接
+新需求先向产品经理解释，无需让对方理解术语或手动执行 Git：
 
-- 本地仍复用 `outputs/product-requirements/<时间>-<slug>/`，正式 PRD 与 `prototypes/` 分目录存储。
-- GitLab 同步本任务全部已生成的 Markdown（包括嵌套目录中的设计系统说明、视觉方向说明及交付入口），以及它们实际引用的图表/附件和必要导航变更。正式 `06-prd.md` 映射到 `<VitePress源目录>/requirements/<slug>/index.md`；其余 Markdown 映射到源目录之外的 `working/<slug>/`，保留相对目录结构。已有仓库可沿用等价路径，但必须满足此隔离规则。每次交付记录实际源目录和路径映射，后续原位更新，不在 working 再复制一份 PRD。
-- 站点已有首页与导航可保留，只收录正式 PRD；本地交付 `index.md` 放到 working，不能拿它替换站点首页。过程文档不经 public、文件复制、符号链接或 Markdown include 等方式进入站点产物。
-- 原型也纳入同一 GitLab 仓库管理：将原型 HTML（含已生成的视觉方向候选）、实际依赖的 CSS/JavaScript/图像/字体等映射到 `working/<slug>/`，保持本地交付根目录下的相对结构，例如 `prototypes/high/`、`prototypes/visual-directions/`、`design-system/`。同步恢复校验所需的清单、规格、界面基线及其必要证据；不得只提交入口 HTML 而漏掉依赖。已有等价目录可沿用，但原型及其资源必须在 VitePress 源目录外，不通过 public 或复制步骤打包进文档站。
-- 不整体复制本地交付目录，不提交未引用截图、本机绝对路径配置、凭据、缓存或 `.prototype-publication.json` 等机器绑定的发布状态。工具元数据中的必要证据路径改成包内路径，或明确记录外部证据待验证，不提交本机私密配置。正式 PRD 本身包含理解需求所需的流程图与验收标准，不依赖未发布的流程图/BDD 页面。必要图像复制到站点可访问的资源目录；仅供过程文档引用的附件放在 working。不得把其他 Markdown 复制进源目录来解决链接问题。
-- 同步后重写文档链接：working 内文档按实际路径互相引用，指向 PRD 的链接改为其仓库路径；PRD 如需追溯过程记录，使用明确标注“GitLab 过程记录，需仓库权限”的 GitLab 链接，不把源目录外 Markdown 当成站点路由。不留下本机绝对路径或未提交的依赖。
-- Markdown 使用普通链接，不依赖 JavaScript。原型本次发布成功且 HTTP 验证通过后，写入完整远程 URL 和 screen/state 锚点；原型更新或发布失败时，把受影响链接标为待发布，不用历史版本冒充当前版本。不在远程文档中链接本机文件。
-- 每次原型发布或状态变化后检查关联 Markdown 的链接是否需更新。HTML 的 SyncLinks 不会同步 Markdown。提交前验证文档所指原型版本与本次评审一致。
+> 我会为这个需求准备一个独立工作目录和分支，方便你同时推进其他需求，避免文件混在一起。它们仍属于同一个 GitLab 仓库，创建和管理由我完成。
 
-例如，确认实际源目录为 `docs/` 后：
+1. 查看 `git worktree list --porcelain`、已有分支及 `working/*/requirement.json`，按稳定 requirementId 找到需求。继续需求时复用已有 worktree；不得重复建立同一需求或在别的任务目录切换分支。
+2. 新需求从更新后的 origin/main 创建 `codex/requirements/<slug>` 和独立 worktree，例如 `git worktree add -b codex/requirements/<slug> <独立绝对目录> origin/main`。分支已存在则复用；目录非空或分支正被其他 worktree 使用时先定位原工作，不使用 force、reset 或自动清理。仓库 main 名称以项目配置为准。
+3. 所有命令显式指定该 worktree。告知用户对应目录，并提示“继续这个需求时使用此目录打开聊天；其他需求使用各自目录”。不能自动创建新的 Codex 聊天；用户明确要求时才创建。多个聊天同时修改同一需求时也不能互相覆盖。
+4. 在该需求的 index.md 记录 requirementId、分支和恢复入口；本机绝对 worktree 路径不入库。需求合并后保留目录。只有用户要求清理时，检查未提交、未推送内容后再处理，不自动删除。
+
+每个需求可独立提交、推送、评审和合并。公共导航冲突必须合并保留各需求入口；相同业务规则的并行修改需依据用户确认处理，不自动替用户决定业务取舍。
+
+## 目录与引用
 
 ```text
-docs/
+docs/                             # 示例：必须核实实际 VitePress 源目录
   .vitepress/config.mts
-  index.md                         # 既有站点首页
-  requirements/<slug>/index.md      # 来自 06-prd.md
+  index.md                        # 站点既有导航首页
+  requirements/<slug>/index.md     # 正式 PRD 唯一编辑源
 working/<slug>/
-  index.md                         # 本地交付入口
+  requirement.json                # 固定标识、目标与文档登记，随 Git 管理
+  index.md                        # 过程交付入口
   00-raw-requirement.md
   01-clarification-questions.md
   02-business-model.md
   07-flowchart.md
   08-bdd.md
-  ...                              # 其余已生成 Markdown，保持子目录结构
-  03-html-design-manifest.json      # 原型恢复与治理校验所需元数据
+  03-html-design-manifest.json
   12-high-fidelity-prototype-spec.json
-  prototypes/high/<flowId>.html     # 原型源码，纳入 GitLab
-  prototypes/visual-directions/     # 已生成的视觉方向候选
-  design-system/                    # 说明文档及共享 CSS/JavaScript
-  assets/                          # 示例：实际被原型引用的资源
+  prototypes/high/<flowId>.html
+  design-system/                  # Markdown 说明与 CSS/JavaScript
+  publication-record.json         # 可追溯发布结果，随 Git 管理
 ```
 
-该目录树是路径映射示例，不是创建空文档或覆盖现有站点配置的要求。
+只创建已到阶段的产物。全部非原型文档使用 Markdown，取消低模和多套视觉方向候选。正式 PRD 不再在 working 保留 06-prd.md 副本。既有不符合当前结构的项目须由用户明确要求 AI 迁移。
 
-## 提交与发布
+- JSON 规格、清单、来源证据和文档登记中的文件路径统一相对仓库根目录，使用 `/`；禁止绝对路径、`..` 和逃逸符号链接。原型资产必须仍在本需求 working 目录内，以便独立发布。
+- HTML/CSS/JavaScript 的资源引用相对引用文件，发布包根为 `working/<slug>/`。打包器将清单的仓库路径解析为包内路径，不将 docs 或其他需求上传。
+- Markdown 文档间链接相对所在文件；PRD 面向读者使用站点链接、已发布原型 URL，或标注“GitLab 过程记录，需仓库权限”的 GitLab 链接。PRD 内直接包含必要流程图和验收标准，不依赖未发布的过程页面。
+- 工具读取所需的外部证据应按许可复制到本需求内并登记；不能复制时明确待验证。配置、缓存、未引用截图及 `.prototype-publication.json` 不入库；在仓库 .gitignore 添加 `**/.prototype-publication.json`。不要忽略固定身份文件或 publication-record.json。
 
-1. 对照原始确认检查正式 PRD、规则 ID、BDD 和原型状态。核对本任务全部 Markdown 均有 GitLab 路径映射，且只有正式 PRD 位于实际 VitePress 源目录中（站点既有首页除外）。检查 Markdown 链接和资源，执行仓库已有的文档构建/校验；检查产物中有 PRD 页面、没有本任务过程文档页面或正文被收录到搜索索引。没有构建环境时明确记录隔离与发布仍待验证，不能只凭侧边栏判断通过。
-2. 检查仓库中的原型相对资源路径和依赖完整性，使用同步后的清单与规格运行治理校验；有浏览器能力时从仓库副本检查实际加载与交互，否则标记待验证。仅暂存本任务文档、原型、必要元数据及导航/资源改动；完成验证后按用户授权本地提交。提交者身份使用项目配置，仅在目标仓库设置，不改全局身份。已有无关改动保留。
-3. 用户要求交付 GitLab 即可按已授权分支推送，不重复索要同一授权。分支、MR、合并和发布按用户明确意图及仓库规则执行；默认分支名称和 Owner 权限本身不等于批准直接改 main。若 main 发布尚未获授权，先准备可审阅的文档提交与差异，再仅询问这一步。不得强推或绕过保护规则。
-4. main 发生获准变更后，按配置检查文档首页和版本文件。预留轮询周期及构建时间，在当前任务中跟进；按实际版本文件格式核对本次提交，不能仅凭 HTTP 200 或时间推断部署成功。版本无法关联时记录待验证，不虚报发布。
-5. 汇报区分本地生成、验证、本地提交、GitLab 推送、站点发布、用户验收，并给出提交哈希及对应链接。推送/构建失败时保留已完成产物并报告实际错误，不扩展到无关基础设施修复。
+## 固定发布身份与 Markdown 更新
 
-私有 GitLab 仓库与文档站访问范围分别以项目配置为准；仓库 private 不代表发布站也需要登录。
+按 `repository-contract.md` 建立 schemaVersion=2 的 `requirement.json`。首次生成随机 publicationId 并提交，普通克隆和换机保留该 ID；复制为新需求必须生成新 ID。repository 与 publicationTarget 均不含凭据，发布前与实际 origin 和本机目标核对。服务器凭据留本机；发布状态不因本机目录改变而决定新 ID。
 
-## 原型版本管理与独立发布
+关联原型的 Markdown 在 requirement.json 登记，并提供唯一标记区域：
 
-GitLab 保存原型源码与变更历史；`prototype-publish` 继续负责原型服务器的自动发布，两者是独立操作。每次原型生成或修改通过静态检查后，按既有发布规则执行，不因已提交 GitLab 就省略发布，也不因已发布就省略 GitLab 同步。不自动新增 GitLab CI、改变 main 的文档发布触发器或将原型交给 VitePress 发布。
+```markdown
+<!-- prototype-links:begin -->
+原型待发布。
+<!-- prototype-links:end -->
+```
 
-同一轮同步与发布使用同一份已验证原型内容；在交付记录中分别记录原型提交哈希、GitLab 推送状态、发布 URL 和发布验证结果。推送失败不冒充已入库，发布失败不回退已完成的版本管理；保留失败项并明确报告。发布状态文件只留本机，文档中的版本追溯记录不包含凭据。
+脚本只更新该区域的链接、源码提交、发布版本和状态，不改业务正文；每个登记文档必须存在，全部区域检查通过才回写。链接可登记 flowId、query 和 fragment。`SyncLinks -LinksPending` 用于开始原型变更；它将本次标为待发布。正式 PRD 尚未生成时不要预登记不存在的文件；生成时补登记。发布后检查自动回写结果。
+
+## 验证、推送、原型发布
+
+1. 校验需求规则、PRD/BDD、仓库路径引用、原型依赖与交互。运行治理 preflight/postwrite 和文档构建；确认站点只包含正式 PRD 与已有首页，没有 working 文档、原型或正文被收入搜索索引。浏览器不可用时标记交互待验证，不虚报最终验收。
+2. 只暂存本需求及必要公共导航改动，完成验证后自动本地提交，再推送需求分支。不要把用户或其他需求的改动混入。新需求开始前明确目标仓库，提交身份仅在目标仓库设置。
+3. 推送成功后发布当前 HEAD。发布器核对 origin、目标和远端同名分支 tip，检查本需求无未提交内容，以及发布文件属于该提交；未推送或远端已变化时停止本次发布并报告。不得先发布再补源码入库。
+4. `prototype-publish -Mode Prd` 从本需求工作目录打包，HTTP 验证成功后写入 publication-record.json，并统一更新登记的 Markdown 区域。AI 检查结果，再提交并推送“发布记录”变更；记录中的 sourceCommit 始终指向原型源码提交，不能自引用记录提交。
+5. 记录回写提交不触发再次上传。脚本对同一发布标识、目标 URL 和相同包摘要检查远端内容，一致时返回 unchanged，沿用原源码版本；原型内容变化才生成新发布版本。失败后保留源码提交和实际失败状态，不把历史成功当成本次成功。链接回写失败单独报告，可用 SyncLinks 修复后提交。
+
+文档构建环境或服务器不可用时分别记录待验证/待发布条件，不增加无关基础设施工作。源码推送失败时不发布原型；发布失败不回退已入库源码。
+
+## 正式 PRD 发布与并行合并
+
+所有草稿持续保存在需求分支，不直接推送 main。用户批准本次 PRD/BDD 后，核对批准内容对应的提交和当前差异，检查 main 最新变更、构建与公共导航冲突，再按仓库 MR/保护规则合并本需求到 main。此批准按当前工作流授权该次文档发布，不新增重复批准环节；若批准后业务内容又变更，只重新确认受影响内容。
+
+PRD 可以在原型完成前独立发布，初始原型状态为待生成/待发布，不要求等待整个需求最终验收。后续原型链接及发布记录更新继续通过需求分支和相应合并交付；纯记录更新不重开业务评审。合并后需要继续工作时先检查分支与 main 的关系，安全同步，不自动重置或强推。
+
+main 变更后检查文档首页与部署版本，等待配置的检测周期及构建时间，核对本次合并提交是否已上线。区分生成、验证、源码提交/推送、原型发布、文档站发布与用户验收。仅本地技能修改不等于 SaaS 仓库已迁移或服务器已发布。

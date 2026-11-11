@@ -1,9 +1,7 @@
-# 发布已拆为独立技能
+# 原型独立发布
 
-原型源码、依赖与必要治理元数据同时按 `gitlab-delivery.md` 纳入 GitLab，位于 VitePress 源目录之外。GitLab 版本管理与本技能的服务器发布相互独立；同轮使用同一份已验证内容，分别记录提交/推送和发布结果。不将 GitLab 提交成功当成发布成功，也不因发布成功省略入库。
+需求工作目录为 GitLab worktree 中的 `working/<slug>`，固定身份及路径见 repository-contract.md。先完成治理 postwrite、依赖检查和可用的浏览器验证，将源码提交并推送需求分支，再调用同级 prototype-publish 的 `Invoke-PrototypePublish.ps1 -Action Publish -Mode Prd -OutputDirectory '<需求工作目录>'`。
 
-原型生成和修改仍由 prd 负责；通过本技能原有 postwrite 与资源检查后，读取同级 `prototype-publish/SKILL.md`，调用其 `scripts/Invoke-PrototypePublish.ps1 -Action Publish -Mode Prd -OutputDirectory '<交付目录>'`。
+发布器确认当前源码已在 origin 同名分支，核对固定 publicationId 与目标，不从未推送的本地修改发布。HTTP 校验成功后自动回写 publication-record.json 和 Markdown 指定区；AI 检查后提交推送记录。记录提交不再触发上传。失败分别报告，源码已入库不代表服务器已发布。
 
-本机未配置服务器时维持本地交付；已经配置但缺少 prototype-publish 时明确提示安装，不能将未发布报告为发布成功。历史 HTML 直接使用 prototype-publish，不补做需求或设计治理清单。
-
-完整发布与服务器配置说明见同级 `prototype-publish/references/remote-publishing.md`。已就绪服务器不初始化，沿用原配置及临时路径。
+开始修改原型前用 `-Action SyncLinks -LinksPending` 标记待发布；此变更随源码提交。缺少服务器配置时按 prototype-publish 引导配置，凭据留本机；不要把缺配置当成成功。已就绪服务器不初始化，沿用配置与目标。正式 PRD 的 main 发布独立进行。

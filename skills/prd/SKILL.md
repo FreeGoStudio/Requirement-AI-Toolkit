@@ -10,13 +10,13 @@ description: "中文产品需求工具。用户调用 $prd，或需要需求澄�
 ## 核心规则
 
 - 以用户原始需求及明确确认作为业务依据，不虚构 API、数据库字段、发布计划或业务规则。开放问题显式保留。
-- 任务开始读取 `references/output-artifacts.md`，复用同一输出目录；仅创建已到达阶段的文件。
+- 任务开始读取 `references/gitlab-delivery.md`、`references/output-artifacts.md`，先向产品经理说明将准备独立工作目录，再按需求创建或复用 GitLab 仓库分支与 worktree。仓库工作区是唯一编辑来源，不维护 outputs 副本；仅创建已到达阶段的文件。
 - 进入原型阶段时读取 `references/html-output.md`、`references/design-governance.md`、`references/prototype-spec.md`。直接生成本地 HTML/CSS/JavaScript，不依赖设计平台账号、插件或远程设计服务。
 - 按以下评审节点推进，已有明确确认可沿用。前置业务确认不足时，仅等待依赖该决策的正式产物与原型变更；可继续独立的探索、比较和草案整理，不假定确认通过。
 - 区分文件生成、自动校验、浏览器实际验证和用户验收。无浏览器能力时保存可执行产物并标记待验证，不虚报截图或交互通过，不推进依赖该检查的评审。
-- 每次高模生成、修改并完成静态检查后，读取 `references/remote-publishing.md`，调用同级 prototype-publish 技能，以 Prd 模式发布。未配置时沿用本地交付；已配置时自动发布仅原型及依赖资源，回复远程入口。缺少发布技能或发布失败时明确说明本次未发布，不将本地成功当作远程成功。服务器配置由 prd-setup 负责。
-- GitLab 交付读取 `references/gitlab-delivery.md`：全部需求 Markdown、原型源码及必要依赖和治理元数据提交 GitLab，只有正式 PRD 放入 VitePress 实际源目录，其余产物放在源目录外。原型版本管理与自动发布分别执行、分别记录结果。项目配置独立保存在本机，不把私人仓库和认证信息固化到通用技能。
-- 所有文档中的原型链接使用普通 Markdown 链接，按 `references/gitlab-delivery.md` 更新。本次原型变更时将关联链接标为待发布，成功发布并验证后更新 URL；SyncLinks 不处理 Markdown，不将其当作文档同步完成。
+- 每次高模生成、修改完成验证并提交、推送需求分支后，读取 `references/remote-publishing.md`，调用同级 prototype-publish 技能，以 Prd 模式发布。未配置时沿用本地交付；已配置时自动发布仅原型及依赖资源，回复远程入口。缺少发布技能或发布失败时明确说明本次未发布，不将本地成功当作远程成功。服务器配置由 prd-setup 负责。
+- GitLab 交付读取 `references/gitlab-delivery.md`：全部需求 Markdown、原型源码及必要依赖和治理元数据提交 GitLab，只有正式 PRD 放入 VitePress 实际源目录，其余产物放在源目录外。按先验证、提交推送、发布源码版本、回写记录再提交的顺序执行，记录提交不重复上传原型。项目配置独立保存在本机，不把私人仓库和认证信息固化到通用技能。
+- 读取 `references/repository-contract.md`，建立随 Git 保存的固定发布标识与仓库相对路径。Markdown 使用普通链接，原型链接由 SyncLinks 统一更新指定标记区，AI 检查结果；开始变更时标为待发布，成功后回写源码版本。
 
 ## 1. 需求接收、探索与比较
 
@@ -32,7 +32,7 @@ description: "中文产品需求工具。用户调用 $prd，或需要需求澄�
 
 ## 3. 需求文档
 
-正式规则与验收场景只使用已确认内容，未决假设单列为开放问题。业务模型确认后读取 `references/prd-template.md` 和 `references/bdd-template.md`，生成 `06-prd.md`、`07-flowchart.md` 和 `08-bdd.md`。流程图内嵌 Mermaid 代码围栏，BDD 内嵌带中文语言声明的 Gherkin 代码围栏，不默认另生成 `.mmd` 或 `.feature` 文档副本。PRD 使用原生 Markdown 标题、表格、Mermaid 与普通链接；原型尚未生成时标记待生成，不虚构链接；生成并验证后将需求规则链接到对应 screen/state 锚点。检查目标 Markdown 渲染器的 Mermaid 支持；不支持时附本地渲染图像。按 GitLab 交付规范检查仓库、按源目录内外映射同步全部需求 Markdown 及必要资源、验证并提交；推送与 main 发布遵循用户授权。用户批准 PRD/BDD 后进入高保真准备。
+正式规则与验收场景只使用已确认内容，未决假设单列为开放问题。业务模型确认后读取 `references/prd-template.md` 和 `references/bdd-template.md`，直接在 requirement.json 的 prdPath 生成正式 PRD，在本需求 working 目录生成 `07-flowchart.md` 和 `08-bdd.md`。流程图内嵌 Mermaid 代码围栏，BDD 内嵌带中文语言声明的 Gherkin 代码围栏，不默认另生成 `.mmd` 或 `.feature` 文档副本。PRD 使用原生 Markdown 标题、表格、Mermaid 与普通链接；原型尚未生成时标记待生成，不虚构链接；生成并验证后将需求规则链接到对应 screen/state 锚点。检查目标 Markdown 渲染器的 Mermaid 支持；不支持时附本地渲染图像。按 GitLab 交付规范检查仓库、直接维护源目录内外的全部需求 Markdown 及必要资源、验证并提交；推送与 main 发布遵循用户授权。用户批准 PRD/BDD 后按仓库规则将该需求合并 main，验证文档站发布；原型尚未完成不阻止批准文档上线。随后进入高保真准备。
 
 ## 4. 原型参考、视觉方向与设计系统
 
@@ -41,11 +41,11 @@ description: "中文产品需求工具。用户调用 $prd，或需要需求澄�
 - 实际查看入选截图，保存 `03-interface-baseline.json`；无参考获准继续时标记低置信度及需求来源，不伪造截图。
 - 扫描已有输出，建立或更新 `03-html-design-manifest.json`，按稳定 `flowId + fidelity` 定位唯一入口。
 
-已有经批准设计系统时复用；有品牌或高模参考时据此建立 CSS token、组件、组合与模板，并在 `design-system/index.md` 展示与评审。无视觉来源时保存 `09-visual-direction-spec.json`，默认生成三套 HTML 候选原型 `prototypes/visual-directions/<directionId>.html`，在 `visual-directions/index.md` 记录说明与链接，截图并保存 `10-visual-direction-review.md`，等待选择。选择后固化设计系统，保存 `11-design-system-review.md`，用户明确确认后才能标记 approved。
+已有经批准设计系统时直接复用；有品牌或参考时据此建立 CSS token、组件、组合与模板，并在 `design-system/index.md` 说明。没有视觉来源时 AI 只提出一套视觉方向，写入 `09-visual-direction.md`，用户确认后再建立设计系统并制作高模。不生成多套候选 HTML，也不设置候选选择和候选发布步骤。保存 `11-design-system-review.md`，已有批准沿用，不重复确认。
 
 ## 5. 高保真原型
 
-保存 `12-high-fidelity-prototype-spec.json`，先登记并批准新增设计资产，再在 `prototypes/high/<flowId>.html` 使用共享样式/组件。按已确认需求建立稳定 flowId 与 screenId，迭代时沿用；不要求存在低保真原型。生成前执行 preflight，写入并登记后执行 postwrite；对照界面基线检查壳层、导航、弹窗、信息密度、mustPreserve 与来源追踪。运行治理校验，检查实际代码依赖、浏览器渲染、响应式、键盘操作与业务状态，保存 `13-high-fidelity-review.md`。失败项修复并复查后请求最终验收。
+按仓库根目录相对路径保存 `12-high-fidelity-prototype-spec.json`，先登记并批准新增设计资产，再在 `prototypes/high/<flowId>.html` 使用共享样式/组件。按已确认需求建立稳定 flowId 与 screenId，迭代时沿用；不要求存在低保真原型。生成前执行 preflight，写入并登记后执行 postwrite；对照界面基线检查壳层、导航、弹窗、信息密度、mustPreserve 与来源追踪。运行治理校验，检查实际代码依赖、浏览器渲染、响应式、键盘操作与业务状态，保存 `13-high-fidelity-review.md`。失败项修复并复查后请求最终验收。
 
 ## 阻塞与恢复
 

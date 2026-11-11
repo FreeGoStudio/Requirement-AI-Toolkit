@@ -1,6 +1,6 @@
 # Requirement AI Toolkit
 
-面向 Codex 的中文产品需求工作流技能，生成 Markdown 需求与过程文档与低/高保真交互原型，支持 GitLab 文档交付。
+面向 Codex 的中文产品需求工作流技能，生成 Markdown 需求与过程文档、高保真交互原型，支持 GitLab 文档交付。
 
 - `skills/prd`：问题探索、业务方案比较、范围收敛、业务模型、参考分析、PRD/流程图/BDD、视觉方向、设计系统与高模评审。
 - `skills/prd-setup`：技能安装、本地 HTML 预览与 Linux 原型发布环境配置。
@@ -16,14 +16,16 @@
 $prd 帮我澄清这个产品需求，并按阶段生成 Markdown 正式 PRD 和可交互的 HTML 原型。
 ```
 
-默认写入 `outputs/product-requirements/<yyyyMMdd-HHmm>-<slug>/`，以 `index.md` 作为交付入口。所有非原型文档均为 Markdown；流程图与 BDD 分别内嵌 Mermaid、Gherkin 围栏。JSON 规格与清单仅供工具使用，HTML/CSS/JavaScript 用于原型。原型目录及依赖整体复制后可本地打开，默认不需要构建、账号、远程服务或 CDN。
+AI 会先向产品经理说明并准备独立需求工作目录和分支（Git worktree），继续需求时复用。直接在 GitLab 本地仓库维护：PRD 放入实际 VitePress 源目录，其余 Markdown、原型和依赖放入源目录外的 working/<slug>/，不维护 outputs 副本。所有文件按需提交 GitLab；仅 PRD 在批准后随需求分支合并 main 发布。各需求可并行推进。
+
+原型发布顺序：验证 → 提交并推送源码 → 发布该版本 → 脚本回写 Markdown 标记区和发布记录 → 提交推送记录。固定发布标识随 Git 保存，凭据与运行状态留本机。记录提交不会重复上传原型。
 
 | 阶段 | 交付 | 下一步条件 |
 | --- | --- | --- |
 | 探索、比较与收敛 | 原始需求、含探索与必要比较的澄清 Markdown、业务模型 Markdown | 必要问题已回答，方案与范围随业务模型确认 |
-| 需求文档 | 06-prd.md、07-flowchart.md、08-bdd.md  | PRD/BDD 已批准 |
+| 需求文档 | prdPath 对应正式 PRD、07-flowchart.md、08-bdd.md  | PRD/BDD 已批准 |
 | 原型参考 | 参考决策、界面基线与清单 | 参考决策明确，入选截图已分析 |
-| 视觉方向与设计系统 | 必要的视觉候选、design-system/ 与评审 Markdown | 方向及设计系统已确认 |
+| 视觉方向与设计系统 | 必要时提出一套视觉方向、design-system/ 与评审 Markdown | 方向及设计系统已确认 |
 | 高模 | prototypes/high/、高模规格与评审 Markdown | 代码依赖、浏览器交互和视觉检查通过，用户验收 |
 
 探索深度按需求成熟度调整：模糊需求先辨认真实目标与遗漏场景，有实质取舍才比较 2–3 个业务方案；已确认的简单修改直接核对缺口。区分事实、假设、建议与已确认决策，不把候选方案当作新增范围。等待决策只阻止依赖它的正式生成，可以继续独立分析和待确认草案。探索记录复用澄清与业务模型 Markdown，正式需求文档仍在业务模型确认后生成；旧任务不补做历史比较。
@@ -32,7 +34,7 @@ $prd 帮我澄清这个产品需求，并按阶段生成 Markdown 正式 PRD 和
 
 ## 安装
 
-所有非原型文档使用原生 Markdown；GitLab 交付遵循 [文档交付规范](skills/prd/references/gitlab-delivery.md)，先检查 VitePress 实际源目录与构建约定。全部需求 Markdown 都提交 GitLab：正式 PRD 放入源目录（如 `docs/requirements/<slug>/index.md`），其余 Markdown 放在源目录外（如 `working/<slug>/`）；站点只发布正式 PRD，保留既有导航首页。项目资料保存在本机 `$CODEX_HOME/private/prd-projects.json`（默认 `%USERPROFILE%/.codex/private/prd-projects.json`），不随技能分发。HTML 原型源码、实际依赖与必要治理元数据也提交 GitLab，保存在 VitePress 源目录外的 `working/<slug>/`；原型继续通过 prototype-publish 独立自动发布，入库与发布分别记录状态。Markdown 使用经验证的原型 URL，不依赖 HTML 链接脚本。
+所有非原型文档使用原生 Markdown；GitLab 交付遵循 [文档交付规范](skills/prd/references/gitlab-delivery.md)，先检查 VitePress 实际源目录与构建约定。全部需求 Markdown 都提交 GitLab：正式 PRD 放入源目录（如 `docs/requirements/<slug>/index.md`），其余 Markdown 放在源目录外（如 `working/<slug>/`）；站点只发布正式 PRD，保留既有导航首页。项目资料保存在本机 `$CODEX_HOME/private/prd-projects.json`（默认 `%USERPROFILE%/.codex/private/prd-projects.json`），不随技能分发。HTML 原型、实际依赖与治理元数据也在 `working/<slug>/` 直接维护并入库；按已推送源码通过 prototype-publish 独立发布。Markdown 使用经验证的原型 URL，不依赖 HTML 链接脚本。
 
 从 GitHub 当前开发分支 `codex/html-prototype-output` 一条命令安装或更新三个技能（需先将该分支的新脚本推送到 GitHub）：
 
