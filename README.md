@@ -30,7 +30,7 @@ $prd 帮我澄清这个产品需求，并按阶段生成 Markdown 正式 PRD 和
 
 ## 安装
 
-所有非原型文档使用原生 Markdown；GitLab 交付遵循 [文档交付规范](skills/prd/references/gitlab-delivery.md)，先检查目标仓库实际目录与构建约定，只同步文档及必要附件。项目资料保存在本机 `$CODEX_HOME/private/prd-projects.json`（默认 `%USERPROFILE%/.codex/private/prd-projects.json`），不随技能分发。HTML 原型仍独立发布；Markdown 使用经验证的原型 URL，不依赖 HTML 链接脚本。
+所有非原型文档使用原生 Markdown；GitLab 交付遵循 [文档交付规范](skills/prd/references/gitlab-delivery.md)，先检查 VitePress 实际源目录与构建约定。全部需求 Markdown 都提交 GitLab：正式 PRD 放入源目录（如 `docs/requirements/<slug>/index.md`），其余 Markdown 放在源目录外（如 `working/<slug>/`）；站点只发布正式 PRD，保留既有导航首页。项目资料保存在本机 `$CODEX_HOME/private/prd-projects.json`（默认 `%USERPROFILE%/.codex/private/prd-projects.json`），不随技能分发。HTML 原型仍独立发布；Markdown 使用经验证的原型 URL，不依赖 HTML 链接脚本。
 
 从 GitHub 当前开发分支 `codex/html-prototype-output` 一条命令安装或更新三个技能（需先将该分支的新脚本推送到 GitHub）：
 

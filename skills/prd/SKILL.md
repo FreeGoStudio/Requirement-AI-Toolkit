@@ -15,7 +15,7 @@ description: "中文产品需求工具。用户调用 $prd，或需要需求澄�
 - 按以下评审节点推进，已有明确确认可沿用。前置业务确认不足时，仅等待依赖该决策的正式产物与原型变更；可继续独立的探索、比较和草案整理，不假定确认通过。
 - 区分文件生成、自动校验、浏览器实际验证和用户验收。无浏览器能力时保存可执行产物并标记待验证，不虚报截图或交互通过，不推进依赖该检查的评审。
 - 每次高模生成、修改并完成静态检查后，读取 `references/remote-publishing.md`，调用同级 prototype-publish 技能，以 Prd 模式发布。未配置时沿用本地交付；已配置时自动发布仅原型及依赖资源，回复远程入口。缺少发布技能或发布失败时明确说明本次未发布，不将本地成功当作远程成功。服务器配置由 prd-setup 负责。
-- 正式 PRD 与 GitLab 交付读取 `references/gitlab-delivery.md`；项目配置独立保存在本机，不把私人仓库和认证信息固化到通用技能。
+- GitLab 交付读取 `references/gitlab-delivery.md`：全部需求 Markdown 提交 GitLab，只有正式 PRD 放入 VitePress 实际源目录，其余 Markdown 放在源目录外。项目配置独立保存在本机，不把私人仓库和认证信息固化到通用技能。
 - 所有文档中的原型链接使用普通 Markdown 链接，按 `references/gitlab-delivery.md` 更新。本次原型变更时将关联链接标为待发布，成功发布并验证后更新 URL；SyncLinks 不处理 Markdown，不将其当作文档同步完成。
 
 ## 1. 需求接收、探索与比较
@@ -32,7 +32,7 @@ description: "中文产品需求工具。用户调用 $prd，或需要需求澄�
 
 ## 3. 需求文档
 
-正式规则与验收场景只使用已确认内容，未决假设单列为开放问题。业务模型确认后读取 `references/prd-template.md` 和 `references/bdd-template.md`，生成 `06-prd.md`、`07-flowchart.md` 和 `08-bdd.md`。流程图内嵌 Mermaid 代码围栏，BDD 内嵌带中文语言声明的 Gherkin 代码围栏，不默认另生成 `.mmd` 或 `.feature` 文档副本。PRD 使用原生 Markdown 标题、表格、Mermaid 与普通链接；原型尚未生成时标记待生成，不虚构链接；生成并验证后将需求规则链接到对应 screen/state 锚点。检查目标 Markdown 渲染器的 Mermaid 支持；不支持时附本地渲染图像。按 GitLab 交付规范检查仓库、同步正式文档及必要资源、验证并提交；推送与 main 发布遵循用户授权。用户批准 PRD/BDD 后进入高保真准备。
+正式规则与验收场景只使用已确认内容，未决假设单列为开放问题。业务模型确认后读取 `references/prd-template.md` 和 `references/bdd-template.md`，生成 `06-prd.md`、`07-flowchart.md` 和 `08-bdd.md`。流程图内嵌 Mermaid 代码围栏，BDD 内嵌带中文语言声明的 Gherkin 代码围栏，不默认另生成 `.mmd` 或 `.feature` 文档副本。PRD 使用原生 Markdown 标题、表格、Mermaid 与普通链接；原型尚未生成时标记待生成，不虚构链接；生成并验证后将需求规则链接到对应 screen/state 锚点。检查目标 Markdown 渲染器的 Mermaid 支持；不支持时附本地渲染图像。按 GitLab 交付规范检查仓库、按源目录内外映射同步全部需求 Markdown 及必要资源、验证并提交；推送与 main 发布遵循用户授权。用户批准 PRD/BDD 后进入高保真准备。
 
 ## 4. 原型参考、视觉方向与设计系统
 

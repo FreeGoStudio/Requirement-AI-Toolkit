@@ -1,6 +1,6 @@
 # 输出产物
 
-正式 Markdown PRD 的仓库同步、附件路径和原型链接见 `gitlab-delivery.md`。本地过程产物与 GitLab 正式文档分别管理，不将整个输出目录提交到文档仓库。
+全部 Markdown 的仓库同步、附件路径和原型链接见 `gitlab-delivery.md`。本地输出目录保持下表结构；交付 GitLab 时，只有 `06-prd.md` 进入 VitePress 实际源目录，其余 Markdown（包括各级 index.md）全部放入源目录外的 working/<slug>/。两类文档都提交，不将整个输出目录原样复制到站点。
 
 默认目录为 `<workspace-root>/outputs/product-requirements/<yyyyMMdd-HHmm>-<short-requirement-slug>/`，使用用户当地时间；slug 使用小写 ASCII、数字与连字符。用户指定目录时优先使用。后续阶段复用目录，不预建空白文件。
 
