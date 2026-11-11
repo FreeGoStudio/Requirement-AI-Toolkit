@@ -1,0 +1,8 @@
+**
+!platform/
+!platform/runner/
+!platform/runner/build.mjs
+!platform/templates/
+!platform/templates/prototype/
+!platform/templates/prototype/package.json
+!platform/templates/prototype/package-lock.json

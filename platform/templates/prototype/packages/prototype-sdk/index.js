@@ -1,6 +1,6 @@
-export function connect(app, root, render) {
+export function connect(app, root, render, options = {}) {
   const standalone = window.parent === window;
-  let state = {}, route = app === 'admin' ? '/settings' : '/login', context, destroyed = false;
+  let state = {}, appStates = {}, viewState, route = options.initialRoute || '/', context = new URLSearchParams(location.search).get('prototypeContext'), destroyed = false;
   const request = (type, payload = {}) => {
     if (standalone) {
       if (type === 'navigate') { route = payload.route; draw(); }
@@ -11,12 +11,12 @@ export function connect(app, root, render) {
   };
   const api = {
     navigate: (targetApp, targetRoute, options = {}) => request('navigate', { app: targetApp, route: targetRoute, ...options }),
-    patch: patch => request('state.patch', { patch }),
+    patch: (patch, targetApp = app) => request('state.patch', { patch, app: targetApp }),
     external: url => request('navigate', { external: url })
   };
   const draw = () => {
     if (destroyed) return;
-    render(root, { state, route, ...api });
+    render(root, { state, appStates, viewState, route, ...api });
     root.dataset.prototypeRoute = route;
     request('rendered', { route, elements: [...root.querySelectorAll('[data-prototype-id]')].map(e => e.dataset.prototypeId) });
   };
@@ -24,10 +24,10 @@ export function connect(app, root, render) {
     if (event.source !== window.parent || event.origin !== location.origin) return;
     const message = event.data;
     if (message?.schemaVersion !== 1 || message.app !== app || typeof message.requestId !== 'string') return;
-    if (message.type === 'initialize') {
-      context = message.context; state = message.payload.state; route = message.payload.route; draw();
+    if (message.type === 'initialize' && message.context === context) {
+      context = message.context; state = message.payload.state; route = message.payload.route; appStates = message.payload.appStates; viewState = message.payload.viewState; draw();
     } else if (message.context === context && message.type === 'state') {
-      state = message.payload.state; route = message.payload.route; draw();
+      state = message.payload.state; route = message.payload.route; appStates = message.payload.appStates; viewState = message.payload.viewState; draw();
     } else if (message.context === context && message.type === 'highlight') {
       root.querySelectorAll('[data-highlight]').forEach(e => e.removeAttribute('data-highlight'));
       const matches = [...root.querySelectorAll('[data-prototype-id]')].filter(e => e.dataset.prototypeId === message.payload.target);

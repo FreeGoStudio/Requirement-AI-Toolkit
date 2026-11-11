@@ -10,7 +10,8 @@
     "test": "node --test platform/tests/*.test.mjs",
     "start": "node platform/server/main.mjs",
     "build": "vite build --config platform/web/vite.config.mjs",
-    "dev": "vite --config platform/web/vite.config.mjs"
+    "dev": "vite --config platform/web/vite.config.mjs",
+    "verify:template": "node platform/scripts/verify-template.mjs"
   },
   "dependencies": {
     "express": "5.3.0",

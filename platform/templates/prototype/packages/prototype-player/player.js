@@ -8,7 +8,7 @@ if (!response.ok) throw new Error('固定包中不存在本需求评审资料');
 const bundle = await response.json();
 if (bundle.error) { document.body.textContent = bundle.error; throw new Error(bundle.error); }
 const scopes = bundle.manifest.review_scope, frame = $('#canvas'), dialog = $('#boundary');
-let state = {}, current, review = true, pending, targetHighlight, context = crypto.randomUUID(), ready = false;
+let state = {}, current, review = true, pending, targetHighlight, context = crypto.randomUUID(), ready = false, frameKey;
 const routeMap = new Map(config.applications.flatMap(app => app.screens.map(screen => [`${app.id}:${screen.route}`, { app, screen }])));
 $('#title').textContent = bundle.manifest.title;
 $('#version').textContent = `固定版本 ${build.build_id}`;
@@ -25,11 +25,19 @@ function commitNavigation(target, replace = false) {
     window.open(url, '_blank', 'noopener'); return;
   }
   current = target;
+  $('#annotations').replaceChildren();
+  if(review) for(const note of bundle.annotations.annotations.filter(note=>note.target?.app===target.app&&note.target?.route===target.route)) {
+    const control=document.createElement('button');control.textContent=note.title || note.id;
+    control.onclick=()=>{targetHighlight=note.target.element_id;if(ready){send('highlight',{target:targetHighlight});targetHighlight=null;}};
+    $('#annotations').append(control);
+    if(note.description){const description=document.createElement('p');description.textContent=note.description;$('#annotations').append(description);}
+  }
   const hash = new URLSearchParams({ app: target.app, route: target.route, review: String(review), ...(target.state ? { state: target.state } : {}) });
   history[replace ? 'replaceState' : 'pushState'](target, '', `#${hash}`);
   const src = new URL(`apps/${entry.app.id}/iframe.html?id=${encodeURIComponent(entry.screen.story_id)}&viewMode=story`, location.href);
-  if (frame.src !== src.href) { context = crypto.randomUUID(); ready = false; frame.src = src.href; }
-  else if (ready) send('state', { state, route: current.route });
+  const key = `${entry.app.id}:${entry.screen.story_id}`;
+  if (frameKey !== key) { frameKey = key; context = crypto.randomUUID(); ready = false; src.searchParams.set('prototypeContext', context); frame.src = src.href; }
+  else if (ready) send('state', { state: state[current.app] || {}, appStates: state, route: current.route, viewState: current.state });
 }
 function navigate(target, replace = false) {
   if (target.external && !/^https?:\/\//.test(target.external)) { report('外部地址无效'); return; }
@@ -43,9 +51,9 @@ $('#return').onclick = () => { setMode(true); navigate(scopes[0]); };
 function initialize(sceneId) {
   const scene = bundle.scenarios.scenarios.find(scene => scene.id === sceneId);
   if (!scene) { report('场景不存在'); return; }
-  state = Object.assign({}, ...Object.values(structuredClone(scene.app_states)));
+  state = structuredClone(scene.app_states);
   $('#scenarios').value = sceneId;
-  if (ready) send('state', { state, route: current.route });
+  if (ready) send('state', { state: state[current.app] || {}, appStates: state, route: current.route, viewState: current.state });
 }
 for (const scene of bundle.scenarios.scenarios) { const option = document.createElement('option'); option.value = scene.id; option.textContent = scene.description; $('#scenarios').append(option); }
 $('#scenarios').onchange = () => initialize($('#scenarios').value);
@@ -65,15 +73,18 @@ window.addEventListener('message', event => {
   if (event.origin !== location.origin || event.source !== frame.contentWindow) return;
   const message = event.data;
   if (message?.schemaVersion !== 1 || message.app !== current?.app || typeof message.requestId !== 'string') return;
-  if (message.type === 'ready') { ready = true; send('initialize', { state, route: current.route }); return; }
+  if (message.context !== context) return;
+  if (message.type === 'ready') { ready = true; send('initialize', { state: state[current.app] || {}, appStates: state, route: current.route, viewState: current.state }); return; }
   if (message.context !== context) return;
   if (message.type === 'navigate' && message.payload && typeof message.payload === 'object') navigate(message.payload);
   if (message.type === 'state.patch' && message.payload?.patch && typeof message.payload.patch === 'object' && !Array.isArray(message.payload.patch)) {
     const patch = JSON.parse(JSON.stringify(message.payload.patch));
     if (Object.keys(patch).some(key => ['__proto__','constructor','prototype'].includes(key))) return;
-    state = { ...state, ...patch }; send('state', { state, route: current.route });
+    const app = message.payload.app || current.app;
+    if (!config.applications.some(item => item.id === app)) { report('状态目标应用未登记'); return; }
+    state = { ...state, [app]: { ...state[app], ...patch } }; send('state', { state: state[current.app] || {}, appStates: state, route: current.route, viewState: current.state });
   }
-  if (message.type === 'rendered' && targetHighlight) { send('highlight', { target: targetHighlight }); targetHighlight = null; }
+  if (message.type === 'rendered' && review && targetHighlight) { send('highlight', { target: targetHighlight }); targetHighlight = null; }
   if (message.type === 'diagnostic') report(`${message.payload.reason}：${message.payload.target}`);
 });
 window.addEventListener('popstate', () => {

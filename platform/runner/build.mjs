@@ -1,4 +1,4 @@
-import { cp, mkdir, symlink, readFile, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 await mkdir('/tmp/work', { recursive: true });
@@ -12,4 +12,7 @@ await cp('/deps/node_modules', '/tmp/work/node_modules', { recursive: true });
 process.chdir('/tmp/work');
 execFileSync(process.execPath, ['scripts/build.mjs'], { stdio: 'inherit', timeout: 240000 });
 await cp('/tmp/work', '/output', { recursive: true, filter: path => !/(^|\/)(\.git|node_modules)(\/|$)/.test(path) });
-await writeFile('/output/runner-result.json', JSON.stringify({ passed: true, node: process.version, dependency_digest: hash(lock) }));
+const version=async name=>JSON.parse(await readFile(`/deps/node_modules/${name}/package.json`,'utf8')).version;
+await writeFile('/output/runner-result.json', JSON.stringify({ passed: true, node: process.version,
+  npm:execFileSync('npm',['--version'],{encoding:'utf8'}).trim(),storybook:await version('storybook'),
+  framework:await version('@storybook/html-vite'),vite:await version('vite'),dependency_digest:hash(lock) }));

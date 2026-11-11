@@ -11,7 +11,7 @@ export const Interactive = { render: () => {
       section.dataset.prototypeId = 'login.sms.settings';
       section.innerHTML = '<h1>登录方式设置</h1><p>设置会同步到当前演示中的 POS。切换页面不会重置。</p><label data-prototype-id="login.sms.enabled"><input type="checkbox" aria-label="启用短信验证码登录"> 启用短信验证码登录</label><p aria-live="polite"></p>';
       const input = section.querySelector('input'); input.checked = !!state.sms_login_enabled;
-      input.onchange = () => patch({ sms_login_enabled: input.checked });
+      input.onchange = () => { patch({ sms_login_enabled: input.checked }); patch({ sms_login_enabled: input.checked }, 'pos'); };
       section.querySelector('[aria-live]').textContent = state.sms_login_enabled ? '短信验证码登录已启用' : '当前仅启用账号密码登录';
     }
     view.querySelector('[data-action="settings"]').onclick = () => navigate('admin', '/settings');
