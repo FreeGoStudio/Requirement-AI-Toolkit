@@ -27,6 +27,15 @@
 - screens 覆盖已确认的主流程、异常、空错状态，每个 screenId 对应实际 HTML 锚点。interactions 记录触发条件、前后状态和需求规则 ID，未知规则留为开放问题，不自行决定。
 - 来源记录包含 prototypeElement、sourceType（requirement/screenshot）、source、sourceRegion、decision、reason。入选截图实际查看情况记入 InterfaceBaseline。
 
+原型生成还须按 `prototype-structure.md` 补充以下字段（上方示例仅展示基础业务规格）：
+
+- `terminalProfiles`：终端、视口、deviceScaleFactor、fixed/fluid/hybrid 布局及区域覆盖配置。
+- `screens[].elements`：重要交互元素的稳定 elementId、语义与组件实例归属；`interactions` 补充触发元素的 screenId/elementId、事件与目标 screen/state。
+- `structurePath`：`prototypes/<low|high>/<flowId>.structure.json`。
+- `snapshotTargets`：要自动采集的 profileId、screenId、stateId 及对应快照路径。快照必须来自浏览器实际计算，不在规格中预填猜测坐标。
+
+规格、HTML、结构导出和快照使用一致的定位标识。上述字段为生成契约，现有治理脚本未覆盖的部分须单独核对并记录结果。
+
 ## 视觉方向规格
 
 `09-visual-direction-spec.json` 记录 candidates（默认三项），每项含 directionId、name、rationale、colors、typography、spacing、radii、shadows、coreComponents、representativeView、entryPath；selection 含 status=pending/selected、directionIds、combinationNotes。候选输出到 visual-directions/，实际截图后请求选择，再建立并确认设计系统。低模不作为唯一视觉来源。

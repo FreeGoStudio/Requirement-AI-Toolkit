@@ -15,6 +15,8 @@
 
 所有面向评审者的正文均为 UTF-8 HTML，JSON 与源文件作为辅助产物。`index.html` 是交付入口，随阶段更新当前状态、已生成文件的相对链接、确认记录、实际错误及待验收条件。只链接已存在文件，明确区分 generated、validated、browser-verified、accepted。
 
+每次低模/高模生成或迭代还需产出 `prototypes/<low|high>/<flowId>.structure.json`，并自动采集 `snapshots/<fidelity>/<flowId>/<profileId>/<screenId>--<stateId>.json`。字段、终端配置、采集和失效规则见 `prototype-structure.md`。入口链接实际生成的结构与快照；无法采集时记录待验证，不创建虚假测量结果。
+
 探索不新增必交文件：`01-clarification-questions.html` 记录探索结论、事实来源、待验证假设及有必要的方案比较；`02-business-model.html` 记录采纳方案、范围、决策来源和确认状态。只记录有内容的部分，不预建空表。
 
 低模前可以在上述文档中整理规则、流程及验收场景，明确标记“待确认草案”，与已确认内容分开。正式 `06-prd.html`、`07-flowchart.html`、`08-bdd.html` 及配套源文件仍在低模确认后生成，编号和正式产出时机不变。探索阶段使用简短内容即可，完整图文格式用于正式交付。

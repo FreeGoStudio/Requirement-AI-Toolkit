@@ -12,6 +12,7 @@ description: "中文产品需求工具。用户调用 $prd，或需要需求澄�
 - 以用户原始需求及明确确认作为业务依据，不虚构 API、数据库字段、发布计划或业务规则。开放问题显式保留。
 - 任务开始读取 `references/output-artifacts.md`，复用同一输出目录；仅创建已到达阶段的文件。
 - 进入原型阶段时读取 `references/html-output.md`、`references/design-governance.md`、`references/prototype-spec.md`。直接生成本地 HTML/CSS/JavaScript，不依赖设计平台账号、插件或远程设计服务。
+- 原型结构、终端布局与自动快照遵循 `references/prototype-structure.md`：保留语义化 HTML 和稳定 Screen/Element ID，生成组件树、交互关系及指定视口的实测布局快照；日常读取优先使用结构化数据，浏览器负责采集与必要验证。
 - 按以下评审节点推进，已有明确确认可沿用。前置业务确认不足时，仅等待依赖该决策的正式产物与原型变更；可继续独立的探索、比较和草案整理，不假定确认通过。
 - 区分文件生成、自动校验、浏览器实际验证和用户验收。无浏览器能力时保存可执行产物并标记待验证，不虚报截图或交互通过，不推进依赖该检查的评审。
 
