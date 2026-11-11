@@ -2,7 +2,7 @@
 
 面向 Codex 的中文产品需求工作流技能，生成 Markdown 需求与过程文档与低/高保真交互原型，支持 GitLab 文档交付。
 
-- `skills/prd`：问题探索、业务方案比较、范围收敛、业务模型、参考分析、低模、PRD/流程图/BDD、视觉方向、设计系统与高模评审。
+- `skills/prd`：问题探索、业务方案比较、范围收敛、业务模型、参考分析、PRD/流程图/BDD、视觉方向、设计系统与高模评审。
 - `skills/prd-setup`：技能安装、本地 HTML 预览与 Linux 原型发布环境配置。
 - `skills/prototype-publish`：独立发布历史 HTML 或 PRD 原型到临时服务器，复用账号、发布 ID 和访问链接。
 
@@ -19,15 +19,14 @@ $prd 帮我澄清这个产品需求，并按阶段生成 Markdown 正式 PRD 和
 | 阶段 | 交付 | 下一步条件 |
 | --- | --- | --- |
 | 探索、比较与收敛 | 原始需求、含探索与必要比较的澄清 Markdown、业务模型 Markdown | 必要问题已回答，方案与范围随业务模型确认 |
-| 参考与低模 | 参考决策、界面基线、规格、prototypes/low/ | 参考决策明确，实际截图已分析 |
-| 低模反查 | 浏览器交互、截图与结构评审 Markdown | 关键检查通过，用户确认 |
 | 需求文档 | 06-prd.md、07-flowchart.md、08-bdd.md  | PRD/BDD 已批准 |
+| 原型参考 | 参考决策、界面基线与清单 | 参考决策明确，入选截图已分析 |
 | 视觉方向与设计系统 | 必要的视觉候选、design-system/ 与评审 Markdown | 方向及设计系统已确认 |
 | 高模 | prototypes/high/、高模规格与评审 Markdown | 代码依赖、浏览器交互和视觉检查通过，用户验收 |
 
-探索深度按需求成熟度调整：模糊需求先辨认真实目标与遗漏场景，有实质取舍才比较 2–3 个业务方案；已确认的简单修改直接核对缺口。区分事实、假设、建议与已确认决策，不把候选方案当作新增范围。等待决策只阻止依赖它的正式生成，可以继续独立分析和待确认草案。探索记录复用澄清与业务模型 Markdown，正式需求文档仍在低模确认后生成；旧任务不补做历史比较。
+探索深度按需求成熟度调整：模糊需求先辨认真实目标与遗漏场景，有实质取舍才比较 2–3 个业务方案；已确认的简单修改直接核对缺口。区分事实、假设、建议与已确认决策，不把候选方案当作新增范围。等待决策只阻止依赖它的正式生成，可以继续独立分析和待确认草案。探索记录复用澄清与业务模型 Markdown，正式需求文档仍在业务模型确认后生成；旧任务不补做历史比较。
 
-低高模共享稳定 flowId 与 screenId，每个流程/保真度保留一个正式入口，修复更新原文件。高模复用已批准的 CSS token、组件、组合与模板。浏览器能力缺失时可保存文件及静态检查结果，实际渲染/交互标记待验证，不虚报完成。
+高模使用稳定 flowId 与 screenId，每个流程/保真度保留一个正式入口，修复更新原文件。高模复用已批准的 CSS token、组件、组合与模板。浏览器能力缺失时可保存文件及静态检查结果，实际渲染/交互标记待验证，不虚报完成。
 
 ## 安装
 
@@ -102,7 +101,7 @@ $prototype-publish 发布 D:\历史原型\订单，入口是 index.html，复用
 
 ```powershell
 ./skills/prd/tests/Test-DesignGovernance.ps1
-./skills/prd/scripts/Test-DesignGovernance.ps1 -ManifestPath '<输出目录>/03-html-design-manifest.json' -PrototypeSpecPath '<输出目录>/04-low-fidelity-prototype-spec.json' -Phase postwrite
+./skills/prd/scripts/Test-DesignGovernance.ps1 -ManifestPath '<输出目录>/03-html-design-manifest.json' -PrototypeSpecPath '<输出目录>/12-high-fidelity-prototype-spec.json' -Phase postwrite
 ```
 
 治理脚本检查路径、流程唯一性、更新策略、参考决策与高模资产批准；postwrite 验证登记文件确实存在。浏览器渲染、链接锚点、交互、响应式、打印以及真实资产复用另按 `skills/prd/references/html-output.md` 验证。静态检查通过不等于最终验收。

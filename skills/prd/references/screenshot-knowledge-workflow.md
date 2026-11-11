@@ -1,6 +1,6 @@
 # 截图知识库工作流
 
-在任何低保真 `PrototypeSpec` 前执行本工作流。截图路径被登记但图片未被实际读取，不算完成参考分析。
+在任何高保真 `PrototypeSpec` 前执行本工作流。截图路径被登记但图片未被实际读取，不算完成参考分析。
 
 ## 1. 定位知识库
 
@@ -35,11 +35,11 @@
 - 全局壳层、固定区域、内容层级、组件模式、弹窗/覆盖关系。
 - 可借用结构和不得复制的敏感内容。
 
-如果任何入选截图无法读取，将 `screenshotAnalysisGate.status` 设为 `blocked` 并停止低模生成。
+如果任何入选截图无法读取，将 `screenshotAnalysisGate.status` 设为 `blocked` 并停止高模生成。
 
 ## 4. 生成 InterfaceBaseline
 
-在低模规格前保存 `03-interface-baseline.json`：
+在高模规格前保存 `03-interface-baseline.json`：
 
 ```json
 {
@@ -70,7 +70,7 @@
 
 ## 5. 来源追踪
 
-每个关键低模区域必须在 `referenceTraceability` 中追溯到已确认需求或实际读取的截图：
+每个关键高模区域必须在 `referenceTraceability` 中追溯到已确认需求或实际读取的截图：
 
 ```json
 {
@@ -87,7 +87,7 @@
 
 ## 6. 结构一致性 Gate
 
-低模生成后必须使用 浏览器截图能力捕获完整页面，与 `InterfaceBaseline` 对照并保存 `05-low-fidelity-structure-review.md`。逐项检查：
+高模生成后必须使用 浏览器截图能力捕获完整页面，与 `InterfaceBaseline` 对照并保存 `13-high-fidelity-review.md`。逐项检查：
 
 - 画布尺寸和比例。
 - 全局壳层与固定导航。
@@ -96,11 +96,11 @@
 - 信息密度与组件分组。
 - 所有 `mustPreserve`。
 - 所有关键区域的来源追踪。
-- 当前业务流程只占用一个 `prototypes/low/<flowId>.html` 正式入口，且 `flowId + fidelity` 唯一。
+- 当前业务流程只占用一个 `prototypes/high/<flowId>.html` 正式入口，且 `flowId + fidelity` 唯一。
 - 流程概览、主流程、异常、空错状态与交互说明 完整或明确标记不适用。
 
-每项标记 `pass | fail | not-applicable` 并附证据。任一关键项或 `mustPreserve` 失败时，修正低模并重新截图检查；通过前不得进入低模用户确认、PRD 或高模阶段。
+每项标记 `pass | fail | not-applicable` 并附证据。任一关键项或 `mustPreserve` 失败时，修正高模并重新截图检查；通过前不得标记高模验证通过或请求最终验收；不阻止独立的需求文档工作。
 
 ## 7. 高保真设计治理反查
 
-结合 HTML/CSS/JavaScript 源文件、浏览器 DOM 和 `03-html-design-manifest.json` 检查低高模 flowId/screenId 映射、已批准资产的实际引用、语义 token 和交互状态。执行 design-governance.md 的代码与截图审计，保存 `13-high-fidelity-review.md`；失败时修复、重新操作与截图，通过前不标记完成。
+结合 HTML/CSS/JavaScript 源文件、浏览器 DOM 和 `03-html-design-manifest.json` 检查高模 flowId/screenId 与已确认需求的对应关系、已批准资产的实际引用、语义 token 和交互状态。执行 design-governance.md 的代码与截图审计，保存 `13-high-fidelity-review.md`；失败时修复、重新操作与截图，通过前不标记完成。

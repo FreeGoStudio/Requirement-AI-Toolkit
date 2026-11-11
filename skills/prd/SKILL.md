@@ -1,6 +1,6 @@
 ---
 name: prd
-description: "中文产品需求工具。用户调用 $prd，或需要需求澄清、PRD、BDD、流程图、低保真或高保真 HTML 原型时使用。按需求成熟度探索问题、比较方案并收敛业务模型，产出全套 Markdown 需求与评审文档及 HTML 交互原型，支持 GitLab 文档交付；配置 Linux 服务器后自动发布原型。"
+description: "中文产品需求工具。用户调用 $prd，或需要需求澄清、PRD、BDD、流程图、高保真 HTML 原型时使用。按需求成熟度探索问题、比较方案并收敛业务模型，产出全套 Markdown 需求与评审文档及 HTML 交互原型，支持 GitLab 文档交付；配置 Linux 服务器后自动发布原型。"
 ---
 
 # 产品需求与 HTML 原型
@@ -14,7 +14,7 @@ description: "中文产品需求工具。用户调用 $prd，或需要需求澄�
 - 进入原型阶段时读取 `references/html-output.md`、`references/design-governance.md`、`references/prototype-spec.md`。直接生成本地 HTML/CSS/JavaScript，不依赖设计平台账号、插件或远程设计服务。
 - 按以下评审节点推进，已有明确确认可沿用。前置业务确认不足时，仅等待依赖该决策的正式产物与原型变更；可继续独立的探索、比较和草案整理，不假定确认通过。
 - 区分文件生成、自动校验、浏览器实际验证和用户验收。无浏览器能力时保存可执行产物并标记待验证，不虚报截图或交互通过，不推进依赖该检查的评审。
-- 每次低模或高模生成、修改并完成静态检查后，读取 `references/remote-publishing.md`，调用同级 prototype-publish 技能，以 Prd 模式发布。未配置时沿用本地交付；已配置时自动发布仅原型及依赖资源，回复远程入口。缺少发布技能或发布失败时明确说明本次未发布，不将本地成功当作远程成功。服务器配置由 prd-setup 负责。
+- 每次高模生成、修改并完成静态检查后，读取 `references/remote-publishing.md`，调用同级 prototype-publish 技能，以 Prd 模式发布。未配置时沿用本地交付；已配置时自动发布仅原型及依赖资源，回复远程入口。缺少发布技能或发布失败时明确说明本次未发布，不将本地成功当作远程成功。服务器配置由 prd-setup 负责。
 - 正式 PRD 与 GitLab 交付读取 `references/gitlab-delivery.md`；项目配置独立保存在本机，不把私人仓库和认证信息固化到通用技能。
 - 所有文档中的原型链接使用普通 Markdown 链接，按 `references/gitlab-delivery.md` 更新。本次原型变更时将关联链接标为待发布，成功发布并验证后更新 URL；SyncLinks 不处理 Markdown，不将其当作文档同步完成。
 
@@ -30,29 +30,22 @@ description: "中文产品需求工具。用户调用 $prd，或需要需求澄�
 
 将探索发现分为当前目标必要、待决定、暂不纳入；“必要”判断本身不等于已授权范围。将回答和采纳方案整理为对象、关系、状态流转、主流程、异常和风险，保存 `02-business-model.md`，记录范围、决策来源及确认状态。方案选择与范围确认并入现有业务模型确认，不新增固定关卡；已确认事项不重复询问。确认前不生成业务原型。
 
-## 3. 低保真原型
+## 3. 需求文档
+
+正式规则与验收场景只使用已确认内容，未决假设单列为开放问题。业务模型确认后读取 `references/prd-template.md` 和 `references/bdd-template.md`，生成 `06-prd.md`、`07-flowchart.md` 和 `08-bdd.md`。流程图内嵌 Mermaid 代码围栏，BDD 内嵌带中文语言声明的 Gherkin 代码围栏，不默认另生成 `.mmd` 或 `.feature` 文档副本。PRD 使用原生 Markdown 标题、表格、Mermaid 与普通链接；原型尚未生成时标记待生成，不虚构链接；生成并验证后将需求规则链接到对应 screen/state 锚点。检查目标 Markdown 渲染器的 Mermaid 支持；不支持时附本地渲染图像。按 GitLab 交付规范检查仓库、同步正式文档及必要资源、验证并提交；推送与 main 发布遵循用户授权。用户批准 PRD/BDD 后进入高保真准备。
+
+## 4. 原型参考、视觉方向与设计系统
 
 - 读取 `references/screenshot-knowledge-workflow.md` 与 `references/knowledge-bases.json`，检查既有原型及参考来源。
-- 保存 `02-reference-decision.md`。无参考时请用户提供参考或明确确认无参考继续；决策 pending 时不生成低模。
+- 保存 `02-reference-decision.md`。无参考时请用户提供参考或明确确认无参考继续；决策 pending 时不生成原型。
 - 实际查看入选截图，保存 `03-interface-baseline.json`；无参考获准继续时标记低置信度及需求来源，不伪造截图。
 - 扫描已有输出，建立或更新 `03-html-design-manifest.json`，按稳定 `flowId + fidelity` 定位唯一入口。
-- 保存 `04-low-fidelity-prototype-spec.json`，通过 preflight 校验后写入 `prototypes/low/<flowId>.html`。灰阶表达结构，使用模拟数据演示已确认的主流程、异常和状态。
 
-## 4. 低保真反查
+已有经批准设计系统时复用；有品牌或高模参考时据此建立 CSS token、组件、组合与模板，并在 `design-system/index.md` 展示与评审。无视觉来源时保存 `09-visual-direction-spec.json`，默认生成三套 HTML 候选原型 `prototypes/visual-directions/<directionId>.html`，在 `visual-directions/index.md` 记录说明与链接，截图并保存 `10-visual-direction-review.md`，等待选择。选择后固化设计系统，保存 `11-design-system-review.md`，用户明确确认后才能标记 approved。
 
-在浏览器打开原型，实际操作并截图，对照界面基线检查壳层、导航、内容区、弹窗、信息密度、mustPreserve 与来源追踪。运行 postwrite 校验，保存 `05-low-fidelity-structure-review.md`。关键问题修正并复查后请求用户确认。
+## 5. 高保真原型
 
-## 5. 需求文档
-
-正式规则与验收场景只使用已确认内容，未决假设单列为开放问题。低模确认后读取 `references/prd-template.md` 和 `references/bdd-template.md`，生成 `06-prd.md`、`07-flowchart.md` 和 `08-bdd.md`。流程图内嵌 Mermaid 代码围栏，BDD 内嵌带中文语言声明的 Gherkin 代码围栏，不默认另生成 `.mmd` 或 `.feature` 文档副本。PRD 使用原生 Markdown 标题、表格、Mermaid 与普通链接；需求规则链接到原型对应 screen/state 锚点。检查目标 Markdown 渲染器的 Mermaid 支持；不支持时附本地渲染图像。按 GitLab 交付规范检查仓库、同步正式文档及必要资源、验证并提交；推送与 main 发布遵循用户授权。用户批准 PRD/BDD 后进入高保真准备。
-
-## 6. 视觉方向与设计系统
-
-低模只作结构参考。已有经批准设计系统时复用；有品牌或高模参考时据此建立 CSS token、组件、组合与模板，并在 `design-system/index.md` 展示与评审。无视觉来源时保存 `09-visual-direction-spec.json`，默认生成三套 HTML 候选原型 `prototypes/visual-directions/<directionId>.html`，在 `visual-directions/index.md` 记录说明与链接，截图并保存 `10-visual-direction-review.md`，等待选择。选择后固化设计系统，保存 `11-design-system-review.md`，用户明确确认后才能标记 approved。
-
-## 7. 高保真原型
-
-保存 `12-high-fidelity-prototype-spec.json`，先登记并批准新增设计资产，再在 `prototypes/high/<flowId>.html` 使用共享样式/组件。保留低模相同 flowId 与 screenId。运行治理校验，检查实际代码依赖、浏览器渲染、响应式、键盘操作与业务状态，保存 `13-high-fidelity-review.md`。失败项修复并复查后请求最终验收。
+保存 `12-high-fidelity-prototype-spec.json`，先登记并批准新增设计资产，再在 `prototypes/high/<flowId>.html` 使用共享样式/组件。按已确认需求建立稳定 flowId 与 screenId，迭代时沿用；不要求存在低保真原型。生成前执行 preflight，写入并登记后执行 postwrite；对照界面基线检查壳层、导航、弹窗、信息密度、mustPreserve 与来源追踪。运行治理校验，检查实际代码依赖、浏览器渲染、响应式、键盘操作与业务状态，保存 `13-high-fidelity-review.md`。失败项修复并复查后请求最终验收。
 
 ## 阻塞与恢复
 

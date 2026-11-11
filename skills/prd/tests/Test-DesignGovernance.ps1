@@ -20,6 +20,29 @@ function Expect-Failure($Name, [scriptblock]$Action, $Pattern) {
 }
 & $validator -ManifestPath $mPath -PrototypeSpecPath $lPath
 & $validator -ManifestPath $mPath -PrototypeSpecPath $hPath
+# New workflow: create and validate high fidelity without any low-fidelity entry or file.
+$directRoot = Join-Path $tempRoot 'direct-high'
+New-Item -ItemType Directory -Path $directRoot | Out-Null
+$directManifest = Join-Path $directRoot 'manifest.json'
+$directSpec = Join-Path $directRoot 'spec.json'
+$directM = Read-Fixture 'valid-manifest.json'
+$directM.flows[0].entries = [pscustomobject]@{ high = '' }
+$directS = Read-Fixture 'valid-high-fidelity-spec.json'
+$directS.flowIdentity.changeType = 'new-flow'
+$directS.htmlStrategy.action = 'create'
+Save-Json $directM $directManifest
+Save-Json $directS $directSpec
+& $validator -ManifestPath $directManifest -PrototypeSpecPath $directSpec
+foreach ($path in @('design-system/tokens.css', 'design-system/components.css', 'prototypes/high/login.html', '02-reference-decision.md')) {
+  $full = Join-Path $directRoot $path
+  New-Item -ItemType Directory -Force -Path (Split-Path $full -Parent) | Out-Null
+  Set-Content -LiteralPath $full -Value 'Fixture' -Encoding UTF8
+}
+$directM.flows[0].entries.high = 'prototypes/high/login.html'
+Save-Json $directM $directManifest
+& $validator -ManifestPath $directManifest -PrototypeSpecPath $directSpec -Phase postwrite
+if (Test-Path (Join-Path $directRoot 'prototypes/low')) { throw 'Direct high-fidelity test unexpectedly created low fidelity' }
+Write-Host 'PASS: direct high fidelity without low-fidelity artifacts'
 $m = Read-Fixture 'valid-manifest.json'
 $m.flows += $m.flows[0]
 $bad = Join-Path $tempRoot 'bad.json'
