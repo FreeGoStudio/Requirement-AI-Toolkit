@@ -1,5 +1,7 @@
 # HTML 生成与验证
 
+本文仅约束 HTML 产物。正式 `06-prd.md` 及其 GitLab 链接按 `gitlab-delivery.md` 处理。
+
 ## 本地交付
 
 直接编写 HTML/CSS/JavaScript 文件；默认静态多页，无需构建或远程服务。每份 HTML 包含 doctype、lang="zh-CN"、UTF-8 charset、viewport、明确 title 与正文标题。使用相对路径引用本包资源，复制整个目录到其他位置后仍能打开。默认支持 file://；不使用需要服务器的 fetch 本地 JSON、ES module 或远程 CDN。确需服务器或项目已有技术栈时说明启动命令与依赖，并验证实际启动。
@@ -27,7 +29,7 @@
 
 ### 文档原型链接
 
-所有交付根目录的 HTML 文档（含 index、PRD、流程图和 BDD）共用 `prototype-links.js`。基础地址只保存在 `window.PRD_PROTOTYPE_BASE_URL`，内容是服务器地址、临时前缀与发布 ID，例如 `http://服务器:端口/_tmp/prototypes/<发布ID>`；页面不能各自写死服务器地址。状态由 `window.PRD_PROTOTYPE_PUBLISH_STATUS` 表示 published 或 pending。
+所有交付根目录的 HTML 文档（含 index、流程图和 BDD；不含 Markdown PRD）共用 `prototype-links.js`。基础地址只保存在 `window.PRD_PROTOTYPE_BASE_URL`，内容是服务器地址、临时前缀与发布 ID，例如 `http://服务器:端口/_tmp/prototypes/<发布ID>`；页面不能各自写死服务器地址。状态由 `window.PRD_PROTOTYPE_PUBLISH_STATUS` 表示 published 或 pending。
 
 文档仅保存相对原型路径及原有页面/状态锚点，初始 href 始终为本地回退：
 
@@ -38,7 +40,7 @@
 <p data-prototype-publication-status>原型待发布，当前链接使用本地文件。</p>
 ```
 
-同级 prototype-publish 的 `Invoke-PrototypePublish.ps1 -Action SyncLinks -OutputDirectory '<交付目录>'` 会根据发布记录生成共享脚本，绑定根目录文档中指向清单原型的现有链接。查询参数与锚点保留，其他文档间链接不变。新增 PRD/BDD 等文档后再次 SyncLinks 即可复用已有发布结果，无需重新上传原型。修改原型前用 `-LinksPending` 将状态置为待发布；未配置服务器也可仅用本机 Python 执行 SyncLinks，不连接服务器。
+同级 prototype-publish 的 `Invoke-PrototypePublish.ps1 -Action SyncLinks -OutputDirectory '<交付目录>'` 会根据发布记录生成共享脚本，绑定根目录文档中指向清单原型的现有链接。查询参数与锚点保留，其他文档间链接不变。新增 HTML 评审/BDD 等文档后再次 SyncLinks 即可复用已有发布结果，无需重新上传原型。修改原型前用 `-LinksPending` 将状态置为待发布；未配置服务器也可仅用本机 Python 执行 SyncLinks，不连接服务器。
 
 只有本次发布成功且 HTTP 校验通过时才使用服务器 URL；开始发布、未配置、上传失败或回退后均清空当前基础地址，页面链接回到本地并显示“待发布”。历史成功 URL 仅作为发布记录保留，不能冒充本次内容已发布。无 JavaScript 时静态 href 仍可打开本地文件。共享脚本与文档一起交付，不用 fetch JSON，兼容 file://。
 

@@ -1,11 +1,11 @@
 ---
 name: prd
-description: "中文产品需求工具。用户调用 $prd，或需要需求澄清、PRD、BDD、流程图、低保真或高保真 HTML 原型时使用。按需求成熟度探索问题、比较方案并收敛业务模型，产出 HTML 需求文档与交互原型；配置 Linux 服务器后自动发布原型。"
+description: "中文产品需求工具。用户调用 $prd，或需要需求澄清、PRD、BDD、流程图、低保真或高保真 HTML 原型时使用。按需求成熟度探索问题、比较方案并收敛业务模型，产出 Markdown 正式 PRD 与 HTML 交互原型，支持 GitLab 文档交付；配置 Linux 服务器后自动发布原型。"
 ---
 
 # 产品需求与 HTML 原型
 
-用中文开展需求探索、方案比较、业务收敛和评审，直接写出可在浏览器打开的 HTML 文档与低/高保真原型。代码标识和 Mermaid/Gherkin 语法可保留英文。
+用中文开展需求探索、方案比较、业务收敛和评审，正式 PRD 使用 Markdown，过程评审文档与低/高保真原型使用 HTML。代码标识和 Mermaid/Gherkin 语法可保留英文。
 
 ## 核心规则
 
@@ -15,7 +15,8 @@ description: "中文产品需求工具。用户调用 $prd，或需要需求澄�
 - 按以下评审节点推进，已有明确确认可沿用。前置业务确认不足时，仅等待依赖该决策的正式产物与原型变更；可继续独立的探索、比较和草案整理，不假定确认通过。
 - 区分文件生成、自动校验、浏览器实际验证和用户验收。无浏览器能力时保存可执行产物并标记待验证，不虚报截图或交互通过，不推进依赖该检查的评审。
 - 每次低模或高模生成、修改并完成静态检查后，读取 `references/remote-publishing.md`，调用同级 prototype-publish 技能，以 Prd 模式发布。未配置时沿用本地交付；已配置时自动发布仅原型及依赖资源，回复远程入口。缺少发布技能或发布失败时明确说明本次未发布，不将本地成功当作远程成功。服务器配置由 prd-setup 负责。
-- 文档原型链接按 `references/html-output.md` 使用共享基础地址变量，不在各页面写死服务器 URL。修改原型时先调用发布技能的 SyncLinks -LinksPending；每次新增或修改交付根目录的文档后调用 SyncLinks。成功发布自动改为服务器链接，未发布或失败保留本地链接并标记待发布。
+- 正式 PRD 与 GitLab 交付读取 `references/gitlab-delivery.md`；项目配置独立保存在本机，不把私人仓库和认证信息固化到通用技能。
+- HTML 文档原型链接按 `references/html-output.md` 使用共享基础地址变量，不在各页面写死服务器 URL。修改原型时先调用发布技能的 SyncLinks -LinksPending；每次新增或修改交付根目录的 HTML 文档后调用 SyncLinks；Markdown 链接按 GitLab 交付规范单独更新，SyncLinks 不处理 Markdown。成功发布自动改为服务器链接，未发布或失败保留本地链接并标记待发布。
 
 ## 1. 需求接收、探索与比较
 
@@ -43,7 +44,7 @@ description: "中文产品需求工具。用户调用 $prd，或需要需求澄�
 
 ## 5. 需求文档
 
-正式规则与验收场景只使用已确认内容，未决假设单列为开放问题。低模确认后读取 `references/prd-template.md` 和 `references/bdd-template.md`，生成 `06-prd.html`、`07-flowchart.html` 和 `08-bdd.html`。同时保留 `07-flowchart.mmd` 与带中文语言声明的 `08-bdd.feature` 作为可编辑源文件。需求规则链接到原型对应 screen/state 锚点；流程图须实际可见，不能仅显示源码。用户批准 PRD/BDD 后进入高保真准备。
+正式规则与验收场景只使用已确认内容，未决假设单列为开放问题。低模确认后读取 `references/prd-template.md` 和 `references/bdd-template.md`，生成 `06-prd.md`、`07-flowchart.html` 和 `08-bdd.html`。同时保留 `07-flowchart.mmd` 与带中文语言声明的 `08-bdd.feature` 作为可编辑源文件。PRD 使用原生 Markdown 标题、表格、Mermaid 与普通链接；需求规则链接到原型对应 screen/state 锚点。HTML 流程图须实际可见，不能仅显示源码。按 GitLab 交付规范检查仓库、同步正式文档及必要资源、验证并提交；推送与 main 发布遵循用户授权。用户批准 PRD/BDD 后进入高保真准备。
 
 ## 6. 视觉方向与设计系统
 

@@ -1,8 +1,8 @@
 # PRD 模板
 
-原型链接遵循 html-output.md 的共享基础地址约定：使用 data-prototype-path 保存相对页面路径与状态锚点，不在文档写死服务器 URL。生成后调用 prototype-publish 的 SyncLinks，使已发布原型优先链接服务器，未发布时保留本地链接并标注待发布。
+原型链接遵循 gitlab-delivery.md，使用普通 Markdown 链接。只引用本次已验证发布的原型 URL，并保留 screen/state 锚点；未发布时明确标记待发布。Markdown 不依赖 prototype-links.js 或 data-prototype-path。
 
-使用以下章节生成 `06-prd.html`，以 HTML 标题、表格和目录锚点呈现，不将 Markdown 原文直接放进页面。文档应简洁、具体，并可追溯到已确认的业务模型。
+使用以下章节生成 `06-prd.md`，以原生 Markdown 标题、表格和代码围栏呈现。文档应简洁、具体，并可追溯到已确认的业务模型。
 
 正式业务规则、流程和验收标准只使用已确认内容，并追溯到业务模型的决策依据。未决假设单列到第 11 节，不因记录在文档中就成为交付承诺。低模前需要整理草案时，写入澄清或业务模型 HTML 的“待确认草案”区域，不提前生成正式 PRD。
 
@@ -75,4 +75,4 @@ flowchart TD
   B --> C["结束"]
 ```
 
-流程图在 HTML 中显示本地 SVG/图像，并链接 07-flowchart.html 与源文件。每条规则使用稳定 ID，页面要求链接到实际原型 screenId。
+PRD 内嵌 Mermaid 代码围栏；若目标文档站不支持 Mermaid，则提供仓库内的 SVG/图像与源文件链接，并验证实际构建。每条规则使用稳定 ID，页面要求链接到实际原型 screenId。
