@@ -19,6 +19,7 @@ from urllib.request import urlopen, Request
 import uuid
 from document_links import sync_document_links
 from publication_catalog import refresh_catalog
+from remote_lock import remote_lock
 from local_url_rewriter import CSS_URL, JS_URL, LocalUrlRewriter
 
 
@@ -324,49 +325,47 @@ def deploy(remote, files, publication_id, version, verify=verify_http):
     root = remote.config['remoteRoot']
     release = f'{root}/releases/{publication_id}/{version}'
     link = f'{root}/published/{publication_id}'
-    lock = f'{root}/.publish-lock'
     q = shlex.quote
-    remote.run(f'test -f {q(root + "/.prd-managed")} && mkdir {q(lock)}')
-    switched = False
-    previous = ''
-    try:
+    # Every attempt uploads to its own unpublished version before taking any lock.
+    remote.run(f'test -f {q(root + "/.prd-managed")} && mkdir -p {q(root + "/releases/" + publication_id)} && mkdir {q(release)} && chmod 755 {q(root + "/releases/" + publication_id)} {q(release)}')
+    for path, data in files.items():
+        target = release + '/' + path
+        parents = list(PurePosixPath(path).parents)[:-1]
+        directories = ' '.join(q(release + '/' + str(parent)) for parent in parents)
+        remote.run('mkdir -p ' + q(posixpath.dirname(target)) + (' && chmod 755 ' + directories if directories else ''))
+        remote.put(target, data)
+        actual = remote.run('sha256sum -- ' + q(target)).split()[0]
+        if actual != digest(data):
+            raise PublishError(f'上传内容校验失败：{path}')
+    with remote_lock(remote, 'publication-' + publication_id):
+        switched = False
         previous = remote.run(f'readlink {q(link)} || test ! -e {q(link)}')
         if previous and not re.fullmatch(re.escape(root) + r'/releases/' + re.escape(publication_id) + r'/[a-f0-9]{32}', previous):
             raise PublishError('现有发布链接不属于本项目，停止更新。')
-        remote.run(f'mkdir -p {q(release)} && chmod 755 {q(root + "/releases/" + publication_id)} {q(release)}')
-        for path, data in files.items():
-            target = release + '/' + path
-            parents = list(PurePosixPath(path).parents)[:-1]
-            directories = ' '.join(q(release + '/' + str(parent)) for parent in parents)
-            remote.run('mkdir -p ' + q(posixpath.dirname(target)) + (' && chmod 755 ' + directories if directories else ''))
-            remote.put(target, data)
-            actual = remote.run('sha256sum -- ' + q(target)).split()[0]
-            if actual != digest(data):
-                raise PublishError(f'上传内容校验失败：{path}')
-        temporary = link + '.next'
-        # A lost SSH response may occur after mv has taken effect; attempt rollback then too.
-        switched = True
-        remote.run(f'ln -s {q(release)} {q(temporary)} && mv -Tf {q(temporary)} {q(link)}')
-        url = remote.config['baseUrl'].rstrip('/') + '/' + publication_id
-        verify(url, files, version)
-        result = {'status': 'published', 'url': url + '/', 'version': version, 'previousVersionPath': previous}
         try:
-            result.update(refresh_catalog(remote, lock_held=True))
+            temporary = link + '.next-' + version
+            # A lost response can occur after mv; rollback must still be attempted.
+            switched = True
+            remote.run(f'ln -s {q(release)} {q(temporary)} && mv -Tf {q(temporary)} {q(link)}')
+            url = remote.config['baseUrl'].rstrip('/') + '/' + publication_id
+            verify(url, files, version)
+            result = {'status': 'published', 'url': url + '/', 'version': version, 'previousVersionPath': previous}
         except Exception as error:
-            result['catalogWarning'] = str(error)
-        return result
+            if switched:
+                try:
+                    if previous:
+                        rollback = link + '.rollback-' + version
+                        remote.run(f'ln -s {q(previous)} {q(rollback)} && mv -Tf {q(rollback)} {q(link)}')
+                    else:
+                        remote.run('rm -f -- ' + q(link))
+                except Exception as rollback_error:
+                    raise PublishError(f'发布校验失败且回退失败，需检查远程状态：{rollback_error}') from error
+            raise
+    try:
+        result.update(refresh_catalog(remote))
     except Exception as error:
-        if switched:
-            try:
-                if previous:
-                    remote.run(f'ln -s {q(previous)} {q(link + ".rollback")} && mv -Tf {q(link + ".rollback")} {q(link)}')
-                else:
-                    remote.run('rm -f -- ' + q(link))
-            except Exception as rollback_error:
-                raise PublishError(f'发布校验失败且回退失败，需检查远程状态：{rollback_error}') from error
-        raise
-    finally:
-        remote.run('rmdir -- ' + q(lock))
+        result['catalogWarning'] = str(error)
+    return result
 
 
 def publication_state(root):

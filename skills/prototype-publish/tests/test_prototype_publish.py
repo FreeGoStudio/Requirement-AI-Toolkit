@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 import importlib.util
 import json
 from pathlib import Path
@@ -169,7 +170,18 @@ class HistoricalHtmlTests(unittest.TestCase):
 
 class DeploymentTests(unittest.TestCase):
     def setUp(self):
-        catalog = patch.object(publish, 'refresh_catalog', return_value={'catalogUrl': 'http://example.test/catalog/'})
+        self.lock_events = []
+        @contextmanager
+        def scoped_lock(remote, name):
+            self.lock_events.append(('enter', name, len(remote.files)))
+            try:
+                yield
+            finally:
+                self.lock_events.append(('exit', name, len(remote.files)))
+        lock = patch.object(publish, 'remote_lock', side_effect=scoped_lock)
+        lock.start()
+        self.addCleanup(lock.stop)
+        catalog = patch.object(publish, 'refresh_catalog' , return_value={'catalogUrl': 'http://example.test/catalog/'})
         self.catalog = catalog.start()
         self.addCleanup(catalog.stop)
 
@@ -180,6 +192,17 @@ class DeploymentTests(unittest.TestCase):
         self.assertEqual(result['status'], 'published')
         self.assertIn('catalog failed', result['catalogWarning'])
         self.assertTrue(remote.current.endswith('c'*32))
+
+    def test_upload_precedes_scoped_lock_and_catalog_follows_release(self):
+        remote = FakeRemote()
+        def catalog(_):
+            self.assertEqual(self.lock_events[-1][0], 'exit')
+            return {}
+        self.catalog.side_effect = catalog
+        publish.deploy(remote, {'index.html': b'new'}, 'a'*32, 'c'*32,
+                       verify=lambda *args: None)
+        self.assertEqual(self.lock_events[0], ('enter', 'publication-' + 'a'*32, 1))
+        self.assertFalse(any('.publish-lock' in cmd for cmd in remote.commands))
 
     def test_temporary_prefix_preserved_in_deploy_and_http(self):
         remote = FakeRemote(previous=False)
@@ -205,7 +228,7 @@ class DeploymentTests(unittest.TestCase):
         with self.assertRaises(OSError):
             publish.deploy(remote, {'index.html': b'new'}, 'a'*32, 'c'*32)
         self.assertEqual(remote.current, remote.original)
-        self.assertTrue(remote.commands[-1].startswith('rmdir'))
+        self.assertEqual(self.lock_events, [])
 
     def test_http_failure_rolls_back_existing_or_initial(self):
         for previous in (True, False):

@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+from unittest.mock import patch
 import hashlib
 import io
 from pathlib import Path
@@ -59,6 +61,31 @@ class Remote:
 
 
 class CatalogTests(unittest.TestCase):
+    def setUp(self):
+        self.lock_events = []
+        @contextmanager
+        def scoped_lock(remote, name):
+            self.lock_events.append(('enter', name))
+            try:
+                yield
+            finally:
+                self.lock_events.append(('exit', name))
+        lock = patch('publication_catalog.remote_lock', side_effect=scoped_lock)
+        lock.start()
+        self.addCleanup(lock.stop)
+
+    def test_cleanup_failure_still_releases_catalog_lock(self):
+        remote = Remote()
+        run = remote.run
+        def fail_cleanup(command):
+            if command.startswith('rm -f'):
+                raise OSError('cleanup failed')
+            return run(command)
+        remote.run = fail_cleanup
+        with self.assertRaisesRegex(OSError, 'cleanup failed'):
+            refresh_catalog(remote, http_open=remote.http)
+        self.assertEqual(self.lock_events, [('enter', 'catalog'), ('exit', 'catalog')])
+
     def test_existing_entries_and_escaped_titles(self):
         remote = Remote()
         remote.add('a'*32, '&lt;script&gt;bad&lt;/script&gt;')
@@ -81,7 +108,7 @@ class CatalogTests(unittest.TestCase):
         result = refresh_catalog(remote, http_open=remote.http)
         self.assertEqual(result['catalogCount'], 2)
         self.assertEqual(remote.files[remote.index].count(b'<article>'), 2)
-        self.assertTrue(remote.commands[-1].startswith('rmdir'))
+        self.assertEqual(self.lock_events[-1], ('exit', 'catalog'))
 
     def test_http_failure_restores_old_catalog(self):
         remote = Remote()

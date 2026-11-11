@@ -8,6 +8,7 @@ import shlex
 import stat
 import uuid
 from urllib.request import Request, urlopen
+from remote_lock import remote_lock
 
 
 class TitleParser(HTMLParser):
@@ -78,12 +79,14 @@ article p{font-size:13px;color:#637083;margin:0 0 24px}.open{margin-top:auto;fon
 </main></body></html>''').encode('utf-8')
 
 
-def refresh_catalog(remote, lock_held=False, http_open=urlopen):
+def refresh_catalog(remote, http_open=urlopen):
+    with remote_lock(remote, "catalog"):
+        return _refresh_catalog(remote, http_open)
+
+
+def _refresh_catalog(remote, http_open):
     root = remote.config['remoteRoot']
     q = shlex.quote
-    lock = root + '/.publish-lock'
-    if not lock_held:
-        remote.run(f'test -f {q(root + "/.prd-managed")} && mkdir {q(lock)}')
     temporary = root + '/published/.catalog-' + uuid.uuid4().hex
     index = root + '/published/index.html'
     previous = None
@@ -120,5 +123,3 @@ def refresh_catalog(remote, lock_held=False, http_open=urlopen):
         raise
     finally:
         remote.run('rm -f -- ' + q(temporary))
-        if not lock_held:
-            remote.run('rmdir -- ' + q(lock))
