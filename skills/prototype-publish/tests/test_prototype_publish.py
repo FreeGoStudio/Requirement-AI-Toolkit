@@ -185,20 +185,17 @@ class DeploymentTests(unittest.TestCase):
         self.catalog = catalog.start()
         self.addCleanup(catalog.stop)
 
-    def test_catalog_failure_does_not_rollback_successful_prototype(self):
+    def test_publish_does_not_rebuild_catalog(self):
         remote = FakeRemote()
         self.catalog.side_effect = RuntimeError('catalog failed')
         result = publish.deploy(remote, {'index.html': b'new'}, 'a'*32, 'c'*32, verify=lambda *args: None)
         self.assertEqual(result['status'], 'published')
-        self.assertIn('catalog failed', result['catalogWarning'])
+        self.catalog.assert_not_called()
+        self.assertNotIn('catalogWarning', result)
         self.assertTrue(remote.current.endswith('c'*32))
 
-    def test_upload_precedes_scoped_lock_and_catalog_follows_release(self):
+    def test_upload_precedes_scoped_lock(self):
         remote = FakeRemote()
-        def catalog(_):
-            self.assertEqual(self.lock_events[-1][0], 'exit')
-            return {}
-        self.catalog.side_effect = catalog
         publish.deploy(remote, {'index.html': b'new'}, 'a'*32, 'c'*32,
                        verify=lambda *args: None)
         self.assertEqual(self.lock_events[0], ('enter', 'publication-' + 'a'*32, 1))

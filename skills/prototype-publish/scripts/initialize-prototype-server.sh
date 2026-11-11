@@ -71,6 +71,14 @@ server {
     index index.html;
     autoindex off;
     charset utf-8;
+    location = $prefix/catalog/ {
+        alias $root/published/;
+        index .catalog-no-index;
+        autoindex on;
+        autoindex_format json;
+        add_header Cache-Control "no-store" always;
+        limit_except GET { deny all; }
+    }
     location $prefix/ { alias $root/published/; }
     $fallback
     location ~ /\. { deny all; }

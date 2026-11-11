@@ -308,7 +308,7 @@ def initialize(remote):
             command = "sudo -S -p '' -- " + command
         result = remote.run(command, remote.password + '\n', timeout=300)
         return {'status': 'initialized', 'detail': result, 'baseUrl': config['baseUrl'],
-                'pending': '发布后检查外部 HTTP；若不可达，请检查服务器防火墙和云安全组。'}
+                **refresh_catalog(remote)}
     finally:
         remote.run('rm -f -- ' + shlex.quote(temporary))
 
@@ -361,10 +361,6 @@ def deploy(remote, files, publication_id, version, verify=verify_http):
                 except Exception as rollback_error:
                     raise PublishError(f'发布校验失败且回退失败，需检查远程状态：{rollback_error}') from error
             raise
-    try:
-        result.update(refresh_catalog(remote))
-    except Exception as error:
-        result['catalogWarning'] = str(error)
     return result
 
 

@@ -2,7 +2,7 @@
 # Runs the real initializer with an isolated filesystem and mocked system services.
 set -eu
 source_script=$1
-sandbox=$(mktemp -d)
+sandbox=$(mktemp -d /tmp/prd-tests-XXXXXXXX)
 trap 'rm -rf "$sandbox"' EXIT
 mkdir -p "$sandbox/bin" "$sandbox/nginx/conf.d"
 export PRD_TEST_SANDBOX="$sandbox"
@@ -61,4 +61,21 @@ sh "$sandbox/initialize.sh" "$sandbox/site" 8080 tester /_tmp/prototypes
 grep -q 'location /_tmp/prototypes/ { alias ' "$site"
 grep -q 'location / { return 404; }' "$site"
 grep -q 'location = /_tmp/prototypes { return 301 /_tmp/prototypes/; }' "$site"
+grep -q 'autoindex_format json;' "$site"
+if test -n "${2:-}"; then
+  sed "s|/etc/nginx|$sandbox/nginx|g" "$2" > "$sandbox/upgrade.sh"
+  # Start from a pre-migration site with the catalog block removed.
+  sed '/    location = .*\/catalog\/ {/,/    }/d' "$site" > "$sandbox/legacy.conf"
+  cp "$sandbox/legacy.conf" "$site"
+  export PRD_FAIL_RELOAD=1
+  if sh "$sandbox/upgrade.sh" "$sandbox/site" /_tmp/prototypes; then echo 'FAIL: accepted migration reload failure'; exit 1; fi
+  cmp "$site" "$sandbox/legacy.conf"
+  unset PRD_FAIL_RELOAD
+  sh "$sandbox/upgrade.sh" "$sandbox/site" /_tmp/prototypes
+  grep -q 'autoindex_format json;' "$site"
+  cp "$site" "$sandbox/migrated.conf"
+  sh "$sandbox/upgrade.sh" "$sandbox/site" /_tmp/prototypes
+  cmp "$site" "$sandbox/migrated.conf"
+  echo 'PASS: catalog migration, rollback and repeat execution.'
+fi
 echo 'PASS: unrelated config protection, occupied port, failed config/reload restoration, idempotent initialization.'

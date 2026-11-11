@@ -65,7 +65,7 @@ PRD 流程先由 prd 完成 postwrite 和静态检查，再调用：
 - HTML `src/href/poster/srcset`、内联样式、CSS `url/@import` 和 JS 字面量 `import/from/fetch/new URL`、资源属性赋值可检查；动态加载路径无法可靠推断时应改成明确资源引用后再发布。模块引用及 `new URL(..., import.meta.url)` 按 JS 路径解析，fetch 和属性赋值按调用页面解析。未经静态识别的运行时资源必须在发布前实际检查，不能因打包通过就声称交互通过。
 - PRD 模式的交付首页在发布副本中由独立原型导航替代，其他文档链接阻止发布；历史模式保留可达 HTML。两种模式均在依赖缺失或越界时报告具体位置并停止。
 - 远程使用 `releases/<发布ID>/<版本ID>` 保存版本，`published/<发布ID>` 为固定访问入口。SFTP 上传后逐文件 SHA-256 核对，再原子切换链接；从本机 HTTP 逐文件核对内容，失败回退。历史版本暂保留，不自动删除。
-- 每次先上传至随机版本目录，逐文件校验后才原子替换固定入口；上传不持锁。相同发布 ID 的入口切换、HTTP 验证和失败回退使用独立的 `flock`，不同原型可并行发布。汇总页从读取列表到替换、验证及失败恢复使用单独的 catalog 锁，发布入口锁释放后才刷新汇总页。
+- 每次先上传至随机版本目录，逐文件校验后才原子替换固定入口；上传不持锁。相同发布 ID 的入口切换、HTTP 验证和失败回退使用独立的 `flock`，不同原型可并行发布。汇总页安装使用单独的 catalog 锁；发布流程不再修改汇总页。
 - 服务器需要 `bash` 和 `flock`。锁等待上限 60 秒；锁由远程进程持有，正常结束、连接 EOF 或进程退出时释放。客户端每 10 秒发送心跳，心跳响应超时 15 秒即关闭发布连接；服务器连续 60 秒未收到心跳则退出释放锁。断连后无法确认的切换或回退仍须检查远程状态，不能声称已验收。
 - `.locks/` 中的文件是内核锁的固定身份，文件存在不表示占用，不应删除这些文件。旧版 `.publish-lock` 目录不再参与新协议，因此遗留目录不阻塞新版发布，也不会被自动删除。升级前结束所有旧版发布/汇总刷新进程，并统一更新客户端；新旧协议不可混跑。
 
@@ -73,9 +73,25 @@ PRD 流程先由 prd 完成 postwrite 和静态检查，再调用：
 
 ## 全局原型汇总页
 
-基础访问地址加 `/` 为全局汇总页，每次发布成功后自动更新，也可执行 `-Action RefreshCatalog` 单独重建。列表从 published 中有效的发布 ID 及其当前版本读取，不列历史版本、临时上传文件或本地需求文档；标题取原型首页 title，更新时间按北京时间显示。无需额外管理员权限，使用原发布账号即可。
+基础访问地址加 / 为汇总页。浏览器打开或点击刷新时读取 catalog/ JSON 目录接口，只列出 32 位发布 ID 目录，再从各入口 index.html 读取标题和 Last-Modified（北京时间显示）。404 的失效入口不展示；接口失败和单项读取失败有明确提示，不伪装成空列表。请求禁用缓存，最多同时读取 4 个原型首页。发布、更新或移除入口后，无需改写汇总文件。
 
-汇总页经上传和 HTTP 内容校验后更新，失败时恢复原汇总页，不回退已成功的原型；返回 catalogWarning 时应明确区分这两个结果。手动添加的非本工具管理首页不会被覆盖。Nginx 初始化配置会将无末尾斜杠的前缀重定向到带斜杠首页。
+团队应统一升级发布技能，避免旧版客户端再次覆盖动态汇总页。
+
+采用 Nginx autoindex_format json，不增加后台服务；目录接口只映射 published，精确匹配 catalog/，不开放 releases 或子目录遍历。接口返回 published 顶层目录信息，页面仅展示有效 ID 且具有首页的原型。发布目录仅应由受信任发布账号维护。
+
+新服务器 Initialize 配置目录接口并安装页面。已有服务器由管理员一次性执行：
+
+```sh
+sh upgrade-catalog-server.sh /var/www/_tmp/prototypes /_tmp/prototypes
+```
+
+脚本只修改本工具管理的专用 Nginx 站点，先备份、nginx -t，再重载，失败恢复；不重新初始化服务器、不更改发布账号权限。然后发布账号在 Windows 执行：
+
+```powershell
+& $publisher -Action RefreshCatalog
+```
+
+RefreshCatalog 现在表示安装/升级动态汇总界面，不是重建列表。先验证目录接口，再原子替换页面并 HTTP 校验；失败恢复旧页面。未就绪接口不会覆盖仍可用的旧汇总页。用户自建首页不覆盖。日常 Publish 完全不依赖汇总安装操作。
 
 ## PRD 文档中的原型链接
 
@@ -97,9 +113,10 @@ Prd 发布会自动绑定交付根目录 HTML 中指向清单原型的链接，�
 ```powershell
 python -m unittest discover -s skills/prototype-publish/tests -p 'test_*.py' -v
 node skills/prototype-publish/tests/test-document-link-runtime.cjs
+node --test skills/prototype-publish/tests/test-catalog.cjs
 ./skills/prototype-publish/tests/Test-PublishCredentials.ps1
 # 有 Git Bash / Linux shell 时，执行隔离的服务初始化故障测试：
-bash skills/prototype-publish/tests/Test-ServerInitialization.sh skills/prototype-publish/scripts/initialize-prototype-server.sh
+bash skills/prototype-publish/tests/Test-ServerInitialization.sh skills/prototype-publish/scripts/initialize-prototype-server.sh skills/prototype-publish/scripts/upgrade-catalog-server.sh
 ```
 
 实机必须另验：SSH 指纹与认证、apt/dnf 环境初始化、Nginx 配置不破坏已有站点、其他设备访问、中文/样式/按钮、更新固定 URL、失败回退。没有服务器时标记这些项目待验收，不用 mock 结果代替。
