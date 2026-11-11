@@ -473,7 +473,6 @@ snapshot_id: snap-req001-001
 workspace_id: team-a
 project_id: retail
 requirement_id: req001
-requirement_revision: 1
 change_id: change-req001-001
 attempt_id: int-req001-001
 prd:
