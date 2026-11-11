@@ -1,5 +1,7 @@
 # Storybook 原型管理平台
 
+**维护位置已调整（2026-11-11）**：后续平台实现请在 `D:/workspace/ai-native-platform/services/prototype-platform` 继续。本目录保留迁移前源码与提交记录；当前仓库继续负责需求和原型技能。运行数据暂保留原位，不要删除 `platform/.local`。平台服务的新维护入口和迁移边界见目标仓库的 README.md、IMPORT.md。
+
 已新增本机可运行平台，完整启动、操作、Codex 配置与恢复说明见 [操作手册](OPERATIONS.md)。管理入口 http://127.0.0.1:3077，Nginx 持续原型入口 http://127.0.0.1:3079/projects/prototype-lab/current 。先登录工作台再访问原型。
 
 2026-11-11 首次真实闭环：用户确认短信测试候选后，GitLab MR !1 已 fast-forward 合并，原候选完整包发布成功。源提交 `8ac495c56286d6da182e294ef14ed681d3cea0b2`，包 `build-7d01c504-88b0-4f97-87fd-7663c5088550`。第二个项目的双仓库已实际创建。其他完整业务剧本仍须逐项签收；Codex key 已配置，但实际调用被组织赠送额度规则拒绝，详情见操作手册。

@@ -1,6 +1,6 @@
 # Requirement AI Toolkit
 
-新增：[Storybook 多项目原型管理平台](platform/README.md)，支持源码需求分支、独立集成验收、固定包发布和历史恢复。以下技能说明仍适用于原有单次 HTML 产出流程。
+本仓库维护需求与原型技能。Storybook 多项目原型管理平台已转由 `D:/workspace/ai-native-platform/services/prototype-platform` 维护，涵盖源码需求分支、集成验收和发布服务；[本仓库旧平台目录](platform/README.md) 保留迁移说明与历史源码。
 
 面向 Codex 的中文产品需求工作流技能，直接生成可在浏览器打开的 HTML 需求文档与低/高保真交互原型。
 

@@ -747,7 +747,11 @@ P3 首个正式验收闭环就必须可靠保存完整产物和验收记录，�
 
 初次方案提交仅代表设计整理。2026-11-11 已新增本机平台实现，详见 [平台使用与验证说明](../platform/README.md)：需求分支、Storybook 双应用、固定候选、人工确认、GitLab fast-forward MR 和同包发布已完成首次真实闭环；冲突隔离、后续 Change、恢复与失败保护有自动验证。用户已确认短信测试候选并授权本机合并发布；其他完整业务剧本仍须逐项验收，不能据此宣称全部签收。Codex CLI 冲突修复适配器已接入，key 已配置；真实调用被 API 组织的订阅赠送额度规则拒绝，待用户选择认证方式，不冒充模型修复验证成功。
 
-## 16. 技术参考
+## 16. 维护归属（2026-11-11）
+
+按用户确认，后续平台实施在 `D:/workspace/ai-native-platform/services/prototype-platform` 继续，该目录中同名方案副本是后续维护入口。当前工具仓库主要负责需求与原型技能，本文保留导入时的方案与验证来源。平台源码导入不迁移或重写已确认的业务包；原位运行数据的后续搬迁应单独验证绝对路径及 Git worktree 引用。
+
+## 17. 技术参考
 
 - [Storybook 静态构建与发布](https://storybook.js.org/docs/sharing/publish-storybook)
 - [Storybook 页面与场景组织](https://storybook.js.org/docs/writing-stories/build-pages-with-storybook)
