@@ -12,6 +12,8 @@ export class DockerRunner {
   async build(source, project) {
     requireThat(this.image, 'RUNNER_NOT_CONFIGURED', '未配置受限构建镜像');
     const config = await loadPrototype(source, project), output = join(this.outputRoot, uid('run'));
+    const inspected = await execute('docker', ['image','inspect','--format','{{.Id}}',this.image], { timeout:30000 });
+    const imageId = inspected.stdout.trim();
     await mkdir(output, { recursive: true });
     // The source is read-only; the only writable host mount is this fresh output.
     // No Docker socket, credential mount, host network or inherited host env.
@@ -20,10 +22,10 @@ export class DockerRunner {
         '--memory=2g', '--cpus=2', '--pids-limit=256', '--read-only', '--tmpfs', '/tmp:rw,exec,size=1g',
         '--mount', `type=bind,source=${resolve(source)},target=/source,readonly`,
         '--mount', `type=bind,source=${resolve(output)},target=/output`,
-        this.image, 'node', '/runner/build.mjs'], { timeout: 300000, maxBuffer: 8 * 1024 * 1024 });
+        imageId, 'node', '/runner/build.mjs'], { timeout: 300000, maxBuffer: 8 * 1024 * 1024 });
     } catch (error) { throw new PlatformError('BUILD_FAILED', String(error.stderr || error.message).slice(-4000), 422); }
     const result = JSON.parse(await readFile(join(output, 'runner-result.json'), 'utf8'));
     requireThat(result.passed === true, 'BUILD_FAILED', '构建未通过');
-    return { output, config, result };
+    return { output, config, result: { ...result, runner_image_id: imageId } };
   }
 }

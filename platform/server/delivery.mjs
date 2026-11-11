@@ -10,13 +10,15 @@ export class DeliveryService {
     this.runner = runner; this.gitlab = gitlab;
     this.browserOptions = browserOptions;
   }
-  async build(actor, projectId, reqId, { attempt_id, idempotency_key }) {
+  async build(actor, projectId, reqId, { attempt_id, history_ref, idempotency_key }) {
     const project = this.projects.authorize(actor, projectId, 'developer');
     return this.projects.queue.run(projectId, async () => {
       const req = this.store.get('requirements', `${projectId}/${reqId}`);
+      requireThat(req.prototype_applicable !== false, 'PROTOTYPE_NOT_APPLICABLE', '纯文档需求不构建原型');
       const operationId = `${projectId}/build/${idempotency_key}`;
       requireThat(idempotency_key, 'IDEMPOTENCY_REQUIRED', '构建需提供请求标识', 400);
       const old = this.store.get('operations', operationId, false);
+      requireThat(!old || (old.requirement_key === req.id && old.attempt_id === attempt_id && old.history_ref === history_ref), 'IDEMPOTENCY_CONFLICT', '构建标识已用于其他来源');
       if (old?.status === 'completed') return this.store.get('builds', old.build_id);
       requireThat(!old || old.status === 'failed', 'OPERATION_RUNNING', '构建执行中或中断待核对');
       const repo = this.projects.repoFor(project); await repo.fetch();
@@ -28,20 +30,20 @@ export class DeliveryService {
         source = await repo.resolved(attempt.workdir, [attempt.source_head_sha, attempt.target_main_sha]);
         workdir = attempt.workdir;
       } else {
-        source = await repo.sha(`refs/heads/${req.branch}`);
-        const existingBuild = this.store.list('builds', projectId).find(b => b.requirement_id === reqId && !b.attempt_id && b.source_commit === source && b.browser_evidence?.passed);
+        source = await repo.sha(history_ref || `refs/heads/${req.branch}`);
+        const existingBuild = this.store.list('builds', projectId).find(b => b.requirement_id === reqId && !b.attempt_id && !!b.reproduction === !!history_ref && b.source_commit === source && b.browser_evidence?.passed);
         if (existingBuild) { await this.artifacts.verify(existingBuild.id); return existingBuild; }
         workdir = join(this.projects.workRoot, uid('preview'));
         await repo.checkout(source, workdir);
       }
-      const operation = { status: 'running', source_commit: source, requirement_key: req.id, attempt_id };
+      const operation = { status: 'running', source_commit: source, requirement_key: req.id, attempt_id, history_ref };
       if (old) this.store.update('operations', operationId, operation);
       else this.store.insert('operations', { id: operationId, project_id: projectId, ...operation });
       try {
         const built = await this.runner.build(workdir, project);
         const artifact = await this.artifacts.collect(project, built.output, built.config, reqId, {
           source_commit: source, candidate_commit: attempt ? source : null, attempt_id: attempt?.id,
-          source_branch: attempt ? attempt.branch : req.branch, toolchain: built.result });
+          source_branch: attempt ? attempt.branch : req.branch, reproduction: !!history_ref, history_ref, toolchain: built.result });
         await this.artifacts.restore(artifact.id);
         const browserEvidence = await verifyBrowser(artifact, this.browserOptions);
         this.store.update('builds', artifact.id, { browser_evidence: browserEvidence });
@@ -67,7 +69,7 @@ export class DeliveryService {
       const current = req.preview_id ? this.store.get('previews', req.preview_id) : null;
       if (current?.build_id === buildId) return current;
       const build = await this.artifacts.verify(buildId);
-      requireThat(build.project_id === projectId && build.requirement_id === reqId && !build.attempt_id,
+      requireThat(build.project_id === projectId && build.requirement_id === reqId && !build.attempt_id && !build.reproduction && !build.sync_id,
         'INVALID_PREVIEW', '需求预览只能使用该需求分支构建');
       await this.artifacts.restore(buildId);
       const record = this.store.insert('previews', { id: uid('preview'), project_id: projectId,
@@ -115,6 +117,7 @@ export class DeliveryService {
       requireThat(input.build_id === build.id && input.candidate_commit === fresh.candidate_commit, 'STALE_ACCEPTANCE', '验收页面版本与候选不一致');
       const bundle = JSON.parse(await (await import('node:fs/promises')).readFile(join(build.archive, 'requirements', `${req.requirement_id}.json`), 'utf8'));
       const criteria = bundle.manifest.acceptance_criteria;
+      await this.gitlab.validatePrd(project, bundle.manifest.prd);
       requireThat(Array.isArray(input.results) && input.results.length === criteria.length && new Set(input.results.map(r => r.id)).size === criteria.length,
         'INCOMPLETE_ACCEPTANCE', '须逐项确认全部验收条件');
       for (const result of input.results) {
@@ -125,19 +128,54 @@ export class DeliveryService {
             && typeof result.reason === 'string' && result.reason.trim(), 'INVALID_REUSE', '沿用确认须指向本需求已有通过项并说明适用性');
         }
       }
-      const id = uid('snap'), record = { id, snapshot_id: id, project_id: project.id, workspace_id: project.workspace_id,
+      const retained = input.retained_deliveries || [];
+      requireThat(Array.isArray(retained) && new Set(retained.map(item => item.snapshot_id)).size === retained.length, 'INVALID_RETENTION', '随本次交付关联重复或无效');
+      for (const item of retained) {
+        const prior = this.store.get('snapshots', item.snapshot_id);
+        const priorMerge = this.store.list('merges', project.id).find(m => m.snapshot_id === prior.id);
+        requireThat(prior.project_id === project.id && priorMerge && item.reason?.trim() &&
+          await this.projects.repoFor(project).ancestor(prior.candidate_commit, fresh.candidate_commit),
+          'INVALID_RETENTION', '只能确认本候选已包含且已有独立验收与合并依据的交付');
+      }
+      const id = fresh.acceptance_draft?.id || uid('snap'), record = fresh.acceptance_draft || { id, snapshot_id: id, project_id: project.id, workspace_id: project.workspace_id,
         requirement_id: req.requirement_id, requirement_key: req.id, change_id: fresh.change_id,
         attempt_id: fresh.id, candidate_commit: fresh.candidate_commit, source_head_sha: fresh.source_head_sha,
         target_main_sha: fresh.target_main_sha, build_id: build.id, artifact_sha256: build.artifact_sha256,
         prd: bundle.manifest.prd, prototype_config_digest: build.prototype_config_digest,
         requirement_package_digest: build.requirement_package_digest, sdk_version: build.sdk_version,
-        reviewer: actor.id, confirmed_at: now(), results: input.results };
+        reviewer: actor.id, confirmed_at: now(), results: input.results, retained_deliveries: retained };
       requireThat(this.gitlab, 'ACCEPTANCE_STORE_UNAVAILABLE', '未配置受控需求资料仓库');
+      if (fresh.acceptance_draft) requireThat(digest(record.results) === digest(input.results) && digest(record.retained_deliveries || []) === digest(retained) && record.reviewer === actor.id, 'ACCEPTANCE_RETRY_CHANGED', '保存中的确认只允许原确认者以相同内容重试');
+      else this.store.update('attempts', attemptId, { acceptance_draft: record });
       const evidence = await this.gitlab.commitAcceptance(project, record);
       const snapshot = this.store.insert('snapshots', { ...record, evidence });
       this.store.update('attempts', attemptId, { status: 'approved', snapshot_id: id });
       this.store.event(project.id, actor.id, 'acceptance.approved', id);
       return snapshot;
+    });
+  }
+  reject(actor, attemptId, reason) {
+    const attempt=this.store.get('attempts',attemptId);
+    this.projects.authorize(actor,attempt.project_id,'reviewer');
+    requireThat(actor.kind==='human'&&attempt.status==='awaiting_acceptance'&&reason?.trim(),'INVALID_REJECTION','人工驳回需待验收候选及具体原因');
+    this.store.event(attempt.project_id,actor.id,'acceptance.rejected',attemptId,{reason,build_id:attempt.build_id});
+    return this.store.update('attempts',attemptId,{status:'rejected',rejection_reason:reason,rejected_by:actor.id});
+  }
+  async recoverRelease(actor, releaseId, key) {
+    const original = this.store.get('releases', releaseId), project = this.projects.authorize(actor, original.project_id, 'maintainer');
+    requireThat(actor.kind === 'human' && original.status === 'published', 'RECOVERY_REQUIRED', '只能由人工恢复已成功发布的完整包');
+    return this.projects.queue.run(project.id, async () => {
+      const existing = this.store.list('releases', project.id).find(r => r.idempotency_key === key);
+      if (existing) { requireThat(existing.recovery_of === releaseId, 'IDEMPOTENCY_CONFLICT', '恢复标识已占用'); return existing; }
+      await this.artifacts.restore(original.build_id);
+      return this.store.transaction(() => {
+        const sequence = (this.store.get('projects', project.id).release_sequence || 0) + 1;
+        const recovered = this.store.insert('releases', { id: uid('release'), project_id: project.id, build_id: original.build_id, snapshot_id: original.snapshot_id,
+          recovery_of: original.id, status: 'published', sequence, idempotency_key: key, published_at: now(), actor: actor.id });
+        this.store.update('projects', project.id, { current_release_id: recovered.id, release_sequence: sequence });
+        this.store.event(project.id, actor.id, 'release.recovered', recovered.id);
+        return recovered;
+      });
     });
   }
   async merge(actor, attemptId) {
@@ -148,6 +186,13 @@ export class DeliveryService {
       requireThat(attempt.status === 'approved' && attempt.snapshot_id, 'ACCEPTANCE_REQUIRED', '候选尚未人工确认');
       const snapshot = this.store.get('snapshots', attempt.snapshot_id);
       await this.artifacts.verify(snapshot.build_id);
+      // Recover a successful GitLab side effect after a transport/DB interruption.
+      const recovered = await this.gitlab?.mergedCandidate?.(project, attempt);
+      if (recovered) {
+        const record = this.store.insert('merges', { id: uid('merge'), project_id: project.id, attempt_id: attempt.id, snapshot_id: snapshot.id, ...recovered });
+        this.store.event(project.id, actor.id, 'candidate.merge_reconciled', record.id);
+        return record;
+      }
       const repo = this.projects.repoFor(project); await repo.fetch();
       if (await repo.sha('main') !== attempt.target_main_sha) {
         this.store.update('attempts', attemptId, { status: 'stale' });
@@ -169,9 +214,18 @@ export class DeliveryService {
       const previous = this.store.list('releases', project.id).find(r => r.idempotency_key === key);
       if (previous?.status === 'published') return previous;
       requireThat(!previous || previous.snapshot_id === snapshotId, 'IDEMPOTENCY_CONFLICT', '请求标识已用于其他发布');
+      requireThat(!previous?.superseded_by, 'SUPERSEDED', '该任务已由后续确认交付替代');
+      const completed = this.store.list('releases', project.id).find(r => r.snapshot_id === snapshotId && r.status === 'published' && !r.recovery_of);
+      if (completed) return completed;
       const merge = this.store.list('merges', project.id).find(m => m.snapshot_id === snapshotId);
       requireThat(merge && merge.merged_commit === snapshot.candidate_commit, 'MERGE_REQUIRED', '持续原型更新前必须合入已确认候选');
       const currentProject = this.store.get('projects', project.id);
+      if (currentProject.current_release_id && !previous) {
+        const displayed = this.store.get('releases', currentProject.current_release_id);
+        const currentSnapshot = this.store.get('snapshots', displayed.snapshot_id);
+        const repo = this.projects.repoFor(project);
+        requireThat(await repo.ancestor(currentSnapshot.candidate_commit, snapshot.candidate_commit), 'SUPERSEDED', '较旧候选不能覆盖当前展示；恢复旧版本须使用显式恢复入口');
+      }
       const sequence = previous?.sequence || (currentProject.release_sequence || 0) + 1;
       requireThat(!previous || sequence === currentProject.release_sequence, 'SUPERSEDED', '旧发布任务已被后续展示决定替代');
       if (!previous) this.store.update('projects', project.id, { release_sequence: sequence });
@@ -186,6 +240,16 @@ export class DeliveryService {
           this.store.insert('deliveries', { id: uid('delivery'), project_id: project.id, change_id: snapshot.change_id,
             snapshot_id: snapshot.id, merge_id: merge.id, release_id: release.id, build_id: snapshot.build_id });
           this.store.update('changes', snapshot.change_id, { status: 'delivered' });
+          for (const item of snapshot.retained_deliveries || []) {
+            const prior = this.store.get('snapshots', item.snapshot_id);
+            const priorMerge = this.store.list('merges', project.id).find(m => m.snapshot_id === prior.id);
+            this.store.insert('deliveries', { id: uid('delivery'), project_id: project.id, change_id: prior.change_id,
+              snapshot_id: prior.id, merge_id: priorMerge.id, release_id: release.id, build_id: snapshot.build_id,
+              delivered_with_snapshot: snapshot.id, retention_reason: item.reason });
+            this.store.update('changes', prior.change_id, { status: 'delivered' });
+            for (const failed of this.store.list('releases', project.id).filter(r => r.snapshot_id === prior.id && r.status !== 'published'))
+              this.store.update('releases', failed.id, { superseded_by: release.id });
+          }
         });
         this.store.event(project.id, actor.id, 'release.published', release.id);
         return this.store.get('releases', release.id);

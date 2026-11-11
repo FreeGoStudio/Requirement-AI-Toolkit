@@ -8,6 +8,7 @@ import { Artifacts, digest, inventory } from '../server/artifacts.mjs';
 import { DeliveryService } from '../server/delivery.mjs';
 import { ProjectService } from '../server/projects.mjs';
 import { Auth, passwordHash } from '../server/auth.mjs';
+import { ConflictAssistant } from '../server/conflict-assistant.mjs';
 
 async function fixture(t) {
   const root = await mkdtemp(join(tmpdir(),'prototype-delivery-')), store = new Store(':memory:');
@@ -23,7 +24,7 @@ async function fixture(t) {
   let main='base';
   const repo={fetch:async()=>{},sha:async ref=>ref==='main'?main:'candidate',publishCandidate:async()=>{}};
   const projects=new ProjectService(store,()=>repo,root),artifacts=new Artifacts(store,root);
-  const gitlab={commitAcceptance:async(p,r)=>({commit:'docscommit',path:`${r.id}.json`}),mergeCandidate:async()=>{main='candidate';return {merged_commit:'candidate',mr_iid:1};}};
+  const gitlab={validatePrd:async()=>{},commitAcceptance:async(p,r)=>({commit:'docscommit',path:`${r.id}.json`}),mergeCandidate:async()=>{main='candidate';return {merged_commit:'candidate',mr_iid:1};}};
   const service=new DeliveryService(projects,artifacts,null,gitlab);
   const human={id:'test-human-fixture',kind:'human',projects:{retail:'admin'}};
   t.after(async()=>{store.close();await rm(root,{recursive:true,force:true});});
@@ -91,4 +92,53 @@ test('登录身份来自受控用户记录，会话过期不可用',()=>{
   const request={headers:{cookie:`prototype_session=${login.token}`}};
   const session=auth.session(request);assert.equal(session.user.id,'user1');
   store.update('sessions',session.id,{expires_at:0});assert.equal(auth.session(request),null);store.close();
+});
+
+test('恢复展示保留交付历史，并阻止旧失败任务覆盖恢复决定',async t=>{
+  const f=await fixture(t),snapshot=await f.service.accept(f.human,'attempt1',acceptance);
+  await f.service.merge(f.human,'attempt1');
+  const published=await f.service.release(f.human,snapshot.id,'publish');
+  const recovered=await f.service.recoverRelease(f.human,published.id,'recover');
+  assert.equal(f.store.get('projects','retail').current_release_id,recovered.id);
+  assert.equal(f.store.list('deliveries').length,1);
+  assert.equal((await f.service.release(f.human,snapshot.id,'new-key')).id,published.id);
+  assert.equal(f.store.get('projects','retail').current_release_id,recovered.id);
+  assert.equal((await f.service.recoverRelease(f.human,published.id,'recover')).id,recovered.id);
+});
+
+test('验收资料保存中断后重试复用相同不可变记录 ID',async t=>{
+  const f=await fixture(t); let recordId;
+  f.gitlab.commitAcceptance=async(p,r)=>{recordId=r.id;throw new Error('network interrupted');};
+  await assert.rejects(f.service.accept(f.human,'attempt1',acceptance),/network interrupted/);
+  f.gitlab.commitAcceptance=async(p,r)=>{assert.equal(r.id,recordId);return {commit:'docscommit'};};
+  const snapshot=await f.service.accept(f.human,'attempt1',acceptance);
+  assert.equal(snapshot.id,recordId);
+});
+
+test('AI 服务失败最多尝试两次，重复事件不无限重试且保留人工现场',async()=>{
+  const store=new Store(':memory:');store.insert('attempts',{id:'a',project_id:'p',status:'awaiting_manual_resolution'});let calls=0;
+  const projects={store,queue:new SerialQueue(),conflictFiles:async()=>[{path:'login.js',content:'conflict'}]};
+  const assistant=new ConflictAssistant(projects,async()=>{calls++;throw new Error('provider offline');});
+  await assistant.run('attempts',{id:'a'});await assistant.run('attempts',{id:'a'});
+  assert.equal(calls,2);assert.equal(store.get('attempts','a').status,'awaiting_manual_resolution');store.close();
+});
+
+test('驳回保留原候选产物，不能合并',async t=>{
+  const f=await fixture(t);f.service.reject(f.human,'attempt1','错误验证码行为不通过');
+  assert.equal(f.store.get('attempts','attempt1').build_id,'build1');
+  await assert.rejects(f.service.merge(f.human,'attempt1'),{code:'ACCEPTANCE_REQUIRED'});
+});
+
+test('A 发布失败后由已确认保留 A 的 B 完成交付，A 原记录不改写',async t=>{
+  const f=await fixture(t),a=await f.service.accept(f.human,'attempt1',acceptance);await f.service.merge(f.human,'attempt1');
+  const restore=f.artifacts.restore.bind(f.artifacts);f.artifacts.restore=async()=>{throw new Error('offline');};
+  await assert.rejects(f.service.release(f.human,a.id,'release-a'),/offline/);f.artifacts.restore=restore;
+  f.store.insert('changes',{id:'change-b',project_id:'retail',status:'pending'});
+  const b=f.store.insert('snapshots',{...a,id:'snap-b',change_id:'change-b',retained_deliveries:[{snapshot_id:a.id,reason:'确认 A 行为仍可使用'}]});
+  f.store.insert('merges',{id:'merge-b',project_id:'retail',snapshot_id:b.id,merged_commit:b.candidate_commit});
+  const result=await f.service.release(f.human,b.id,'release-b');
+  assert.equal(f.store.get('changes','change1').status,'delivered');
+  const failed=f.store.list('releases').find(r=>r.idempotency_key==='release-a');assert.equal(failed.status,'failed');assert.equal(failed.superseded_by,result.id);
+  assert.equal(f.store.get('snapshots',a.id).build_id,'build1');
+  await assert.rejects(f.service.release(f.human,a.id,'release-a'),{code:'SUPERSEDED'});
 });

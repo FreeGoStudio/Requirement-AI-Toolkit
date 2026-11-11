@@ -7,6 +7,7 @@ import { git, GitRepository } from '../server/git.mjs';
 import { Store } from '../server/store.mjs';
 import { ProjectService, requirementId } from '../server/projects.mjs';
 import { validatePrototype } from '../server/config.mjs';
+import { ConflictAssistant } from '../server/conflict-assistant.mjs';
 
 async function fixture(t) {
   const root = await mkdtemp(join(tmpdir(), 'prototype-branches-'));
@@ -58,6 +59,29 @@ test('独立候选保留冻结来源，冲突不改需求分支和 main', async 
   assert.equal(await f.repo.sha('reqsms001'), sms);
   assert.equal(await f.repo.sha('main'), qr);
   assert.equal((await f.service.createIntegration(f.actor, 'retail', 'reqsms001', { idempotency_key: 'int1' })).id, attempt.id);
+  assert.match((await f.service.conflictFiles(f.actor,'attempts',attempt.id))[0].content, /<<<<<<<|=======/);
+  await assert.rejects(f.service.resolveConflicts(f.actor,'attempts',attempt.id,{source_head_sha:sms,reason:'retain both',files:[{path:'../outside',content:'x'}]}), {code:'INVALID_RESOLUTION'});
+  const assistant=new ConflictAssistant(f.service,async()=>({reason:'保留二维码与短信两种登录',files:[{path:'login.txt',content:'password + QR + SMS\n'}]}));
+  const resolved=await assistant.run('attempts',attempt);
+  assert.equal(resolved.status,'awaiting_verification');
+  assert.equal(await f.repo.sha('reqsms001'),sms);
+  assert.equal(await f.repo.sha('main'),qr);
+  assert.equal(await f.repo.text(resolved.candidate_commit,'login.txt'),'password + QR + SMS');
+});
+
+test('交付后新候选开启下一 Change，纯文档需求不制造原型验收',async t=>{
+  const f=await fixture(t),req=await f.service.createRequirement(f.actor,'retail',{requirement_id:'req1',title:'first'});
+  f.store.update('changes',req.change_id,{status:'delivered'});
+  const candidate=await f.service.createIntegration(f.actor,'retail','req1',{idempotency_key:'next'});
+  assert.notEqual(candidate.change_id,req.change_id);
+  assert.equal(f.store.get('changes',req.change_id).status,'delivered');
+  assert.equal(await f.repo.sha('req1'),req.origin_commit);
+  const docs=await f.service.createRequirement(f.actor,'retail',{requirement_id:'doc1',title:'document',prototype_applicable:false});
+  await assert.rejects(f.service.createIntegration(f.actor,'retail','doc1',{}),{code:'PROTOTYPE_NOT_APPLICABLE'});
+  const reviewer={id:'test-reviewer',kind:'human',projects:{retail:'reviewer'}};
+  f.service.completeDocumentChange(reviewer,'retail','doc1',{commit:docs.origin_commit,path:'prd.md'});
+  assert.equal(f.store.get('changes',docs.change_id).prototype,'not_applicable');
+  assert.equal(f.store.list('snapshots').length,0);
 });
 test('指定主线同步保留业务修改，拒绝未合入目标和并发覆盖', async t => {
   const f = await fixture(t);

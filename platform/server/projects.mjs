@@ -2,6 +2,8 @@ import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { uid, SerialQueue } from './store.mjs';
 import { requireThat } from './errors.mjs';
+import { readFile, writeFile } from 'node:fs/promises';
+import { existingWithin } from './config.mjs';
 
 export function requirementId(raw = '') {
   const value = raw.trim().toLowerCase() || `req${new Date().toISOString().slice(0,10).replaceAll('-', '')}${randomBytes(4).toString('hex')}`;
@@ -37,6 +39,7 @@ export class ProjectService {
       const origin = old?.origin_commit || await repo.sha('refs/heads/main');
       const record = old || this.store.insert('requirements', { id: key, project_id: projectId,
         requirement_id: id, title: input.title, plane_id: input.plane_id, prd: input.prd,
+        prototype_applicable: input.prototype_applicable !== false,
         idempotency_key: input.idempotency_key, branch: id, origin_commit: origin,
         working_base_commit: origin, origin_release_id: project.current_release_id || null, status: 'creating' });
       if (!await repo.hasBranch(id)) await repo.branch(id, origin);
@@ -52,13 +55,19 @@ export class ProjectService {
     return this.queue.run(projectId, async () => {
       const req = this.store.get('requirements', `${projectId}/${reqId}`);
       requireThat(req.status === 'active', 'INVALID_REQUIREMENT', '需求尚未就绪');
+      requireThat(req.prototype_applicable !== false, 'PROTOTYPE_NOT_APPLICABLE', '纯文档需求不创建原型候选');
       const previous = this.store.list('attempts', projectId).find(a => a.requirement_key === req.id && a.idempotency_key === input.idempotency_key);
       if (input.idempotency_key && previous) return previous;
+      let change = this.store.get('changes', req.change_id);
+      if (change.status === 'delivered') {
+        change = this.store.insert('changes', { id: uid('change'), project_id: projectId, requirement_key: req.id, status: 'pending', previous_change_id: change.id });
+        this.store.update('requirements', req.id, { change_id: change.id });
+      }
       const repo = this.repoFor(project); await repo.fetch();
       const source = await repo.sha(`refs/heads/${req.branch}`), base = await repo.sha('refs/heads/main');
       const id = uid('int'), branch = `integration/${reqId}/${id}`, workdir = join(this.workRoot, id);
       const attempt = this.store.insert('attempts', { id, project_id: projectId, requirement_key: req.id,
-        change_id: req.change_id, source_head_sha: source, target_main_sha: base, prd: req.prd,
+        change_id: change.id, source_head_sha: source, target_main_sha: base, prd: req.prd,
         branch, workdir, status: 'integrating', idempotency_key: input.idempotency_key });
       try {
         const result = await repo.integrate(base, source, workdir, branch);
@@ -66,6 +75,54 @@ export class ProjectService {
         return this.store.update('attempts', id, { ...result, status: result.conflicts.length ? 'awaiting_manual_resolution' : 'awaiting_verification' });
       } catch (error) { this.store.update('attempts', id, { status: 'failed', error: error.message }); throw error; }
     });
+  }
+  async conflictFiles(actor, table, id) {
+    requireThat(['attempts','syncs'].includes(table), 'INVALID_TYPE', '无效冲突类型');
+    const record = this.store.get(table, id); this.authorize(actor, record.project_id, 'developer');
+    requireThat(record.status === 'awaiting_manual_resolution', 'INVALID_STATE', '当前没有待处理冲突');
+    return Promise.all(record.conflicts.map(async path => ({ path, content: await readFile(await existingWithin(record.workdir, path), 'utf8') })));
+  }
+  async resolveConflicts(actor, table, id, input) {
+    requireThat(['attempts','syncs'].includes(table), 'INVALID_TYPE', '无效冲突类型');
+    const record = this.store.get(table, id), project = this.authorize(actor, record.project_id, 'developer');
+    return this.queue.run(project.id, async () => {
+      const fresh = this.store.get(table, id);
+      requireThat(fresh.status === 'awaiting_manual_resolution', 'INVALID_STATE', '冲突现场已变化');
+      if (input.business_rules_changed) {
+        this.store.event(project.id, actor.id, 'conflict.requires_requirement_revision', id, { reason: input.reason });
+        return this.store.update(table, id, { status: 'requires_requirement_revision', reason: input.reason });
+      }
+      requireThat(input.source_head_sha === fresh.source_head_sha && input.reason?.trim(), 'RESOLUTION_SOURCE_REQUIRED', '需核对冻结来源并说明冲突取舍');
+      requireThat(Array.isArray(input.files) && input.files.length === fresh.conflicts.length && new Set(input.files.map(f => f.path)).size === fresh.conflicts.length,
+        'INCOMPLETE_RESOLUTION', '需要提交所有冲突文件的完整处理结果');
+      this.store.event(project.id, actor.id, 'conflict.before_resolution', id, { files: await this.conflictFiles(actor, table, id) });
+      for (const file of input.files) {
+        requireThat(fresh.conflicts.includes(file.path) && typeof file.content === 'string' && !/^<{7}|^={7}|^>{7}/m.test(file.content), 'INVALID_RESOLUTION', '文件不属于冲突或仍有冲突标记');
+        await writeFile(await existingWithin(fresh.workdir, file.path), file.content);
+      }
+      const repo = this.repoFor(project);
+      await repo.run(['add','--',...fresh.conflicts], fresh.workdir);
+      await repo.run(['commit','-m',`Resolve isolated prototype conflict (${actor.kind})`], fresh.workdir);
+      const head = await repo.resolved(fresh.workdir, [fresh.source_head_sha, fresh.target_main_sha || fresh.target_commit]);
+      this.store.event(project.id, actor.id, 'conflict.resolved', id, { reason: input.reason, impact: input.impact || input.reason, commit: head, files: input.files });
+      return this.store.update(table, id, { status: 'awaiting_verification', candidate_commit: head, resolution_actor: actor.id, resolution_kind: actor.kind });
+    });
+  }
+  stopAttempt(actor, table, id, reason) {
+    requireThat(['attempts','syncs'].includes(table), 'INVALID_TYPE', '无效类型');
+    const record = this.store.get(table, id); this.authorize(actor, record.project_id, 'developer');
+    requireThat(!['completed','approved'].includes(record.status), 'INVALID_STATE', '已完成或已确认事实不能取消');
+    requireThat(reason?.trim(), 'REASON_REQUIRED', '请说明停止原因');
+    this.store.event(record.project_id, actor.id, 'attempt.cancelled', id, { reason });
+    return this.store.update(table, id, { status: 'cancelled', reason });
+  }
+  completeDocumentChange(actor, projectId, reqId, evidence) {
+    this.authorize(actor, projectId, 'reviewer');
+    const req = this.store.get('requirements', `${projectId}/${reqId}`);
+    requireThat(actor.kind === 'human' && req.prototype_applicable === false, 'PROTOTYPE_APPLICABLE', '仅人工可结束原型不适用的文档需求');
+    requireThat(evidence?.commit && evidence?.path, 'DOCUMENT_EVIDENCE_REQUIRED', '须记录文档来源提交与路径');
+    this.store.event(projectId, actor.id, 'document.completed', req.change_id, { evidence });
+    return this.store.update('changes', req.change_id, { status: 'delivered', prototype: 'not_applicable', evidence, confirmed_by: actor.id });
   }
   async startSync(actor, projectId, reqId, input) {
     const project = this.authorize(actor, projectId, 'developer');

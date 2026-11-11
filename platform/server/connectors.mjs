@@ -16,7 +16,19 @@ export class GitLab {
     const branches = await this.request(`/projects/${id}/protected_branches`);
     const main = branches.find(branch => branch.name === 'main');
     requireThat(main && main.push_access_levels.every(level => level.access_level === 0), 'GITLAB_POLICY', 'main 必须禁止直接推送');
+    const user = await this.request('/user');
+    let page = 1, members;
+    do {
+      members = await this.request(`/projects/${id}/members/all?per_page=100&page=${page++}`);
+      // Namespace owners/admins are the trusted administrators of the gate itself.
+      requireThat(members.every(member => member.access_level !== 40 || member.id === user.id), 'GITLAB_POLICY', '原型仓库普通维护者必须由平台唯一合并身份持有；业务成员使用 Developer 或更低权限');
+    } while (members.length === 100);
     return project;
+  }
+  async mergedCandidate(project, attempt) {
+    const records = await this.request(`/projects/${project.gitlab_project_id}/merge_requests?source_branch=${encodeURIComponent(attempt.branch)}&state=merged&target_branch=main`);
+    const mr = records.find(item => item.sha === attempt.candidate_commit && !item.squash_commit_sha && (item.merge_commit_sha || item.sha) === attempt.candidate_commit);
+    return mr ? { mr_iid: mr.iid, gitlab_project_id: project.gitlab_project_id, merged_commit: mr.merge_commit_sha || mr.sha, merged_at: mr.merged_at, web_url: mr.web_url } : null;
   }
   async mergeCandidate(project, attempt) {
     await this.validateProject(project.gitlab_project_id);
@@ -63,6 +75,10 @@ export class GitLab {
       actions: [{ action: 'create', file_path: path, content: JSON.stringify(record, null, 2) }]
     });
     return { path, commit: commit.id };
+  }
+  async validatePrd(project, prd) {
+    requireThat(prd && /^[a-f0-9]{40}$/.test(prd.commit) && typeof prd.path === 'string' && !prd.path.includes('..'), 'INVALID_PRD', 'PRD 必须绑定需求资料仓库中的精确提交及路径');
+    await this.request(`/projects/${project.requirements_gitlab_id}/repository/files/${encodeURIComponent(prd.path)}?ref=${prd.commit}`);
   }
 }
 
