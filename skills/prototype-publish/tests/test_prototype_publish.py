@@ -263,7 +263,8 @@ class DeploymentTests(unittest.TestCase):
             def read(self): return b'expected'
         with patch.object(publish, 'urlopen', return_value=Response()) as fetch:
             publish.verify_http('http://example.test/id', {'index.html': b'expected', 'assets/a.css': b'expected'}, 'version')
-            self.assertEqual(fetch.call_count, 2)
+            self.assertEqual(fetch.call_count, 3)
+            self.assertEqual(fetch.call_args_list[0].args[0].full_url, "http://example.test/id/")
             with self.assertRaises(publish.PublishError):
                 publish.verify_http('http://example.test/id', {'index.html': b'wrong'}, 'version')
 

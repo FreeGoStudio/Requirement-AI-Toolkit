@@ -314,30 +314,35 @@ def initialize(remote):
 
 
 def verify_http(base_url, files, version):
-    for path, expected in files.items():
-        url = base_url.rstrip('/') + '/' + quote(path) + '?prd_version=' + version
+    for path, expected in [('', files['index.html']), *files.items()]:
+        # Check exactly the URLs visitors use, including the fixed directory URL.
+        url = base_url.rstrip('/') + '/' + quote(path)
         with urlopen(Request(url, headers={'Cache-Control': 'no-cache'}), timeout=20) as response:
             if response.status != 200 or digest(response.read()) != digest(expected):
                 raise PublishError(f'远程 HTTP 内容校验失败：{path}')
 
 
 def deploy(remote, files, publication_id, version, verify=verify_http):
+    if not all(re.fullmatch(r'[a-f0-9]{32}', value) for value in (publication_id, version)):
+        raise PublishError('发布 ID 或版本 ID 无效。')
     root = remote.config['remoteRoot']
+    staging = f'{root}/.uploads/{publication_id}/{version}'
     release = f'{root}/releases/{publication_id}/{version}'
     link = f'{root}/published/{publication_id}'
     q = shlex.quote
     # Every attempt uploads to its own unpublished version before taking any lock.
-    remote.run(f'test -f {q(root + "/.prd-managed")} && mkdir -p {q(root + "/releases/" + publication_id)} && mkdir {q(release)} && chmod 755 {q(root + "/releases/" + publication_id)} {q(release)}')
+    remote.run(f'test -f {q(root + "/.prd-managed")} && mkdir -p {q(root + "/.uploads/" + publication_id)} && mkdir {q(staging)} && chmod 755 {q(staging)}')
     for path, data in files.items():
-        target = release + '/' + path
+        target = staging + '/' + path
         parents = list(PurePosixPath(path).parents)[:-1]
-        directories = ' '.join(q(release + '/' + str(parent)) for parent in parents)
+        directories = ' '.join(q(staging + '/' + str(parent)) for parent in parents)
         remote.run('mkdir -p ' + q(posixpath.dirname(target)) + (' && chmod 755 ' + directories if directories else ''))
         remote.put(target, data)
         actual = remote.run('sha256sum -- ' + q(target)).split()[0]
         if actual != digest(data):
             raise PublishError(f'上传内容校验失败：{path}')
     with remote_lock(remote, 'publication-' + publication_id):
+        remote.run(f'mkdir -p {q(root + "/releases/" + publication_id)} && chmod 755 {q(root + "/releases/" + publication_id)} && test ! -e {q(release)} && mv -T {q(staging)} {q(release)}')
         switched = False
         previous = remote.run(f'readlink {q(link)} || test ! -e {q(link)}')
         if previous and not re.fullmatch(re.escape(root) + r'/releases/' + re.escape(publication_id) + r'/[a-f0-9]{32}', previous):
@@ -361,7 +366,33 @@ def deploy(remote, files, publication_id, version, verify=verify_http):
                 except Exception as rollback_error:
                     raise PublishError(f'发布校验失败且回退失败，需检查远程状态：{rollback_error}') from error
             raise
+        # Still holding this publication's lock. In-flight uploads are outside releases.
+        try:
+            cleanup_releases(remote, publication_id, version)
+            result['cleanupStatus'] = 'complete'
+        except Exception as error:
+            result['cleanupStatus'] = 'pending'
+            result['cleanupWarning'] = str(error)
+        result['fixedHomeVerified'] = True
+        result['publishedFileCount'] = len(files)
     return result
+
+
+def cleanup_releases(remote, publication_id, version):
+    if not all(re.fullmatch(r'[a-f0-9]{32}', value) for value in (publication_id, version)):
+        raise PublishError('拒绝清理无效的发布路径。')
+    root = remote.config['remoteRoot']
+    q = shlex.quote
+    versions = root + '/releases/' + publication_id
+    current = versions + '/' + version
+    link = root + '/published/' + publication_id
+    # Never follow symlinks or recurse outside this publication's version children.
+    remote.run(f'test -f {q(root + "/.prd-managed")} && '
+               f'test ! -L {q(root + "/releases")} && test ! -L {q(versions)} && '
+               f'test "$(readlink {q(link)})" = {q(current)} && '
+               f'find {q(versions)} -regextype posix-extended -mindepth 1 -maxdepth 1 '
+               f'-type d -regex {q(".*/[a-f0-9]{32}")} ! -path {q(current)} '
+               '-exec rm -rf -- {} +')
 
 
 def publication_state(root):
@@ -431,6 +462,8 @@ def main():
         if request.get('password'):
             rendered = rendered.replace(request['password'], '[REDACTED]')
         print(rendered)
+        if result.get('cleanupWarning'):
+            print('新版本已发布，旧版本清理未完成：' + result['cleanupWarning'], file=sys.stderr)
         return 0
     except Exception as error:
         message = str(error)
