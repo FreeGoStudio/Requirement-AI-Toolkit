@@ -17,6 +17,8 @@ description: "发布静态 HTML 原型到已配置的 Linux 临时服务器，�
 
 ## 选择输入
 
+Prd 模式仅接受当前高保真清单。清单含 low 字段（包括空字段）时提示“请先要求 AI 迁移项目”，不自动忽略、不转换、不发布。用户明确要求迁移后按 prd 当前规则处理；不得改用 Html 模式绕过这个检查。独立普通 HTML 发布仍可使用 Html 模式。
+
 - PRD 产物：使用 `-Mode Prd -OutputDirectory '<交付目录>'`，仅发布清单登记的原型和依赖。需求与设计治理由 prd 在调用前完成，本技能不重做业务评审。
 - 历史 HTML：使用 `-Mode Html -OutputDirectory '<资源根目录>' -EntryPath '<入口相对路径>'`，无需 PRD 清单、规格或历史评审。只有单个 HTML 时也可把文件绝对路径直接传给 OutputDirectory，父目录作为资源根目录。
 - Auto 优先使用已有 PRD 清单；显式 EntryPath 则按历史 HTML 处理。无清单时选 index.html，否则只在根目录恰有一个 HTML 时自动选入口；存在歧义才询问。

@@ -31,8 +31,8 @@ try {
   Assert-ConfigurationBlocked 'host'
   $sourceRoot = Join-Path $temporary 'source'
   New-Item -ItemType Directory -Path $sourceRoot | Out-Null
-  '{"flows":[{"entries":{"low":"prototypes/low/login.html"}}]}' | Set-Content (Join-Path $sourceRoot '03-html-design-manifest.json') -Encoding UTF8
-  '<a href="prototypes/low/login.html#failed">原型</a>' | Set-Content (Join-Path $sourceRoot '06-prd.html') -Encoding UTF8
+  '{"flows":[{"entries":{"high":"prototypes/high/login.html"}}]}' | Set-Content (Join-Path $sourceRoot '03-html-design-manifest.json') -Encoding UTF8
+  '<a href="prototypes/high/login.html#failed">原型</a>' | Set-Content (Join-Path $sourceRoot '06-prd.html') -Encoding UTF8
   'window.PRD_PROTOTYPE_BASE_URL = "http://stale.example/id";' | Set-Content (Join-Path $sourceRoot 'prototype-links.js') -Encoding UTF8
   $blocked = $false
   try { & $script -Action Publish -Mode Prd -OutputDirectory $sourceRoot -ConfigDirectory $temporary }

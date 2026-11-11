@@ -19,8 +19,8 @@ class PackageTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
-        self.write('03-html-design-manifest.json', json.dumps({'flows': [{'flowId': 'login', 'flowName': '登录', 'entries': {'low': 'prototypes/low/login.html'}}]}))
-        self.write('prototypes/low/login.html', '<html><a href="../../index.html#reviews">返回</a><link href="../../design-system/main.css" rel="stylesheet"><script src="../../assets/app.js"></script><button onclick="document.body.dataset.clicked=1">登录</button></html>')
+        self.write('03-html-design-manifest.json', json.dumps({'flows': [{'flowId': 'login', 'flowName': '登录', 'entries': {'high': 'prototypes/high/login.html'}}]}))
+        self.write('prototypes/high/login.html', '<html><a href="../../index.html#reviews">返回</a><link href="../../design-system/main.css" rel="stylesheet"><script src="../../assets/app.js"></script><button onclick="document.body.dataset.clicked=1">登录</button></html>')
         self.write('design-system/main.css', '@import "colors.css"; body{background:url(../assets/bg.svg)}')
         self.write('design-system/colors.css', 'body{color:red}')
         self.write('assets/bg.svg', '<svg xmlns="http://www.w3.org/2000/svg"></svg>')
@@ -35,23 +35,30 @@ class PackageTests(unittest.TestCase):
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(text, encoding='utf-8')
 
+    def test_legacy_low_entry_requires_migration_even_with_high_entry(self):
+        for legacy_path in ('', 'prototypes/low/login.html'):
+            with self.subTest(legacy_path=legacy_path):
+                self.write('03-html-design-manifest.json', json.dumps({'flows': [{'flowId': 'login', 'flowName': '登录', 'entries': {'high': 'prototypes/high/login.html', 'low': legacy_path}}]}))
+                with self.assertRaisesRegex(publish.PublishError, '迁移'):
+                    publish.Package(self.root).build()
+
     def test_bundle_only_prototypes_and_transitive_assets(self):
         files = publish.Package(self.root).build()
-        self.assertEqual(set(files), {'index.html', 'prototypes/low/login.html', 'design-system/main.css', 'design-system/colors.css', 'assets/bg.svg', 'assets/app.js'})
+        self.assertEqual(set(files), {'index.html', 'prototypes/high/login.html', 'design-system/main.css', 'design-system/colors.css', 'assets/bg.svg', 'assets/app.js'})
         self.assertIn('登录'.encode(), files['index.html'])
-        self.assertNotIn(b'#reviews', files['prototypes/low/login.html'])
-        self.assertIn('#reviews', (self.root / 'prototypes/low/login.html').read_text(encoding='utf-8'))
+        self.assertNotIn(b'#reviews', files['prototypes/high/login.html'])
+        self.assertIn('#reviews', (self.root / 'prototypes/high/login.html').read_text(encoding='utf-8'))
         self.assertNotIn('机密'.encode(), b''.join(files.values()))
 
     def test_unsafe_missing_and_document_dependencies_fail(self):
         for reference in ('../../06-prd.html', '../../../outside.png', '../../missing.png', '../../screenshots/review.png', '/assets/bg.svg', '../../03-html-design-manifest.json'):
             with self.subTest(reference=reference):
-                self.write('prototypes/low/login.html', f'<a href="{reference}">link</a>')
+                self.write('prototypes/high/login.html', f'<a href="{reference}">link</a>')
                 with self.assertRaises(publish.PublishError):
                     publish.Package(self.root).build()
 
     def test_srcset_inline_css_and_internal_anchor(self):
-        self.write('prototypes/low/login.html', '<a href="#login">内部</a><style>body{background:url(../../assets/bg.svg)}</style><img srcset="../../assets/bg.svg 1x, ../../assets/bg.svg 2x">')
+        self.write('prototypes/high/login.html', '<a href="#login">内部</a><style>body{background:url(../../assets/bg.svg)}</style><img srcset="../../assets/bg.svg 1x, ../../assets/bg.svg 2x">')
         self.assertIn('assets/bg.svg', publish.Package(self.root).build())
 
     def test_dynamic_resources_fail_with_source(self):
@@ -62,11 +69,11 @@ class PackageTests(unittest.TestCase):
     def test_javascript_document_and_module_relative_dependencies(self):
         self.write('assets/app.js', "import './helper.js'; fetch('./data.json'); const icon = new URL('./bg.svg', import.meta.url);")
         self.write('assets/helper.js', 'document.body.dataset.helper=1;')
-        self.write('prototypes/low/data.json', '{"message":"模拟数据"}')
+        self.write('prototypes/high/data.json', '{"message":"模拟数据"}')
         files = publish.Package(self.root).build()
         self.assertIn('assets/helper.js', files)
         self.assertIn('assets/bg.svg', files)
-        self.assertIn('prototypes/low/data.json', files)
+        self.assertIn('prototypes/high/data.json', files)
         self.assertNotIn('assets/data.json', files)
 
     def test_stable_id_and_copied_folder_isolation(self):

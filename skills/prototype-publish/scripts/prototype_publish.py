@@ -74,8 +74,10 @@ class Package:
         manifest = json.loads(manifest_path.read_text(encoding='utf-8-sig'))
         self.entries = {}
         for flow in manifest['flows']:
+            if 'low' in flow['entries']:
+                raise PublishError('旧版低保真清单不再支持，请先要求 AI 迁移项目；本次未发布。')
             for fidelity, path in flow['entries'].items():
-                if fidelity in ('low', 'high') and path:
+                if fidelity == 'high' and path:
                     expected = f"prototypes/{fidelity}/{flow['flowId']}.html"
                     if path != expected or not re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*', flow['flowId']):
                         raise PublishError(f'非法原型入口：{path}')

@@ -56,7 +56,9 @@ def sync_document_links(root, state=None, pending=False):
     if not manifest_path.is_file():
         return 0
     manifest = json.loads(manifest_path.read_text(encoding='utf-8-sig'))
-    entries = {path for flow in manifest.get('flows', []) for fidelity, path in flow.get('entries', {}).items() if fidelity in ('low', 'high') and path}
+    if any('low' in flow.get('entries', {}) for flow in manifest.get('flows', [])):
+        raise ValueError('旧版低保真清单不再支持，请先要求 AI 迁移项目。')
+    entries = {path for flow in manifest.get('flows', []) for fidelity, path in flow.get('entries', {}).items() if fidelity == 'high' and path}
     if state is None:
         state_path = root / '.prototype-publication.json'
         state = json.loads(state_path.read_text(encoding='utf-8-sig')) if state_path.exists() else {}

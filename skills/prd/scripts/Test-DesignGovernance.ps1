@@ -42,7 +42,8 @@ foreach ($flow in @($manifest.flows)) {
   Require (Has-Text $flow.flowName) 'Missing flowName'
   Require (-not $flowMap.ContainsKey($flow.flowId)) "Duplicate flowId: $($flow.flowId)"
   $flowMap[$flow.flowId] = $flow
-  foreach ($fidelity in @('low', 'high')) {
+  Require ($null -eq $flow.entries.PSObject.Properties['low']) 'Legacy low-fidelity entry: ask AI to migrate this project first'
+  foreach ($fidelity in @('high')) {
     $path = $flow.entries.$fidelity
     if (Has-Text $path) {
       Check-Path $path ($Phase -eq 'postwrite')
@@ -59,7 +60,7 @@ if (Has-Text $PrototypeSpecPath) {
   Require ($id -cmatch '^[a-z0-9]+(?:-[a-z0-9]+)*$') 'Invalid spec flowId'
   Require (Has-Text $spec.flowIdentity.flowName) 'Missing spec flowName'
   Require (Has-Text $spec.flowIdentity.objective) 'Missing flow objective'
-  Require ($fidelity -in @('low', 'high') -and $spec.mode -eq "$fidelity-fidelity") 'Mode/fidelity mismatch'
+  Require ($fidelity -eq 'high' -and $spec.mode -eq 'high-fidelity') 'Only high fidelity is supported; ask AI to migrate legacy specifications first'
   Require ($spec.productDomain -eq $manifest.productDomain) 'Product domain mismatch'
   Require ($spec.flowIdentity.changeType -in @('new-flow', 'fix', 'iteration', 'redesign')) 'Invalid changeType'
   Require ($spec.prototypeReferenceGate.userDecision -in @('provided-reference', 'use-existing-prototype', 'continue-without-reference')) 'Reference decision pending or invalid'

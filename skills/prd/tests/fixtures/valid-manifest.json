@@ -25,7 +25,6 @@
       "flowId": "login",
       "flowName": "登录",
       "entries": {
-        "low": "prototypes/low/login.html",
         "high": "prototypes/high/login.html"
       }
     }
