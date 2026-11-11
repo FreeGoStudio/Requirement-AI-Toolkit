@@ -15,7 +15,7 @@ description: "中文产品需求工具。用户调用 $prd，或需要需求澄�
 - 按以下评审节点推进，已有明确确认可沿用。前置业务确认不足时，仅等待依赖该决策的正式产物与原型变更；可继续独立的探索、比较和草案整理，不假定确认通过。
 - 区分文件生成、自动校验、浏览器实际验证和用户验收。无浏览器能力时保存可执行产物并标记待验证，不虚报截图或交互通过，不推进依赖该检查的评审。
 - 每次高模生成、修改并完成静态检查后，读取 `references/remote-publishing.md`，调用同级 prototype-publish 技能，以 Prd 模式发布。未配置时沿用本地交付；已配置时自动发布仅原型及依赖资源，回复远程入口。缺少发布技能或发布失败时明确说明本次未发布，不将本地成功当作远程成功。服务器配置由 prd-setup 负责。
-- GitLab 交付读取 `references/gitlab-delivery.md`：全部需求 Markdown 提交 GitLab，只有正式 PRD 放入 VitePress 实际源目录，其余 Markdown 放在源目录外。项目配置独立保存在本机，不把私人仓库和认证信息固化到通用技能。
+- GitLab 交付读取 `references/gitlab-delivery.md`：全部需求 Markdown、原型源码及必要依赖和治理元数据提交 GitLab，只有正式 PRD 放入 VitePress 实际源目录，其余产物放在源目录外。原型版本管理与自动发布分别执行、分别记录结果。项目配置独立保存在本机，不把私人仓库和认证信息固化到通用技能。
 - 所有文档中的原型链接使用普通 Markdown 链接，按 `references/gitlab-delivery.md` 更新。本次原型变更时将关联链接标为待发布，成功发布并验证后更新 URL；SyncLinks 不处理 Markdown，不将其当作文档同步完成。
 
 ## 1. 需求接收、探索与比较
