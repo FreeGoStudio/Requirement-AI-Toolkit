@@ -4,7 +4,7 @@
 node_modules/
 dist/
 storybook-static/
-platform/.local/
-platform/config.local.json
+# 历史运行数据与缓存留在原位；平台源码已归入 ai-native-platform
+/platform/
 test-results/
 playwright-report/

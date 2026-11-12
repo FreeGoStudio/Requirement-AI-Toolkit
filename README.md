@@ -1,6 +1,10 @@
 # Requirement AI Toolkit
 
-本仓库维护需求与原型技能。Storybook 多项目原型管理平台已转由 `D:/workspace/ai-native-platform/services/prototype-platform` 维护，涵盖源码需求分支、集成验收和发布服务；[本仓库旧平台目录](platform/README.md) 保留迁移说明与历史源码。
+本仓库只维护需求与原型 skill、安装脚本、技能测试及相关设计探索资料。平台实现、部署、实施方案和调整任务统一在 `D:/workspace/ai-native-platform/services/prototype-platform` 维护；本仓库不再保留其活动源码副本，也不在此推进平台开发。
+
+本机仍可能存在被 Git 忽略的 `platform/.local`、`platform/config.local.json` 和缓存，它们承载已有平台运行数据及历史路径引用，不能因本次整理而删除或移动。它们不属于技能源码；后续运行数据迁移在平台项目单独处理。旧平台文件可通过 Git 历史追溯。
+
+`outputs/product-requirements/20261111-1140-prototype-state-overview/` 是 HTML 原型状态直达与 AI 读取的技能设计探索，继续保留。
 
 面向 Codex 的中文产品需求工作流技能，直接生成可在浏览器打开的 HTML 需求文档与低/高保真交互原型。
 
