@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "requirement_id": "req1",
+  "title": "TodoList 技术验收主线",
+  "prd": {
+    "repository": "storybook-todo-requirements",
+    "path": "requirements/req1/prd.md",
+    "commit": "UNBOUND_LOCAL_EXAMPLE"
+  },
+  "affected_apps": [
+    "todo",
+    "settings"
+  ],
+  "acceptance_criteria": [
+    "AC1",
+    "AC2",
+    "AC3",
+    "AC4",
+    "AC5"
+  ],
+  "annotations": "annotations.yaml",
+  "scenarios": "scenarios.yaml",
+  "walkthrough": "walkthrough.yaml",
+  "review_scope": [
+    {
+      "id": "tasks",
+      "app": "todo",
+      "route": "/tasks",
+      "role": "focus",
+      "whole_page": true,
+      "acceptance_criteria": [
+        "AC1",
+        "AC3",
+        "AC4"
+      ]
+    },
+    {
+      "id": "settings",
+      "app": "settings",
+      "route": "/settings",
+      "role": "focus",
+      "whole_page": true,
+      "acceptance_criteria": [
+        "AC2"
+      ]
+    },
+    {
+      "id": "summary",
+      "app": "todo",
+      "route": "/summary",
+      "role": "context",
+      "whole_page": true
+    }
+  ],
+  "nonvisual_acceptance": {
+    "AC5": "由 Plane、GitLab 及平台交付事实验证"
+  }
+}
