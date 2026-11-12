@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "steps": [
+    {
+      "id": "input",
+      "action": "highlight",
+      "app": "todo",
+      "route": "/tasks",
+      "target": "todo.input",
+      "annotation": "tasks-note"
+    },
+    {
+      "id": "settings",
+      "action": "highlight",
+      "app": "settings",
+      "route": "/settings",
+      "target": "todo.settings",
+      "annotation": "settings-note"
+    },
+    {
+      "id": "summary",
+      "action": "navigate",
+      "app": "todo",
+      "route": "/summary"
+    }
+  ]
+}

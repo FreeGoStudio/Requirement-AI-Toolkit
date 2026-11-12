@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "workspace_id": "local-workflow-lab",
+  "project_id": "storybook-todo",
+  "repository": {
+    "default_branch": "main"
+  },
+  "applications": [
+    {
+      "id": "todo",
+      "name": "待办",
+      "root": "apps/todo",
+      "build_command": "npm run build-storybook --prefix apps/todo",
+      "output": "apps/todo/storybook-static",
+      "entry": "/tasks",
+      "screens": [
+        {
+          "route": "/tasks",
+          "story_id": "todo-application--interactive"
+        },
+        {
+          "route": "/summary",
+          "story_id": "todo-application--summary"
+        },
+        {
+          "route": "/outside",
+          "story_id": "todo-application--interactive"
+        }
+      ]
+    },
+    {
+      "id": "settings",
+      "name": "设置",
+      "root": "apps/settings",
+      "build_command": "npm run build-storybook --prefix apps/settings",
+      "output": "apps/settings/storybook-static",
+      "entry": "/settings",
+      "screens": [
+        {
+          "route": "/settings",
+          "story_id": "settings-application--interactive"
+        }
+      ]
+    }
+  ]
+}

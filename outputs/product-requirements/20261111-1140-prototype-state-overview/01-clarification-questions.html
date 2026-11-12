@@ -1,0 +1,43 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>HTML 原型状态总览方案</title><style>body{max-width:1080px;margin:40px auto;padding:0 24px;font:16px/1.8 system-ui,sans-serif;color:#203047;background:#fafbfd}h1,h2{line-height:1.4}section{background:white;padding:20px 24px;margin:20px 0;border:1px solid #dce3ec;border-radius:12px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #dce3ec;padding:10px;text-align:left}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eef2f6;padding:16px}a{color:#1759b4}code{overflow-wrap:anywhere}@media print{body{margin:0;background:white}section{break-inside:avoid}}</style></head><body><a href="index.html">交付入口</a><h1>HTML 原型状态总览方案</h1><p><strong>状态：建议方案，待用户确认；不是已实现功能。</strong></p>
+<section><h2>1. 已有依据与设计缺口</h2><p>已检查仓库 skills/prd/references/prototype-spec.md、prototype-structure.md 和 output-artifacts.md。已有 flowId、screenId、stateId、元素标识、交互结构与布局快照规范；本次范围内搜索未发现场景直达与恢复协议。这是规范检查，尚未对远程供应商原型逐个状态实测。</p><p>原有能力继续保留。新增建议集中于：把状态登记为可直接访问、可复现且可继续操作的场景，减少寻找状态的点击。</p></section>
+<section><h2>2. 方案选择</h2><table><tr><th>方式</th><th>收益</th><th>代价</th></tr><tr><td>每个状态复制一个 HTML</td><td>直接打开</td><td>页面和交互重复维护，容易不一致</td></tr><tr><td>总览页同时嵌入全部实时页面</td><td>类似摊平画布</td><td>多个 iframe 同时渲染，可能加重当前性能问题</td></tr><tr><td>推荐：状态目录 + 同一原型的场景入口</td><td>直接访问、共享真实组件和交互</td><td>需增加场景初始化和就绪约定</td></tr></table><p>总览默认只展示文字与按需加载的已生成缩略图；进入场景时再加载一个真实页面。缩略图不是独立维护的第二套界面。</p></section>
+<section><h2>3. 总览如何组织</h2><p>按流程 → 页面 → 场景分组。页面类包含已设计的默认、空、加载、错误等状态；弹窗、抽屉和表单校验状态归属其底层页面。只登记已有或明确批准的状态，不穷举字段组合，也不因为目录需要而新增业务规则。</p><p>每张卡片包含场景名称、稳定 sceneId、状态说明、演示数据说明、打开场景、复制地址，以及可选缩略图。提供页面/状态类别筛选和名称/ID 搜索。详情标明来源需求和是否已验证；缺失或过期缩略图明确标识，不阻止直接打开。</p><p>交互原型内提供独立的“原型工具”区域：返回总览、重置当前场景、进入正常流程。截图时隐藏工具区，不混入业务菜单。总览另设“正常流程入口”。</p></section>
+<section><h2>4. 入口与状态身份</h2><pre>supplier-finance.html#contract-detail
+supplier-finance.html?scene=contract-detail-edit-open#contract-detail</pre><p>以上仅为入口格式示例，不代表当前远程原型已支持该场景。无 scene 参数时沿用旧初始化和路由；有参数时读取场景登记。场景唯一键为 flowId + fidelity + sceneId，沿用 screenId/stateId，不用显示文案或数组位置作为 ID。</p><p>URL 只存稳定 sceneId 和已有页面锚点；数据、角色、弹窗及选中对象由登记项确定，避免任意参数拼出不存在的业务组合。scene 与锚点冲突时由场景登记确定页面，并规范化地址。未知 scene 明确显示“场景不存在”和总览入口，不默默打开默认页造成误判。</p></section>
+<section><h2>5. 一个场景还原什么</h2><p>场景是“可复现的完整页面上下文”，不是只给弹窗加 display:block。初始化包含模拟数据、选中对象、角色（仅适用已设计角色）、页面、页签、表单内容、校验状态、浮层及必要的滚动/焦点。弹窗必须有匹配的底层页面，关闭后应能继续浏览。</p><p>示例字段如下；示例合同与编辑场景仅用于说明结构，不作为新增业务要求。requirementRefs 在真实登记时必须指向实际来源。</p><pre>{
+  &quot;sceneId&quot;: &quot;contract-detail-edit-open&quot;,
+  &quot;screenId&quot;: &quot;contract-detail&quot;,
+  &quot;stateId&quot;: &quot;edit-open&quot;,
+  &quot;title&quot;: &quot;合同详情 / 编辑弹窗打开（示例）&quot;,
+  &quot;fixtureId&quot;: &quot;contract-editable-demo&quot;,
+  &quot;overlay&quot;: {
+    &quot;id&quot;: &quot;contract-edit&quot;,
+    &quot;state&quot;: &quot;pristine&quot;
+  },
+  &quot;href&quot;: &quot;supplier-finance.html?scene=contract-detail-edit-open#contract-detail&quot;,
+  &quot;readyWhen&quot;: {
+    &quot;visible&quot;: [
+      &quot;contract-detail&quot;,
+      &quot;contract-edit&quot;
+    ],
+    &quot;focused&quot;: &quot;contract-edit-name&quot;
+  },
+  &quot;sourceRevision&quot;: &quot;&lt;生成时计算&gt;&quot;,
+  &quot;requirementRefs&quot;: []
+}</pre><p>首次打开/刷新直达地址时，从固定模拟数据重新初始化；场景内修改仅进入该标签页的模拟状态，不覆盖正常模式的持久化数据。重置恢复入口场景。跨标签页互不污染；现有业务依赖持久化时使用独立命名空间。模拟日期、随机数据和依赖结果固定，避免同一地址显示不同内容。</p></section>
+<section><h2>6. 保留正常交互</h2><p>初始化顺序：解析地址 → 校验场景 → 建立独立模拟数据 → 调用现有页面/状态入口 → 渲染既有组件 → 应用既有浮层和焦点逻辑 → 发出就绪标记。不通过自动点击若干按钮来回放前置流程。</p><p>直达只替代初始上下文的建立。打开后，编辑、取消、关闭、提交及正常路由继续使用原有事件处理与状态流转，不在每次渲染时强制恢复场景。业务状态必须满足原有前置条件，不绕过原有提交校验，不另写一套静态弹窗。</p><p>scene 参数表示可重置的起点，不承诺编码当前任意编辑结果；“复制入口”复制登记场景地址。场景初始化仅在首次进入或明确切换/重置时触发。普通交互不添加虚假的场景历史；浏览器后退/前进保留原有页面路由语义，重新进入不同场景入口时才恢复该场景。进入正常流程时移除 scene，并通过原有初始化入口开始。</p><p>加载、瞬时提示等场景若需保持可观察，使用仅在场景模式启用的可控模拟延迟/时钟并提供继续或重置；正常流程保持原时间行为。不能让真实异步回调覆盖指定场景。</p></section>
+<section><h2>7. AI 读取与等待协议</h2><p>建议在原型目录生成 states.html（人用目录）与 state-catalog.json（AI 可读目录），从同一份场景定义生成，关联已有 structure.json、PrototypeSpec 和快照。为兼容 file://，总览可内嵌生成的数据或加载普通 JS，不依赖 fetch 本地 JSON。JSON 供文件读取或 HTTP 获取。</p><p>AI 默认先读目录和已有结构，选取 sceneId 后直接打开 href；等显式就绪，再读取必要结构或截图。已存在且 sourceRevision、sceneId、profileId 一致的截图/布局快照可以复用，过期则重采集。快照路径包含 sceneId，避免同一 screen/state 的不同模拟数据互相覆盖。</p><pre>window.__PROTOTYPE_STATE__ = {
+  sceneId: "contract-detail-edit-open",
+  screenId: "contract-detail",
+  status: "ready", // initializing | ready | error
+  sourceRevision: "...",
+  error: null
+}</pre><p>以上是拟议接口，不是现有 API。ready 需在数据注入、视图提交、目标浮层和焦点就位后设置；视觉采集还需等待字体、目标图片及布局稳定。失败记录明确原因并置 error；使用有界等待，不依赖固定 sleep 或无期限 networkidle。初始化就绪不能作为后续每次交互的完成信号，后续按预期页面/元素状态等待。</p><p>只保证减少探索点击，不承诺具体加速比例。视觉校验仍需查看关键截图，结构化读取不能替代外观检查。</p></section>
+<section><h2>8. 文件与发布兼容</h2><pre>prototypes/high/
+  states.html
+  state-catalog.json
+  supplier-finance.html
+  supplier-finance.scenes.js
+  supplier-finance.structure.json</pre><p>以上是建议布局。每个流程保留唯一业务 HTML，场景定义负责登记与数据，不复制业务界面。目录使用相对地址，保留 query 与 hash；沿用现有文档共享发布基础地址机制。实施时检查发布收集器是否纳入目录、清单、场景脚本与缩略图，不能假设现有发布器已支持；本轮不修改或执行发布。</p></section>
+<section><h2>9. 建议验收点</h2><ol><li>目录中每个已登记场景都有直接地址；新标签页首次打开无需前置点击即可得到指定页面与浮层。</li><li>刷新/重置可复现相同模拟数据及状态；两个标签页之间和正常模式之间互不污染。</li><li>同一业务上下文下，直达得到的场景与正常操作到达的场景在内容、可用操作、视觉和关闭目标上等价。</li><li>弹窗关闭、表单校验、提交后续及正常导航仍可操作；未带 scene 的旧入口保持原行为。</li><li>未知场景、初始化失败、锚点冲突有确定结果；ready 不提前，失败不无限等待。后退/前进按约定运行。</li><li>目录链接全部有效，ID 唯一，数据及浮层引用有效，快照过期可识别；本地与发布地址均可直接打开。</li><li>选择同一组页面和弹窗，对比串行点击与直达：分别记录工具调用次数、前置点击数、到达可读状态耗时及截图分析耗时，不虚构收益阈值。</li></ol><p>最终验收范围为所有已登记且属于原需求的场景；若先用一个页面和一个弹窗验证接入方式，应标记为试点，不能宣称全部覆盖。</p></section>
+<section><h2>10. 推荐实施顺序与待确认项</h2><p>先盘点已有页面/状态及来源，建立覆盖清单；再接入同一运行时的场景初始化，生成目录和就绪标记；最后补齐所有已登记状态并验证正常流程与发布。首版不做全部实时 iframe、组合穷举、第二套界面或自动回放点击。</p><p>本轮建议确认的是方案方向：采用“状态目录 + 场景直达 + 原交互复用”。实施前需确定首先接入的原型范围；当前供应商财务原型可作为候选，但其完整状态清单尚未实测。本方案已形成文档，功能实现、速度收益及用户验收均未完成。</p></section></body></html>

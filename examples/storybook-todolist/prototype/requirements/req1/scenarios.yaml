@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "scenarios": [
+    {
+      "id": "empty",
+      "description": "空白场景",
+      "app_states": {
+        "todo": {
+          "tasks": [],
+          "draft": "",
+          "showCompleted": true,
+          "filter": "all"
+        },
+        "settings": {}
+      }
+    },
+    {
+      "id": "example",
+      "description": "示例场景",
+      "app_states": {
+        "todo": {
+          "tasks": [
+            {
+              "id": "sample1",
+              "title": "检查固定版本",
+              "done": false
+            }
+          ],
+          "draft": "",
+          "showCompleted": true,
+          "filter": "all"
+        },
+        "settings": {}
+      }
+    }
+  ]
+}

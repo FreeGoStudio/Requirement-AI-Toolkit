@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "annotations": [
+    {
+      "id": "tasks-note",
+      "type": "element",
+      "scope_id": "tasks",
+      "title": "新增与管理待办",
+      "target": {
+        "app": "todo",
+        "route": "/tasks",
+        "element_id": "todo.input"
+      }
+    },
+    {
+      "id": "settings-note",
+      "type": "element",
+      "scope_id": "settings",
+      "title": "跨应用显示设置",
+      "target": {
+        "app": "settings",
+        "route": "/settings",
+        "element_id": "todo.settings"
+      }
+    }
+  ]
+}

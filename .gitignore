@@ -1,0 +1,10 @@
+/scripts/__pycache__
+/scripts/tests/__pycache__
+/.playwright-mcp
+node_modules/
+dist/
+storybook-static/
+# 历史运行数据与缓存留在原位；平台源码已归入 ai-native-platform
+/platform/
+test-results/
+playwright-report/
